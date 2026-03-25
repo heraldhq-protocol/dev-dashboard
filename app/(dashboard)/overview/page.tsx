@@ -105,7 +105,7 @@ export default function OverviewPage() {
             <CardTitle className="text-base text-left">Notification Volume</CardTitle>
           </CardHeader>
           <CardContent className="pl-0">
-            <div className="h-[300px] w-[100%] min-w-0 pb-4 pr-4">
+            <div className="h-[300px] w-full min-w-0 pb-4 pr-4">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={performanceData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1A3A52" vertical={false} />

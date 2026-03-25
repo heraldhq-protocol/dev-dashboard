@@ -5,32 +5,13 @@ import type { JWT } from "next-auth/jwt";
 const ADMIN_API_URL = process.env.NEXT_PUBLIC_HERALD_ADMIN_API_URL || "https://admin-api.herald.xyz";
 
 async function refreshAccessToken(token: JWT) {
-  try {
-    const res = await fetch(`${ADMIN_API_URL}/v1/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken: token.refreshToken }),
-    });
-
-    const refreshedTokens = await res.json();
-
-    if (!res.ok) {
-      throw refreshedTokens;
-    }
-
-    return {
-      ...token,
-      accessToken: refreshedTokens.accessToken,
-      accessTokenExpires: Date.now() + (refreshedTokens.expiresIn || 3600) * 1000,
-      refreshToken: refreshedTokens.refreshToken ?? token.refreshToken, // Fall back to old refresh token
-    };
-  } catch (error) {
-    console.error("Error refreshing access token", error);
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
-  }
+  // MOCKED FOR UI DEVELOPMENT
+  return {
+    ...token,
+    accessToken: "mock_jwt_token_for_ui_dev",
+    accessTokenExpires: Date.now() + 86400 * 1000,
+    refreshToken: token.refreshToken,
+  };
 }
 
 export const authOptions: NextAuthOptions = {
@@ -46,35 +27,16 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.wallet || !credentials?.signature || !credentials?.message) return null;
         
-        try {
-          const res = await fetch(`${ADMIN_API_URL}/v1/auth/wallet-login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              wallet: credentials.wallet,
-              signature: credentials.signature,
-              message: credentials.message,
-            }),
-          });
-
-          const data = await res.json();
-
-          if (res.ok && data.accessToken) {
-            return {
-              id: credentials.wallet,
-              protocolId: data.protocolId,
-              role: data.role,
-              tier: data.tier,
-              accessToken: data.accessToken,
-              refreshToken: data.refreshToken,
-              // Token expiry defaults to 1h
-              accessTokenExpires: Date.now() + (data.expiresIn || 3600) * 1000,
-            };
-          }
-        } catch (error) {
-          console.error("Wallet login error:", error);
-        }
-        return null;
+        // MOCKED FOR UI DEVELOPMENT
+        return {
+          id: credentials.wallet,
+          protocolId: "proto_mock123",
+          role: "admin",
+          tier: 2,
+          accessToken: "mock_jwt_token_for_ui_dev",
+          refreshToken: "mock_refresh_token",
+          accessTokenExpires: Date.now() + 86400 * 1000,
+        };
       },
     }),
     CredentialsProvider({
@@ -88,34 +50,16 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         
-        try {
-          const res = await fetch(`${ADMIN_API_URL}/v1/auth/email-login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-              totp: credentials.totp,
-            }),
-          });
-
-          const data = await res.json();
-
-          if (res.ok && data.accessToken) {
-            return {
-              id: credentials.email,
-              protocolId: data.protocolId,
-              role: data.role,
-              tier: data.tier,
-              accessToken: data.accessToken,
-              refreshToken: data.refreshToken,
-              accessTokenExpires: Date.now() + (data.expiresIn || 3600) * 1000,
-            };
-          }
-        } catch (error) {
-          console.error("Email login error:", error);
-        }
-        return null;
+        // MOCKED FOR UI DEVELOPMENT
+        return {
+          id: credentials.email,
+          protocolId: "proto_mock123",
+          role: "admin",
+          tier: 2,
+          accessToken: "mock_jwt_token_for_ui_dev",
+          refreshToken: "mock_refresh_token",
+          accessTokenExpires: Date.now() + 86400 * 1000,
+        };
       },
     })
   ],
