@@ -19,34 +19,46 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed, toggleSidebar } = useUiStore();
+  const { mobileSidebarOpen, desktopSidebarCollapsed, closeMobileSidebar } = useUiStore();
 
   return (
     <>
       {/* Mobile overlay */}
-      {!sidebarCollapsed && (
+      {mobileSidebarOpen && (
         <div 
           className="fixed inset-0 z-40 bg-navy/80 backdrop-blur-sm lg:hidden" 
-          onClick={toggleSidebar}
+          onClick={closeMobileSidebar}
         />
       )}
 
       <aside 
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-navy-2/95 backdrop-blur-md transition-all duration-250 ease-in-out lg:static lg:z-auto",
-          sidebarCollapsed ? "-translate-x-full lg:translate-x-0 lg:w-16" : "w-60 translate-x-0"
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-navy-2/95 backdrop-blur-md transition-all duration-300 ease-in-out lg:static lg:z-auto shrink-0",
+          mobileSidebarOpen ? "translate-x-0 w-[240px]" : "-translate-x-full",
+          "lg:translate-x-0",
+          desktopSidebarCollapsed ? "lg:w-16" : "lg:w-[240px]"
         )}
       >
-        <div className="flex h-16 items-center border-b border-border px-4">
-          <div className="flex items-center gap-3">
+        <div className="flex h-16 items-center border-b border-border px-4 justify-between">
+          <div className="flex items-center gap-3 overflow-hidden">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal pt-0.5">
               <span className="text-xl font-bold leading-none text-navy">H</span>
             </div>
-            {!sidebarCollapsed && <span className="text-xl font-extrabold tracking-tight text-white">Herald.</span>}
+            <span className={cn(
+              "text-xl font-extrabold tracking-tight text-white transition-all duration-300",
+              desktopSidebarCollapsed ? "lg:opacity-0 lg:w-0" : "opacity-100 w-auto"
+            )}>Herald.</span>
           </div>
+          
+          {/* Mobile close button */}
+          <button onClick={closeMobileSidebar} className="lg:hidden text-text-muted hover:text-white">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4">
           <ul className="grid gap-1 px-3">
             {navItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
@@ -54,16 +66,20 @@ export function Sidebar() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    title={sidebarCollapsed ? item.name : undefined}
+                    onClick={() => closeMobileSidebar()}
+                    title={desktopSidebarCollapsed ? item.name : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all hover:bg-card-2",
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all hover:bg-card-2 whitespace-nowrap overflow-hidden",
                       isActive ? "bg-card-2 text-white shadow-[inset_3px_0_0_var(--color-teal)]" : "text-text-secondary"
                     )}
                   >
                     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                     </svg>
-                    {!sidebarCollapsed && <span>{item.name}</span>}
+                    <span className={cn(
+                      "transition-all duration-300",
+                      desktopSidebarCollapsed ? "lg:opacity-0 lg:translate-x-4" : "opacity-100 translate-x-0"
+                    )}>{item.name}</span>
                   </Link>
                 </li>
               );
@@ -71,7 +87,7 @@ export function Sidebar() {
           </ul>
         </nav>
 
-        <SidebarUsageMeter collapsed={sidebarCollapsed} />
+        <SidebarUsageMeter collapsed={desktopSidebarCollapsed} />
       </aside>
     </>
   );

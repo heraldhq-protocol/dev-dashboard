@@ -1,10 +1,10 @@
 "use client";
 
-export function SidebarUsageMeter({ collapsed }: { collapsed: boolean }) {
-  if (collapsed) return null;
+import { cn } from "@/lib/utils";
 
+export function SidebarUsageMeter({ collapsed }: { collapsed: boolean }) {
   return (
-    <div className="p-4 border-t border-border mt-auto">
+    <div className={cn("p-4 border-t border-border mt-auto transition-opacity", collapsed ? "lg:hidden" : "")}>
       <div className="mb-2 flex items-center justify-between text-xs font-semibold">
         <span className="text-text-secondary">Usage</span>
         <span className="text-text-muted">78%</span>

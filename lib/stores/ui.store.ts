@@ -1,17 +1,23 @@
 import { create } from "zustand";
 
 interface UiState {
-  sidebarCollapsed: boolean;
+  mobileSidebarOpen: boolean;
+  desktopSidebarCollapsed: boolean;
   activeEnvironment: "sandbox" | "live";
   theme: "dark" | "light"; // always dark for now
-  toggleSidebar: () => void;
+  toggleMobileSidebar: () => void;
+  closeMobileSidebar: () => void;
+  toggleDesktopSidebar: () => void;
   setEnvironment: (env: "sandbox" | "live") => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  sidebarCollapsed: false,
+  mobileSidebarOpen: false,
+  desktopSidebarCollapsed: false,
   activeEnvironment: "sandbox",
   theme: "dark",
-  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  toggleMobileSidebar: () => set((state) => ({ mobileSidebarOpen: !state.mobileSidebarOpen })),
+  closeMobileSidebar: () => set({ mobileSidebarOpen: false }),
+  toggleDesktopSidebar: () => set((state) => ({ desktopSidebarCollapsed: !state.desktopSidebarCollapsed })),
   setEnvironment: (env) => set({ activeEnvironment: env }),
 }));

@@ -5,18 +5,27 @@ import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 
 export function TopNav() {
-  const { toggleSidebar, activeEnvironment, setEnvironment } = useUiStore();
+  const { toggleMobileSidebar, toggleDesktopSidebar, desktopSidebarCollapsed, activeEnvironment, setEnvironment } = useUiStore();
   const { data: session } = useSession();
 
   return (
     <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-navy/85 px-4 backdrop-blur-md sm:px-6">
       <div className="flex items-center gap-4">
         <button 
-          onClick={toggleSidebar}
+          onClick={toggleMobileSidebar}
           className="lg:hidden text-text-secondary hover:text-white"
         >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <button 
+          onClick={toggleDesktopSidebar}
+          className="hidden lg:block text-text-secondary hover:text-white transition-colors"
+          title={desktopSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={desktopSidebarCollapsed ? "M4 6h16M4 12h16M4 18h16" : "M4 6h16M4 12h8m-8 6h16"} />
           </svg>
         </button>
         <div className="text-xl font-extrabold tracking-tight text-white lg:hidden">◈ Herald</div>
