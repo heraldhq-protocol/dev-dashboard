@@ -44,3 +44,5 @@ next-env.d.ts
 # husky
 .husky/_/husky.sh.backup
 .husky/_/h
+
+implementation_plan.md
