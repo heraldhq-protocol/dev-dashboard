@@ -1,8 +1,3 @@
-. "$(dirname "$0")/_/husky.sh"
-
-echo "🔍 Running pre-commit checks..."
-
-echo "➡️ Linting staged files..."
-pnpm lint || { echo "❌ Lint failed"; exit 1; }
-
+echo " Running pre-commit checks..."
+pnpm lint || exit 1
 echo "✅ Pre-commit passed"
