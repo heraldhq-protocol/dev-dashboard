@@ -75,7 +75,7 @@ export default function LoginPage() {
       if (res?.error) {
         setError("Invalid credentials or TOTP");
       }
-    } catch (err: unknown) {
+    } catch {
       setError("An error occurred during sign in");
     } finally {
       setLoading(false);
