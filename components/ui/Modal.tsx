@@ -2,7 +2,7 @@ import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { cn } from "@/lib/utils"
 
-const Modal = DialogPrimitive.Root
+const ModalRoot = DialogPrimitive.Root
 
 const ModalTrigger = DialogPrimitive.Trigger
 
@@ -44,6 +44,32 @@ const ModalContent = React.forwardRef<
   </ModalPortal>
 ))
 ModalContent.displayName = DialogPrimitive.Content.displayName
+
+interface ModalProps {
+  open?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
+  title?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+const Modal = ({ open, isOpen, onClose, title, children }: ModalProps) => {
+  const isModalOpen = open !== undefined ? open : isOpen;
+  return (
+    <ModalRoot open={isModalOpen} onOpenChange={(val: boolean) => {
+      if (!val && onClose) onClose();
+    }}>
+      <ModalContent>
+        {title && (
+          <DialogPrimitive.Title className="text-xl font-bold text-white mb-4">
+            {title}
+          </DialogPrimitive.Title>
+        )}
+        {children}
+      </ModalContent>
+    </ModalRoot>
+  );
+};
 
 export {
   Modal,
