@@ -42,3 +42,12 @@ export interface TeamMemberDto {
   status: "active" | "invited";
   lastLoginAt: string | null;
 }
+
+export interface BillingPlanDto {
+  tier: 0 | 1 | 2 | 3; // 0: Free, 1: Growth, 2: Scale, 3: Enterprise
+  name: string;
+  monthlyPrice: number;
+  sendLimit: number;
+  currentUsage: number;
+  nextBillingDate: string;
+}
