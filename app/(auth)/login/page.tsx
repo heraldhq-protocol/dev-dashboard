@@ -8,6 +8,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import bs58 from "bs58";
 import { createSignInChallenge } from "@/lib/auth-utils";
+import Image from "next/image";
 
 export default function LoginPage() {
   const { publicKey, signMessage } = useWallet();
@@ -87,8 +88,9 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-teal/8 blur-[120px]" />
 
       <div className="z-10 w-full max-w-[440px]">
-        <div className="mb-8 text-center text-text-primary">
-          <div className="mb-2 text-2xl font-extrabold tracking-tight">◈ Herald</div>
+        <div className="mb-8 flex items-center justify-center text-center text-text-primary">
+          <Image src="/herald-logo.svg" alt="Herald Logo" width={36} height={36} className="h-9 w-9 object-contain mr-3" />
+          <div className="text-3xl font-extrabold tracking-tight text-white">Herald</div>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl">

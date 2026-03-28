@@ -3,6 +3,7 @@
 import { useUiStore } from "@/lib/stores/ui.store";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
+import Image from "next/image";
 
 export function TopNav() {
   const { toggleMobileSidebar, toggleDesktopSidebar, desktopSidebarCollapsed, activeEnvironment, setEnvironment } = useUiStore();
@@ -28,7 +29,10 @@ export function TopNav() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={desktopSidebarCollapsed ? "M4 6h16M4 12h16M4 18h16" : "M4 6h16M4 12h8m-8 6h16"} />
           </svg>
         </button>
-        <div className="text-xl font-extrabold tracking-tight text-white lg:hidden">◈ Herald</div>
+        <div className="flex items-center gap-2 lg:hidden">
+          <Image src="/herald-logo.svg" alt="Herald Logo" width={24} height={24} className="h-6 w-6 object-contain" />
+          <span className="text-xl font-extrabold tracking-tight text-white">Herald</span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 border-l border-border pl-4">
