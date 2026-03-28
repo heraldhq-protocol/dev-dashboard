@@ -2,7 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { JWT } from "next-auth/jwt";
 
-const ADMIN_API_URL = process.env.NEXT_PUBLIC_HERALD_ADMIN_API_URL || "https://admin-api.herald.xyz";
+// const ADMIN_API_URL = process.env.NEXT_PUBLIC_HERALD_ADMIN_API_URL || "https://admin-api.herald.xyz";
 
 async function refreshAccessToken(token: JWT) {
   // MOCKED FOR UI DEVELOPMENT

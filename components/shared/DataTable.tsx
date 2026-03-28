@@ -6,6 +6,7 @@ import {
   useReactTable,
   ColumnDef,
 } from "@tanstack/react-table";
+import { useMemo } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -16,17 +17,27 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
+  // Memoize table options to prevent unnecessary re-renders
+  const tableOptions = useMemo(
+    () => ({
+      data,
+      columns,
+      getCoreRowModel: getCoreRowModel(),
+    }),
+    [data, columns]
+  );
+
+  const table = useReactTable(tableOptions);
+
+  // Memoize computed values for stable references
+  const rows = useMemo(() => table.getRowModel().rows, [table]);
+  const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-x-auto">
       <table className="w-full text-left text-sm text-text-secondary min-w-[600px]">
         <thead className="bg-card-2 text-xs uppercase tracking-widest text-text-muted">
-          {table.getHeaderGroups().map((headerGroup) => (
+          {headerGroups.map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th key={header.id} className="px-6 py-4 font-semibold">
@@ -42,8 +53,8 @@ export function DataTable<TData, TValue>({
           ))}
         </thead>
         <tbody className="divide-y divide-border">
-          {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
+          {rows.length ? (
+            rows.map((row) => (
               <tr key={row.id} className="hover:bg-card-2/50 transition-colors">
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
