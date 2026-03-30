@@ -51,15 +51,16 @@ interface ModalProps {
   onClose?: () => void;
   title?: React.ReactNode;
   children: React.ReactNode;
+  className?: string
 }
 
-const Modal = ({ open, isOpen, onClose, title, children }: ModalProps) => {
+const Modal = ({ open, isOpen, onClose, title, children, className }: ModalProps) => {
   const isModalOpen = open !== undefined ? open : isOpen;
   return (
     <ModalRoot open={isModalOpen} onOpenChange={(val: boolean) => {
       if (!val && onClose) onClose();
     }}>
-      <ModalContent>
+      <ModalContent className={className}>
         {title && (
           <DialogPrimitive.Title className="text-xl font-bold text-white mb-4">
             {title}

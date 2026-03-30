@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-navy: #060D18;
-  --color-navy-2: #0A1628;
-  --color-card: #0D1F35;
+  --color-navy: #060d18;
+  --color-navy-2: #0a1628;
+  --color-card: #0d1f35;
   --color-card-2: #112240;
-  --color-border: #0E2A3D;
-  --color-border-2: #1A3A52;
-  --color-teal: #00C896;
-  --color-teal-2: #00E5A8;
-  --color-teal-dim: #007A5C;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #CBD5E1;
-  --color-text-muted: #64748B;
-  --color-red: #D63031;
-  --color-green: #27AE60;
-  --color-gold: #E8920A;
-  --color-purple: #5B35D5;
+  --color-border: #0e2a3d;
+  --color-border-2: #1a3a52;
+  --color-teal: #00c896;
+  --color-teal-2: #00e5a8;
+  --color-teal-dim: #007a5c;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #64748b;
+  --color-red: #d63031;
+  --color-green: #27ae60;
+  --color-gold: #e8920a;
+  --color-purple: #5b35d5;
 
-  --font-sans: 'Syne', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: "Syne", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
 body {

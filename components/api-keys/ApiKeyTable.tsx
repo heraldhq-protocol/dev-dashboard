@@ -18,7 +18,7 @@ export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
   }
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-x-auto">
+    <div className="bg-card rounded-xl border border-border overflow-x-auto md:overflow-hidden">
       <table className="w-full text-left text-sm text-text-secondary min-w-[700px]">
         <thead className="bg-card-2 text-xs uppercase tracking-widest text-text-muted border-b border-border">
           <tr>

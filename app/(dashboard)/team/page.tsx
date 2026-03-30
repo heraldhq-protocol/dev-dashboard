@@ -10,16 +10,35 @@ import { Modal } from "@/components/ui/Modal";
 
 // Mock Data
 const MOCK_TEAM: TeamMemberDto[] = [
-  { id: "usr_1", email: "alice@protocol.xyz", role: "owner", status: "active", lastLoginAt: new Date(Date.now() - 3600000).toISOString() },
-  { id: "usr_2", email: "bob@protocol.xyz", role: "developer", status: "active", lastLoginAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: "usr_3", email: "charlie@protocol.xyz", role: "read_only", status: "invited", lastLoginAt: null },
+  {
+    id: "usr_1",
+    email: "alice@protocol.xyz",
+    role: "owner",
+    status: "active",
+    lastLoginAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: "usr_2",
+    email: "bob@protocol.xyz",
+    role: "developer",
+    status: "active",
+    lastLoginAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: "usr_3",
+    email: "charlie@protocol.xyz",
+    role: "read_only",
+    status: "invited",
+    lastLoginAt: null,
+  },
 ];
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMemberDto[]>(MOCK_TEAM);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<TeamMemberDto["role"]>("developer");
+  const [inviteRole, setInviteRole] =
+    useState<TeamMemberDto["role"]>("developer");
 
   const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,18 +59,38 @@ export default function TeamPage() {
   };
 
   const handleRemove = (id: string) => {
-    setMembers(members.filter(m => m.id !== id));
+    setMembers(members.filter((m) => m.id !== id));
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Team Members</h1>
-          <p className="text-sm text-text-muted mt-1">Manage who has access to your Herald protocol dashboard and their permissions.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Team Members
+          </h1>
+          <p className="text-sm text-text-muted mt-1">
+            Manage who has access to your Herald protocol dashboard and their
+            permissions.
+          </p>
         </div>
-        <Button onClick={() => setIsInviteOpen(true)} className="gap-2 shrink-0">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+        <Button
+          onClick={() => setIsInviteOpen(true)}
+          className="gap-2 shrink-0"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+            />
+          </svg>
           Invite Member
         </Button>
       </div>
@@ -69,7 +108,10 @@ export default function TeamPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {members.map((m) => (
-              <tr key={m.id} className="hover:bg-card-2/50 transition-colors group">
+              <tr
+                key={m.id}
+                className="hover:bg-card-2/50 transition-colors group"
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-teal/20 text-teal flex items-center justify-center font-bold text-xs">
@@ -82,17 +124,23 @@ export default function TeamPage() {
                   {m.role.replace("_", " ")}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <Badge variant={m.status === "active" ? "secondary" : "outline"}>
+                  <Badge
+                    variant={m.status === "active" ? "secondary" : "outline"}
+                  >
                     {m.status}
                   </Badge>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-text-muted">
-                  {m.lastLoginAt ? formatDistanceToNow(new Date(m.lastLoginAt), { addSuffix: true }) : "-"}
+                  {m.lastLoginAt
+                    ? formatDistanceToNow(new Date(m.lastLoginAt), {
+                        addSuffix: true,
+                      })
+                    : "-"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                   {m.role !== "owner" && (
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       onClick={() => handleRemove(m.id)}
                       className="text-red hover:bg-red/10 hover:text-red opacity-0 group-hover:opacity-100 transition-opacity h-8 px-3 text-xs"
                     >
@@ -106,11 +154,17 @@ export default function TeamPage() {
         </table>
       </div>
 
-      <Modal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} title="Invite Team Member">
+      <Modal
+        isOpen={isInviteOpen}
+        onClose={() => setIsInviteOpen(false)}
+        title="Invite Team Member"
+      >
         <form onSubmit={handleInvite} className="flex flex-col gap-6 mt-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-text-secondary">Email Address</label>
-            <Input 
+            <label className="text-sm font-medium text-text-secondary">
+              Email Address
+            </label>
+            <Input
               type="email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
@@ -122,21 +176,35 @@ export default function TeamPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-text-secondary">Role Assignment</label>
-            <select 
+            <label className="text-sm font-medium text-text-secondary">
+              Role Assignment
+            </label>
+            <select
               className="w-full bg-card border border-border rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
               value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as TeamMemberDto["role"])}
+              onChange={(e) =>
+                setInviteRole(e.target.value as TeamMemberDto["role"])
+              }
             >
               <option value="admin">Admin (Full Access)</option>
-              <option value="developer">Developer (API Keys & Logs only)</option>
+              <option value="developer">
+                Developer (API Keys & Logs only)
+              </option>
               <option value="read_only">Read Only (Analytics only)</option>
             </select>
           </div>
 
           <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-border">
-            <Button type="button" variant="ghost" onClick={() => setIsInviteOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={!inviteEmail}>Send Invite</Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsInviteOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={!inviteEmail}>
+              Send Invite
+            </Button>
           </div>
         </form>
       </Modal>

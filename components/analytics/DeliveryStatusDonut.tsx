@@ -25,13 +25,17 @@ export function DeliveryStatusDonut() {
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip 
-            contentStyle={{ backgroundColor: "#112240", border: "1px solid #1A3A52", borderRadius: "8px" }}
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#112240",
+              border: "1px solid #1A3A52",
+              borderRadius: "8px",
+            }}
             itemStyle={{ color: "#FFFFFF" }}
           />
         </PieChart>
       </ResponsiveContainer>
-      
+
       {/* Center Label */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <span className="text-2xl font-bold text-white">85%</span>

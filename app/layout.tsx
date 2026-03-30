@@ -29,11 +29,8 @@ export default function RootLayout({
       className={`${syne.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col">
-        <ClientProviders>
-          {children}
-        </ClientProviders>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );
 }
-
