@@ -5,7 +5,7 @@ import { TopNav } from "./TopNav";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-navy text-text-primary">
+    <div className="flex min-h-screen overflow-hidden bg-navy text-text-primary">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopNav />
