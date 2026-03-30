@@ -74,7 +74,7 @@ export function Sidebar() {
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="flex shrink-0 items-center justify-center">
               <Image
-                src="/herald-logo.svg"
+                src="/logo.svg"
                 alt="Herald Logo"
                 width={32}
                 height={32}

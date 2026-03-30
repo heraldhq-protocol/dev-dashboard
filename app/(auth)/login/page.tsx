@@ -8,35 +8,8 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import bs58 from "bs58";
 import { createSignInChallenge } from "@/lib/auth-utils";
+import Image from "next/image";
 
-// Inlined SVG — eliminates next/image deployment dependency entirely.
-// SVG has its own white bg rect + teal inner rect so no wrapper bg needed.
-function HeraldLogo({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 764 764"
-      className={className}
-      aria-label="Herald Logo"
-    >
-      <defs>
-        <style>{`.cls-1{fill:#fff;}.cls-2{fill:#00c896;}`}</style>
-      </defs>
-      <g>
-        <rect className="cls-1" width="764" height="764" rx="178.21" />
-      </g>
-      <g>
-        <rect className="cls-2" x="224.5" y="195.5" width="329" height="360" rx="47.2" />
-      </g>
-      <g>
-        <circle className="cls-1" cx="387.5" cy="360.5" r="86" />
-      </g>
-      <g>
-        <rect className="cls-1" x="301.5" y="358.5" width="172" height="201" />
-      </g>
-    </svg>
-  );
-}
 
 export default function LoginPage() {
   const { publicKey, signMessage } = useWallet();
@@ -120,7 +93,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[440px]">
         {/* Logo */}
         <div className="mb-8 flex items-center justify-center gap-3">
-          <HeraldLogo className="h-9 w-9 shrink-0 rounded-lg" />
+          <Image width={30} height={30} src={'/logo.svg'} alt="logo" />
           <span className="text-3xl font-extrabold tracking-tight text-white">Herald</span>
         </div>
 
