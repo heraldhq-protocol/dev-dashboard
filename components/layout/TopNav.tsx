@@ -30,7 +30,6 @@ export function TopNav() {
           </svg>
         </button>
         <div className="flex items-center gap-2 lg:hidden">
-          {/* TODO: Add logo and make push */}
           <Image src="/logo.svg" alt="Herald Logo" width={24} height={24} className="h-6 w-6 object-contain" />
           <span className="text-xl font-extrabold tracking-tight text-white">Herald</span>
         </div>
