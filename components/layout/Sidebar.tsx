@@ -52,27 +52,45 @@ export function Sidebar() {
   const { mobileSidebarOpen, desktopSidebarCollapsed, closeMobileSidebar } =
     useUiStore();
 
+  const collapsed = desktopSidebarCollapsed;
+
   return (
     <>
-      {/* Mobile overlay */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-navy/80 backdrop-blur-sm lg:hidden"
-          onClick={closeMobileSidebar}
-        />
-      )}
+      {/* Mobile overlay — with fade transition */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-navy/80 backdrop-blur-sm lg:hidden transition-opacity duration-300",
+          mobileSidebarOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none",
+        )}
+        onClick={closeMobileSidebar}
+      />
 
       <aside
+        style={{ willChange: "width, transform" }}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-navy-2/95 backdrop-blur-md transition-all duration-300 ease-in-out lg:static lg:z-auto shrink-0",
-          mobileSidebarOpen ? "translate-x-0 w-[240px]" : "-translate-x-full",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-navy-2/95 backdrop-blur-md shrink-0",
+          "transition-[width,transform] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+          "lg:static lg:z-auto",
+          // Mobile: slide in/out
+          mobileSidebarOpen
+            ? "translate-x-0 w-[240px]"
+            : "-translate-x-full w-[240px]",
+          // Desktop: collapse width smoothly (fixed values, not auto)
           "lg:translate-x-0",
-          desktopSidebarCollapsed ? "lg:w-16" : "lg:w-[240px]",
+          collapsed ? "lg:w-[68px]" : "lg:w-[240px]",
         )}
       >
-        <div className="flex h-16 items-center border-b border-border px-4 justify-between">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex shrink-0 items-center justify-center">
+        {/* Logo Header */}
+        <div className="flex h-16 items-center border-b border-border px-4 justify-between shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className={cn(
+                "flex shrink-0 items-center justify-center transition-transform duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+                collapsed ? "lg:scale-90" : "scale-100",
+              )}
+            >
               <Image
                 src="/logo.svg"
                 alt="Herald Logo"
@@ -83,10 +101,11 @@ export function Sidebar() {
             </div>
             <span
               className={cn(
-                "text-xl font-extrabold tracking-tight text-white transition-all duration-300",
-                desktopSidebarCollapsed
-                  ? "lg:opacity-0 lg:w-0"
-                  : "opacity-100 w-auto",
+                "text-xl font-extrabold tracking-tight text-white whitespace-nowrap overflow-hidden",
+                "transition-[opacity,max-width] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+                collapsed
+                  ? "lg:max-w-0 lg:opacity-0"
+                  : "max-w-[160px] opacity-100",
               )}
             >
               Herald
@@ -96,7 +115,7 @@ export function Sidebar() {
           {/* Mobile close button */}
           <button
             onClick={closeMobileSidebar}
-            className="lg:hidden text-text-muted hover:text-white"
+            className="lg:hidden text-text-muted hover:text-white transition-colors"
           >
             <svg
               className="w-5 h-5"
@@ -114,6 +133,7 @@ export function Sidebar() {
           </button>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4">
           <ul className="grid gap-1 px-3">
             {navItems.map((item) => {
@@ -123,12 +143,13 @@ export function Sidebar() {
                   <Link
                     href={item.href}
                     onClick={() => closeMobileSidebar()}
-                    title={desktopSidebarCollapsed ? item.name : undefined}
+                    title={collapsed ? item.name : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all hover:bg-card-2 whitespace-nowrap overflow-hidden",
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold whitespace-nowrap overflow-hidden",
+                      "transition-colors duration-200",
                       isActive
                         ? "bg-card-2 text-white shadow-[inset_3px_0_0_var(--color-teal)]"
-                        : "text-text-secondary",
+                        : "text-text-secondary hover:bg-card-2 hover:text-white",
                     )}
                   >
                     <svg
@@ -146,10 +167,11 @@ export function Sidebar() {
                     </svg>
                     <span
                       className={cn(
-                        "transition-all duration-300",
-                        desktopSidebarCollapsed
-                          ? "lg:opacity-0 lg:translate-x-4"
-                          : "opacity-100 translate-x-0",
+                        "overflow-hidden whitespace-nowrap",
+                        "transition-[opacity,max-width,transform] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+                        collapsed
+                          ? "lg:max-w-0 lg:opacity-0 lg:translate-x-2"
+                          : "max-w-[160px] opacity-100 translate-x-0",
                       )}
                     >
                       {item.name}
@@ -161,7 +183,7 @@ export function Sidebar() {
           </ul>
         </nav>
 
-        <SidebarUsageMeter collapsed={desktopSidebarCollapsed} />
+        <SidebarUsageMeter collapsed={collapsed} />
       </aside>
     </>
   );
