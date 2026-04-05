@@ -4,46 +4,59 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { WebhookList, Webhook } from "@/components/webhooks/WebhookList";
+import { WebhookList } from "@/components/webhooks/WebhookList";
 
-const INITIAL_WEBHOOKS: Webhook[] = [
-  {
-    id: "wh_1",
-    url: "https://api.myprotocol.xyz/herald/events",
-    events: [
-      "notification.sent",
-      "notification.failed",
-      "notification.bounced",
-    ],
-    active: true,
-    lastTriggeredAt: new Date(Date.now() - 300000).toISOString(),
-    createdAt: new Date(Date.now() - 864000000).toISOString(),
-    failureCount: 0,
-  },
-  {
-    id: "wh_2",
-    url: "https://hooks.slack.com/services/T0x.../B0x.../abcdef",
-    events: ["notification.failed"],
-    active: true,
-    lastTriggeredAt: new Date(Date.now() - 7200000).toISOString(),
-    createdAt: new Date(Date.now() - 1728000000).toISOString(),
-    failureCount: 2,
-  },
-  {
-    id: "wh_3",
-    url: "https://staging.myprotocol.xyz/webhooks/herald",
-    events: ["notification.sent"],
-    active: false,
-    createdAt: new Date(Date.now() - 2592000000).toISOString(),
-    failureCount: 0,
-  },
-];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { listWebhooks, createWebhook, updateWebhook, deleteWebhook } from "@/lib/api/webhooks";
 
 export default function WebhooksPage() {
-  const [webhooks, setWebhooks] = useState<Webhook[]>(INITIAL_WEBHOOKS);
+  const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+
+  const { data: webhooks = [], isLoading } = useQuery({
+    queryKey: ["webhooks"],
+    queryFn: listWebhooks,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createWebhook,
+    onSuccess: (data) => {
+      setIsCreateOpen(false);
+      setNewUrl("");
+      setSelectedEvents([]);
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      // Important to show secret if applicable, but WebhookDto has it in response depending on backend logic
+      toast.success("Webhook created successfully.");
+      if (data.secret) {
+        // Maybe open modal to show secret, but for now simple toast/alert
+        alert(`Your webhook secret is: ${data.secret}. Please save it!`);
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to create webhook");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, dto }: { id: string, dto: any }) => updateWebhook(id, dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+    },
+    onError: () => {
+      toast.error("Failed to update webhook");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteWebhook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      toast.success("Webhook deleted");
+    },
+  });
 
   const AVAILABLE_EVENTS = [
     "notification.sent",
@@ -53,33 +66,24 @@ export default function WebhooksPage() {
     "apikey.revoked",
   ];
 
-  const handleToggle = useCallback((id: string) => {
-    setWebhooks((prev) =>
-      prev.map((wh) => (wh.id === id ? { ...wh, active: !wh.active } : wh)),
-    );
-  }, []);
+  const handleToggle = useCallback((webhook: any) => {
+    updateMutation.mutate({ id: webhook.id, dto: { isActive: !webhook.active } });
+  }, [updateMutation]);
 
   const handleDelete = useCallback((id: string) => {
-    setWebhooks((prev) => prev.filter((wh) => wh.id !== id));
-  }, []);
+    if (confirm("Are you sure you want to delete this webhook?")) {
+      deleteMutation.mutate(id);
+    }
+  }, [deleteMutation]);
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUrl.trim() || selectedEvents.length === 0) return;
 
-    const webhook: Webhook = {
-      id: `wh_${Date.now()}`,
+    createMutation.mutate({
       url: newUrl.trim(),
       events: selectedEvents,
-      active: true,
-      createdAt: new Date().toISOString(),
-      failureCount: 0,
-    };
-
-    setWebhooks((prev) => [webhook, ...prev]);
-    setIsCreateOpen(false);
-    setNewUrl("");
-    setSelectedEvents([]);
+    });
   };
 
   const toggleEvent = (event: string) => {
@@ -87,6 +91,10 @@ export default function WebhooksPage() {
       prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event],
     );
   };
+
+  if (isLoading) {
+    return <div className="text-text-muted">Loading webhooks…</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -191,7 +199,8 @@ export default function WebhooksPage() {
             <Button
               type="submit"
               variant="primary"
-              disabled={!newUrl.trim() || selectedEvents.length === 0}
+              disabled={!newUrl.trim() || selectedEvents.length === 0 || createMutation.isPending}
+              isLoading={createMutation.isPending}
             >
               Create Webhook
             </Button>

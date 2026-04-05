@@ -9,10 +9,11 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import bs58 from "bs58";
 import { createSignInChallenge } from "@/lib/auth-utils";
 import Image from "next/image";
-
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const { publicKey, signMessage } = useWallet();
+  const router = useRouter();
+  const { publicKey, signMessage, wallet, connect, connected } = useWallet();
   const { setVisible } = useWalletModal();
 
   const [email, setEmail] = useState("");
@@ -26,33 +27,38 @@ export default function LoginPage() {
       setLoading(true);
       setError("");
 
-      if (!publicKey) {
-        setVisible(true);
-        setLoading(false);
-        return;
+      if (!connected) {
+        if (!wallet) {
+          setVisible(true);
+          setLoading(false);
+          return;
+        }
+        await connect();
+      }
+
+      const activePublicKey = publicKey || wallet?.adapter?.publicKey;
+
+      if (!activePublicKey) {
+        throw new Error("Wallet not connected completely");
       }
 
       if (!signMessage) {
         throw new Error("Wallet does not support message signing");
       }
 
-      const nonce = Math.random().toString(36).substring(2, 10);
-      const message = createSignInChallenge(nonce);
+      const timestamp = Date.now();
+      const message = createSignInChallenge(activePublicKey.toBase58(), timestamp);
       const encodedMessage = new TextEncoder().encode(message);
 
       const signature = await signMessage(encodedMessage);
 
-      const res = await signIn("wallet", {
-        wallet: publicKey.toBase58(),
+      await signIn("wallet", {
+        wallet: activePublicKey.toBase58(),
         signature: bs58.encode(signature),
         message,
-        redirect: true,
         callbackUrl: "/overview",
+        redirect: true,
       });
-
-      if (res?.error) {
-        setError("Wallet login failed. Are you registered as an admin?");
-      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to sign message");
     } finally {
@@ -66,17 +72,13 @@ export default function LoginPage() {
       setLoading(true);
       setError("");
 
-      const res = await signIn("email", {
+      await signIn("email", {
         email,
         password,
         totp,
-        redirect: true,
         callbackUrl: "/overview",
+        redirect: true,
       });
-
-      if (res?.error) {
-        setError("Invalid credentials or TOTP");
-      }
     } catch {
       setError("An error occurred during sign in");
     } finally {
@@ -93,7 +95,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[440px]">
         {/* Logo */}
         <div className="mb-8 flex items-center justify-center gap-3">
-          <Image width={30} height={30} src={'/logo.svg'} alt="logo" />
+          <Image width={30} height={30} src={"/logo.svg"} alt="logo" priority />
           <span className="text-3xl font-extrabold tracking-tight text-white">Herald</span>
         </div>
 
@@ -112,7 +114,7 @@ export default function LoginPage() {
             onClick={handleWalletLogin}
             disabled={loading}
           >
-            {loading ? "Connecting…" : publicKey ? "Sign Message to Login" : "Connect Wallet"}
+            {loading ? "Connecting…" : (connected && publicKey) ? "Sign Message to Login" : "Connect Wallet"}
           </Button>
 
           <div className="relative my-7">

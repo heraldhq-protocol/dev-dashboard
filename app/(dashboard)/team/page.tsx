@@ -8,59 +8,59 @@ import { TeamMemberDto } from "@/types/api";
 import { formatDistanceToNow } from "date-fns";
 import { Modal } from "@/components/ui/Modal";
 
-// Mock Data
-const MOCK_TEAM: TeamMemberDto[] = [
-  {
-    id: "usr_1",
-    email: "alice@protocol.xyz",
-    role: "owner",
-    status: "active",
-    lastLoginAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: "usr_2",
-    email: "bob@protocol.xyz",
-    role: "developer",
-    status: "active",
-    lastLoginAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: "usr_3",
-    email: "charlie@protocol.xyz",
-    role: "read_only",
-    status: "invited",
-    lastLoginAt: null,
-  },
-];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { listTeam, inviteMember, removeMember } from "@/lib/api/team";
 
 export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMemberDto[]>(MOCK_TEAM);
+  const queryClient = useQueryClient();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] =
-    useState<TeamMemberDto["role"]>("developer");
+  const [inviteRole, setInviteRole] = useState<TeamMemberDto["role"]>("developer");
+
+  const { data: members = [], isLoading } = useQuery({
+    queryKey: ["team"],
+    queryFn: listTeam,
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: inviteMember,
+    onSuccess: (data) => {
+      setIsInviteOpen(false);
+      setInviteEmail("");
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+      // Show token directly if no email transport yet
+      toast.success(`Invite created! Token: ${data.inviteToken}`, { duration: 10000 });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to invite member");
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: removeMember,
+    onSuccess: () => {
+      toast.success("Member removed");
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+    },
+  });
 
   const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail) return;
-
-    const newMember: TeamMemberDto = {
-      id: `usr_${Date.now()}`,
-      email: inviteEmail,
-      role: inviteRole,
-      status: "invited",
-      lastLoginAt: null,
-    };
-
-    setMembers([...members, newMember]);
-    setIsInviteOpen(false);
-    setInviteEmail("");
-    setInviteRole("developer");
+    // Note: team endpoint takes 'admin' | 'developer' | 'read_only'
+    inviteMutation.mutate({ email: inviteEmail, role: inviteRole as any });
   };
 
   const handleRemove = (id: string) => {
-    setMembers(members.filter((m) => m.id !== id));
+    if (confirm("Are you sure you want to remove this member?")) {
+      removeMutation.mutate(id);
+    }
   };
+
+  if (isLoading) {
+    return <div className="text-text-muted">Loading team members…</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -115,9 +115,12 @@ export default function TeamPage() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-teal/20 text-teal flex items-center justify-center font-bold text-xs">
-                      {m.email.charAt(0).toUpperCase()}
+                      {m.email ? m.email.charAt(0).toUpperCase() : "?"}
                     </div>
-                    <span className="text-white font-medium">{m.email}</span>
+                    <div className="flex flex-col">
+                      <span className="text-white font-medium">{m.email || "No email"}</span>
+                      {m.walletPubkey && <span className="text-xs text-text-dim font-mono">{m.walletPubkey.slice(0, 8)}...</span>}
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap capitalize text-text-muted">
@@ -141,6 +144,7 @@ export default function TeamPage() {
                   {m.role !== "owner" && (
                     <Button
                       variant="ghost"
+                      disabled={removeMutation.isPending}
                       onClick={() => handleRemove(m.id)}
                       className="text-red hover:bg-red/10 hover:text-red opacity-0 group-hover:opacity-100 transition-opacity h-8 px-3 text-xs"
                     >
@@ -202,7 +206,7 @@ export default function TeamPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={!inviteEmail}>
+            <Button type="submit" variant="primary" disabled={!inviteEmail || inviteMutation.isPending} isLoading={inviteMutation.isPending}>
               Send Invite
             </Button>
           </div>
