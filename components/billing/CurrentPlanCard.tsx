@@ -19,7 +19,7 @@ export function CurrentPlanCard({ plan, onUpgradeClick }: CurrentPlanCardProps) 
         <div>
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-2">Current Plan</h2>
           <div className="flex items-baseline gap-3">
-            <h3 className="text-3xl font-bold text-white">{plan.name}</h3>
+            <h3 className="text-3xl font-bold text-foreground">{plan.name}</h3>
             {!isFree && (
               <span className="text-teal font-medium bg-teal/10 px-2.5 py-1 rounded-lg text-sm border border-teal/20">
                 Active
@@ -29,11 +29,11 @@ export function CurrentPlanCard({ plan, onUpgradeClick }: CurrentPlanCardProps) 
         </div>
 
         <div className="space-y-1">
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-foreground">
             ${plan.monthlyPrice} <span className="text-text-muted text-sm font-normal">/ month</span>
           </div>
           <p className="text-sm text-text-secondary">
-            Next billing date: <span className="text-white font-medium">{format(new Date(plan.nextBillingDate), "MMM d, yyyy")}</span>
+            Next billing date: <span className="text-foreground font-medium">{format(new Date(plan.nextBillingDate), "MMM d, yyyy")}</span>
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export function CurrentPlanCard({ plan, onUpgradeClick }: CurrentPlanCardProps) 
 
       <div className="flex flex-col items-start md:items-end justify-between md:border-l border-border md:pl-8">
         <div className="space-y-3 mb-6">
-          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+          <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
             <svg className="w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>

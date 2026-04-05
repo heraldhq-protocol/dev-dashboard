@@ -69,7 +69,7 @@ export default function BillingPage() {
   return (
     <div className="space-y-10 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Billing & Usage
         </h1>
         <p className="text-sm text-text-muted mt-1">
@@ -80,7 +80,7 @@ export default function BillingPage() {
       <CurrentPlanCard plan={MOCK_PLAN} onUpgradeClick={handleUpgrade} />
 
       <div>
-        <h2 className="text-xl font-bold text-white mb-6">Compare Plans</h2>
+        <h2 className="text-xl font-bold text-foreground mb-6">Compare Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TIERS.map((tier) => {
             const isCurrent = tier.level === MOCK_PLAN.tier;
@@ -100,10 +100,10 @@ export default function BillingPage() {
                 )}
 
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {tier.name}
                   </h3>
-                  <div className="mt-2 flex items-baseline text-3xl font-bold text-white">
+                  <div className="mt-2 flex items-baseline text-3xl font-bold text-foreground">
                     {tier.price}
                     <span className="ml-1 text-sm font-medium text-text-muted">
                       /mo
@@ -113,7 +113,7 @@ export default function BillingPage() {
 
                 <div className="mb-6 pb-6 border-b border-border">
                   <span className="text-sm text-text-primary">
-                    <span className="font-bold text-white">{tier.sends}</span>{" "}
+                    <span className="font-bold text-foreground">{tier.sends}</span>{" "}
                     Notifications
                   </span>
                 </div>
@@ -157,7 +157,7 @@ export default function BillingPage() {
 
       {/* Enterprise CTA */}
       <div className="bg-navy border border-border-2 rounded-xl p-8 text-center mt-12">
-        <h3 className="text-lg font-bold text-white mb-2">Need more volume?</h3>
+        <h3 className="text-lg font-bold text-foreground mb-2">Need more volume?</h3>
         <p className="text-sm text-text-muted mb-4 max-w-lg mx-auto">
           Contact us for custom enterprise plans with massive notification
           volumes, dedicated IP addresses, and white-glove onboarding.

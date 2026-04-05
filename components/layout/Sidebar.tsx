@@ -101,7 +101,7 @@ export function Sidebar() {
             </div>
             <span
               className={cn(
-                "text-xl font-extrabold tracking-tight text-white whitespace-nowrap overflow-hidden",
+                "text-xl font-extrabold tracking-tight text-foreground whitespace-nowrap overflow-hidden",
                 "transition-[opacity,max-width] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
                 collapsed
                   ? "lg:max-w-0 lg:opacity-0"
@@ -115,7 +115,7 @@ export function Sidebar() {
           {/* Mobile close button */}
           <button
             onClick={closeMobileSidebar}
-            className="lg:hidden text-text-muted hover:text-white transition-colors"
+            className="lg:hidden text-text-muted hover:text-foreground transition-colors"
           >
             <svg
               className="w-5 h-5"
@@ -148,8 +148,8 @@ export function Sidebar() {
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold whitespace-nowrap overflow-hidden",
                       "transition-colors duration-200",
                       isActive
-                        ? "bg-card-2 text-white shadow-[inset_3px_0_0_var(--color-teal)]"
-                        : "text-text-secondary hover:bg-card-2 hover:text-white",
+                        ? "bg-card-2 text-primary shadow-[inset_3px_0_0_var(--color-teal)]"
+                        : "text-text-secondary hover:bg-card-2 hover:text-primary",
                     )}
                   >
                     <svg

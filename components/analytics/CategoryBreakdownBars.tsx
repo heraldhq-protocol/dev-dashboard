@@ -19,7 +19,7 @@ export function CategoryBreakdownBars() {
             </div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-text-muted text-[11px]">{cat.count}</span>
-              <span className="font-bold text-white w-8 text-right">{cat.value}%</span>
+              <span className="font-bold text-foreground w-8 text-right">{cat.value}%</span>
             </div>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-card-2">

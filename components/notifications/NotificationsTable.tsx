@@ -52,7 +52,7 @@ export function NotificationsTable({ page, onPageChange, statusFilter, categoryF
                   onClick={() => router.push(`/notifications/${log.id}`)}
                   className="hover:bg-card-2/50 transition-colors cursor-pointer group"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap font-mono text-text-muted group-hover:text-white transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap font-mono text-text-muted group-hover:text-foreground transition-colors">
                     {log.id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -94,7 +94,7 @@ export function NotificationsTable({ page, onPageChange, statusFilter, categoryF
           >
             &larr; Prev
           </Button>
-          <div className="flex items-center px-4 py-1.5 font-medium text-white bg-card-2 rounded-lg border border-border">
+          <div className="flex items-center px-4 py-1.5 font-medium text-foreground bg-card-2 rounded-lg border border-border">
             {page} / {totalPages || 1}
           </div>
           <Button 

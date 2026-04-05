@@ -6,7 +6,7 @@ export function DateRangePicker() {
           key={range}
           className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
             range === "30d" 
-              ? "bg-navy-2 text-white shadow-sm ring-1 ring-border" 
+              ? "bg-navy-2 text-foreground shadow-sm ring-1 ring-border" 
               : "text-text-muted hover:text-text-secondary hover:bg-navy-2/50"
           }`}
         >

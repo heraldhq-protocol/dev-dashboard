@@ -32,7 +32,7 @@ export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
         <tbody className="divide-y divide-border">
           {keys.map((k) => (
             <tr key={k.id} className="hover:bg-card-2/50 transition-colors group">
-              <td className="px-6 py-4 whitespace-nowrap text-white font-medium">
+              <td className="px-6 py-4 whitespace-nowrap text-foreground font-medium">
                 {k.name}
               </td>
               <td className="px-6 py-4 whitespace-nowrap font-mono text-text-muted">

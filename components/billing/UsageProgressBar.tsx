@@ -27,7 +27,7 @@ export function UsageProgressBar({ used, quota }: UsageProgressBarProps) {
         <span className="text-text-secondary">Current Usage</span>
         <span
           className={
-            isCritical ? "text-red" : isWarning ? "text-gold" : "text-white"
+            isCritical ? "text-red" : isWarning ? "text-gold" : "text-foreground"
           }
         >
           {used.toLocaleString()} / {quota.toLocaleString()}

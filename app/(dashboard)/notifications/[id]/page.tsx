@@ -26,10 +26,10 @@ export default function NotificationDetailPage({ params }: { params: Promise<{ i
   return (
     <div className="space-y-6 max-w-4xl w-full pt-4">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" className="text-text-muted hover:text-white px-2 h-auto py-1 gap-2 cursor-pointer" onClick={() => router.back()}>
+        <Button variant="ghost" className="text-text-muted hover:text-foreground px-2 h-auto py-1 gap-2 cursor-pointer" onClick={() => router.back()}>
           <FaChevronLeft /> Back
         </Button>
-        <h1 className="text-base font-bold tracking-tight text-white font-mono break-all">{id}</h1>
+        <h1 className="text-base font-bold tracking-tight text-foreground font-mono break-all">{id}</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -44,10 +44,10 @@ export default function NotificationDetailPage({ params }: { params: Promise<{ i
             <div className="text-teal font-mono font-medium">7aV...9xK</div>
 
             <div className="text-text-muted">Category</div>
-            <div className="capitalize text-white">DeFi Alerts</div>
+            <div className="capitalize text-foreground">DeFi Alerts</div>
 
             <div className="text-text-muted">Timestamp</div>
-            <div className="text-white">Mar 15, 2026, 14:32:01 UTC</div>
+            <div className="text-foreground">Mar 15, 2026, 14:32:01 UTC</div>
 
             <div className="text-text-muted">Receipt Tx</div>
             <div><ReceiptProof signature="5xR9K7Lp1N2vM...8wQj" /></div>

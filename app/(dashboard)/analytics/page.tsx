@@ -43,7 +43,7 @@ export default function AnalyticsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Analytics
           </h1>
           <p className="text-sm text-text-muted mt-1">
@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
 
             {/* Value section with divider */}
             <div className="relative border-t border-border/40 pt-3">
-              <p className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
                 {kpi.value}
               </p>
               <p className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">{kpi.detail}</p>
@@ -110,7 +110,7 @@ export default function AnalyticsPage() {
                   Message Volume
                 </CardTitle>
                 <div className="flex items-baseline gap-3 mt-2">
-                  <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight">19,450</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">19,450</span>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal">
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />

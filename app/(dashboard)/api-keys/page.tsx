@@ -46,7 +46,7 @@ export default function ApiKeysPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             API Keys
           </h1>
           <p className="text-sm text-text-muted mt-1">
@@ -75,7 +75,7 @@ export default function ApiKeysPage() {
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-green shadow-[0_0_10px_#27AE60]"></span>
           Live Keys
         </h2>
@@ -85,7 +85,7 @@ export default function ApiKeysPage() {
       <hr className="border-border gap-y-4" />
 
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-gold shadow-[0_0_10px_#E8920A]"></span>
           Test Keys
         </h2>

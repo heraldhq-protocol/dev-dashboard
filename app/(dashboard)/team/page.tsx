@@ -66,7 +66,7 @@ export default function TeamPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Team Members
           </h1>
           <p className="text-sm text-text-muted mt-1">
@@ -117,7 +117,7 @@ export default function TeamPage() {
                     <div className="h-8 w-8 rounded-full bg-teal/20 text-teal flex items-center justify-center font-bold text-xs">
                       {m.email.charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-white font-medium">{m.email}</span>
+                    <span className="text-foreground font-medium">{m.email}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap capitalize text-text-muted">
@@ -180,7 +180,7 @@ export default function TeamPage() {
               Role Assignment
             </label>
             <select
-              className="w-full bg-card border border-border rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
+              className="w-full bg-card border border-border rounded-lg px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
               value={inviteRole}
               onChange={(e) =>
                 setInviteRole(e.target.value as TeamMemberDto["role"])

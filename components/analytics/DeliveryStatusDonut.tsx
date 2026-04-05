@@ -40,7 +40,7 @@ export function DeliveryStatusDonut() {
 
         {/* Center Label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-2xl font-bold text-white">85%</span>
+          <span className="text-2xl font-bold text-foreground">85%</span>
           <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">
             Success
           </span>
@@ -58,7 +58,7 @@ export function DeliveryStatusDonut() {
             <span className="text-[11px] text-text-muted font-medium">
               {entry.name}
             </span>
-            <span className="text-[11px] text-white font-bold">{entry.value}%</span>
+            <span className="text-[11px] text-foreground font-bold">{entry.value}%</span>
           </div>
         ))}
       </div>

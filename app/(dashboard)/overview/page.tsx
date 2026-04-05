@@ -83,7 +83,7 @@ function FailureRow({
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
           {/* Reason — primary info */}
-          <span className="text-sm font-semibold text-white">{reason}</span>
+          <span className="text-sm font-semibold text-foreground">{reason}</span>
           {/* Category badge */}
           <span
             className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
@@ -126,7 +126,7 @@ export default function OverviewPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Overview
         </h1>
         <p className="text-sm text-text-muted">
@@ -143,7 +143,7 @@ export default function OverviewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">42,893</div>
+            <div className="text-3xl font-bold text-foreground">42,893</div>
             <p className="text-xs text-teal mt-1">↑ 12% from last month</p>
           </CardContent>
         </Card>
@@ -155,7 +155,7 @@ export default function OverviewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">99.8%</div>
+            <div className="text-3xl font-bold text-foreground">99.8%</div>
             <p className="text-xs text-text-muted mt-1">
               Based on on-chain confirmations
             </p>
@@ -169,7 +169,7 @@ export default function OverviewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">4</div>
+            <div className="text-3xl font-bold text-foreground">4</div>
             <p className="text-xs text-text-muted mt-1">
               Listening to 12 events
             </p>

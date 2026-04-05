@@ -94,11 +94,11 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="mb-8 flex items-center justify-center gap-3">
           <Image width={30} height={30} src={'/logo.svg'} alt="logo" />
-          <span className="text-3xl font-extrabold tracking-tight text-white">Herald</span>
+          <span className="text-3xl font-extrabold tracking-tight text-primary-foreground">Herald</span>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-2xl">
-          <h2 className="mb-6 text-xl font-bold text-white text-center">Sign in to Dashboard</h2>
+          <h2 className="mb-6 text-xl font-bold text-primary-foreground text-center">Sign in to Dashboard</h2>
 
           {error && (
             <div className="mb-6 rounded-lg border border-red/20 bg-red/10 p-3 text-sm text-red">

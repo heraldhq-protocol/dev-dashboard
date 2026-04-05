@@ -14,7 +14,7 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Notification Log
         </h1>
         <p className="text-sm text-text-muted">
@@ -27,7 +27,7 @@ export default function NotificationsPage() {
         <input
           type="text"
           placeholder="Search by wallet or ID..."
-          className="flex-1 bg-card border border-border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-teal"
+          className="flex-1 bg-card border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-teal"
           value={params.search}
           onChange={(e) => {
             setParams((p) => ({ ...p, search: e.target.value }));
@@ -36,7 +36,7 @@ export default function NotificationsPage() {
         />
 
         <select
-          className="bg-card border border-border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
+          className="bg-card border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
           value={params.status}
           onChange={(e) => {
             setParams((p) => ({ ...p, status: e.target.value }));
@@ -51,7 +51,7 @@ export default function NotificationsPage() {
         </select>
 
         <select
-          className="bg-card border border-border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
+          className="bg-card border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
           value={params.category}
           onChange={(e) => {
             setParams((p) => ({ ...p, category: e.target.value }));

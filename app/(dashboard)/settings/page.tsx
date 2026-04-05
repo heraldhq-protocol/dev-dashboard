@@ -40,7 +40,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Project Settings
         </h1>
         <p className="text-sm text-text-muted mt-1">
@@ -49,7 +49,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
-        <h2 className="text-lg font-bold text-white mb-6">
+        <h2 className="text-lg font-bold text-foreground mb-6">
           General Information
         </h2>
 
@@ -116,7 +116,7 @@ export default function SettingsPage() {
 
           <hr className="border-border" />
 
-          <h2 className="text-lg font-bold text-white pt-2">Sender Identity</h2>
+          <h2 className="text-lg font-bold text-foreground pt-2">Sender Identity</h2>
           <div className="space-y-1.5 max-w-md">
             <label className="text-sm font-medium text-text-secondary">{`"From" Name`}</label>
             <Input
@@ -175,7 +175,7 @@ export default function SettingsPage() {
         className="border border-red/30"
         >
           <div className="flex flex-col items-center justify-center p-2 space-y-1.5">
-            <h2 className="text-lg font-bold text-white">Are you sure you want to delete this project?</h2>
+            <h2 className="text-lg font-bold text-foreground">Are you sure you want to delete this project?</h2>
             <p className="text-sm text-text-muted mt-1">This action cannot be undone</p>
             <Input type="text" placeholder="Enter project name" value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="w-full"/>
             <div className="mt-5 flex items-center justify-center gap-4">

@@ -27,7 +27,7 @@ export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) 
         <svg className="mx-auto h-12 w-12 text-text-muted/40 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
         </svg>
-        <h3 className="text-lg font-bold text-white mb-1">No webhooks configured</h3>
+        <h3 className="text-lg font-bold text-foreground mb-1">No webhooks configured</h3>
         <p className="text-sm text-text-muted max-w-sm mx-auto">
           Create a webhook endpoint to receive real-time notifications when events occur on your protocol.
         </p>
@@ -47,7 +47,7 @@ export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
                 <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${wh.active ? "bg-green shadow-[0_0_8px_#27AE60]" : "bg-text-muted/40"}`} />
-                <code className="text-sm font-mono text-white truncate block">{wh.url}</code>
+                <code className="text-sm font-mono text-foreground truncate block">{wh.url}</code>
               </div>
 
               <div className="flex flex-wrap gap-1.5 mt-3 ml-5">
@@ -80,7 +80,7 @@ export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) 
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                   wh.active
                     ? "bg-green/10 border-green/20 text-green hover:bg-green/20"
-                    : "bg-card-2 border-border text-text-muted hover:text-white hover:border-text-muted"
+                    : "bg-card-2 border-border text-text-muted hover:text-foreground hover:border-text-muted"
                 }`}
               >
                 {wh.active ? "Enabled" : "Disabled"}
