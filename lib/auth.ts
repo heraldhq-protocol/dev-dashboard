@@ -2,20 +2,42 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { JWT } from "next-auth/jwt";
 
-// const ADMIN_API_URL = process.env.NEXT_PUBLIC_HERALD_ADMIN_API_URL || "https://admin-api.herald.xyz";
+const ADMIN_API_URL =
+  process.env.NEXT_PUBLIC_HERALD_ADMIN_API_URL ||
+  "http://localhost:3001/v1";
 
-async function refreshAccessToken(token: JWT) {
-  // MOCKED FOR UI DEVELOPMENT
-  return {
-    ...token,
-    accessToken: "mock_jwt_token_for_ui_dev",
-    accessTokenExpires: Date.now() + 86400 * 1000,
-    refreshToken: token.refreshToken,
-  };
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+  try {
+    if (!token.refreshToken) {
+      return { ...token, error: "NoRefreshTokenError" };
+    }
+
+    const res = await fetch(`${ADMIN_API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: token.refreshToken }),
+    });
+
+    if (!res.ok) {
+      return { ...token, error: "RefreshAccessTokenError" };
+    }
+
+    const data = await res.json();
+    return {
+      ...token,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken ?? token.refreshToken,
+      accessTokenExpires: Date.now() + 14 * 60 * 1000, // 14 min (access token = 15 min)
+      error: undefined,
+    };
+  } catch {
+    return { ...token, error: "RefreshAccessTokenError" };
+  }
 }
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // ── Wallet sign-in ────────────────────────────────────────────────
     CredentialsProvider({
       id: "wallet",
       name: "Wallet",
@@ -25,20 +47,53 @@ export const authOptions: NextAuthOptions = {
         message: { label: "Message", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.wallet || !credentials?.signature || !credentials?.message) return null;
-        
-        // MOCKED FOR UI DEVELOPMENT
-        return {
-          id: credentials.wallet,
-          protocolId: "proto_mock123",
-          role: "admin",
-          tier: 2,
-          accessToken: "mock_jwt_token_for_ui_dev",
-          refreshToken: "mock_refresh_token",
-          accessTokenExpires: Date.now() + 86400 * 1000,
-        };
+        if (
+          !credentials?.wallet ||
+          !credentials?.signature ||
+          !credentials?.message
+        )
+          return null;
+
+        try {
+          const res = await fetch(`${ADMIN_API_URL}/auth/wallet-login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              walletPubkey: credentials.wallet,
+              signature: credentials.signature,
+              message: credentials.message,
+            }),
+          });
+
+          if (!res.ok) {
+            console.error("Wallet login backend error:", res.status, await res.text());
+            return null;
+          }
+
+          const data = await res.json();
+
+          // Decode the access token to get protocolId + role without a library
+          // Decode the access token to get protocolId + role safely
+          const base64Url = data.accessToken.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const payload = JSON.parse(Buffer.from(base64, "base64").toString());
+
+          return {
+            id: payload.sub,
+            protocolId: payload.protocolId ?? null,
+            role: payload.role ?? null,
+            tier: 0,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken ?? "",
+            accessTokenExpires: Date.now() + 14 * 60 * 1000,
+          };
+        } catch {
+          return null;
+        }
       },
     }),
+
+    // ── Email + TOTP sign-in ──────────────────────────────────────────
     CredentialsProvider({
       id: "email",
       name: "Email and TOTP",
@@ -49,23 +104,45 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        
-        // MOCKED FOR UI DEVELOPMENT
-        return {
-          id: credentials.email,
-          protocolId: "proto_mock123",
-          role: "admin",
-          tier: 2,
-          accessToken: "mock_jwt_token_for_ui_dev",
-          refreshToken: "mock_refresh_token",
-          accessTokenExpires: Date.now() + 86400 * 1000,
-        };
+
+        try {
+          const res = await fetch(`${ADMIN_API_URL}/auth/email-login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+              totpCode: credentials.totp || undefined,
+            }),
+          });
+
+          if (!res.ok) return null;
+
+          const data = await res.json();
+
+          const payload = JSON.parse(
+            Buffer.from(data.accessToken.split(".")[1], "base64url").toString()
+          );
+
+          return {
+            id: payload.sub,
+            protocolId: payload.protocolId ?? null,
+            role: payload.role,
+            tier: 0,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            accessTokenExpires: Date.now() + 14 * 60 * 1000,
+          };
+        } catch {
+          return null;
+        }
       },
-    })
+    }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
-      // Initial sign in
+      // Initial sign-in
       if (user) {
         return {
           ...token,
@@ -79,18 +156,23 @@ export const authOptions: NextAuthOptions = {
         };
       }
 
-      // Return previous token if the access token has not expired yet
+      // Token still valid
       if (Date.now() < (token.accessTokenExpires as number)) {
         return token;
       }
 
-      // Access token has expired, try to update it
-      return refreshAccessToken(token);
+      // Token expired — refresh (only if we have a refresh token)
+      if (token.refreshToken) {
+        return refreshAccessToken(token);
+      }
+
+      return { ...token, error: "NoRefreshTokenError" };
     },
+
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.protocolId = token.protocolId as string;
+        session.user.protocolId = token.protocolId as string | null;
         session.user.role = token.role;
         session.user.tier = token.tier as number;
         session.accessToken = token.accessToken as string;
@@ -99,6 +181,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+
   pages: {
     signIn: "/login",
   },

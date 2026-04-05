@@ -4,18 +4,10 @@ import { Badge } from "@/components/ui/Badge";
 import { WebhookTestButton } from "./WebhookTestButton";
 import { formatDistanceToNow } from "date-fns";
 
-export interface Webhook {
-  id: string;
-  url: string;
-  events: string[];
-  active: boolean;
-  lastTriggeredAt?: string;
-  createdAt: string;
-  failureCount: number;
-}
+import { WebhookDto } from "@/types/api";
 
 interface WebhookListProps {
-  webhooks: Webhook[];
+  webhooks: WebhookDto[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
 }
@@ -46,7 +38,7 @@ export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) 
             {/* Left: URL + event badges */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
-                <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${wh.active ? "bg-green shadow-[0_0_8px_#27AE60]" : "bg-text-muted/40"}`} />
+                <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${wh.isActive ? "bg-green shadow-[0_0_8px_#27AE60]" : "bg-text-muted/40"}`} />
                 <code className="text-sm font-mono text-white truncate block">{wh.url}</code>
               </div>
 
@@ -61,8 +53,8 @@ export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) 
               <div className="flex items-center gap-4 mt-3 ml-5 text-xs text-text-muted">
                 <span>
                   Last triggered:{" "}
-                  {wh.lastTriggeredAt
-                    ? formatDistanceToNow(new Date(wh.lastTriggeredAt), { addSuffix: true })
+                  {wh.lastSuccessAt
+                    ? formatDistanceToNow(new Date(wh.lastSuccessAt), { addSuffix: true })
                     : "Never"}
                 </span>
                 {wh.failureCount > 0 && (
@@ -78,12 +70,12 @@ export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) 
               <button
                 onClick={() => onToggle(wh.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                  wh.active
+                  wh.isActive
                     ? "bg-green/10 border-green/20 text-green hover:bg-green/20"
                     : "bg-card-2 border-border text-text-muted hover:text-white hover:border-text-muted"
                 }`}
               >
-                {wh.active ? "Enabled" : "Disabled"}
+                {wh.isActive ? "Enabled" : "Disabled"}
               </button>
 
               <button

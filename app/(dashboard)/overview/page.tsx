@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+
 import {
   LineChart,
   Line,
@@ -15,6 +15,8 @@ import { FiAlertTriangle } from "react-icons/fi";
 import { FaCopy } from "react-icons/fa";
 import { FaArrowRight } from "react-icons/fa6";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getDashboardStats } from "@/lib/api/analytics";
 
 const performanceData = [
   { date: "Mar 1", sends: 120 },
@@ -123,6 +125,11 @@ function FailureRow({
 }
 
 export default function OverviewPage() {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["dashboardStats"],
+    queryFn: getDashboardStats,
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
@@ -139,23 +146,35 @@ export default function OverviewPage() {
         <Card className="bg-navy-2 border-border-2 rounded-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-text-muted text-left">
-              Total Sends (30d)
+              Total Sends (This Period)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">42,893</div>
-            <p className="text-xs text-teal mt-1">↑ 12% from last month</p>
+            {isLoading ? (
+              <div className="h-8 w-24 bg-card-2 animate-pulse rounded" />
+            ) : (
+              <div className="text-3xl font-bold text-white">
+                {stats?.sendsThisPeriod.toLocaleString() ?? 0}
+              </div>
+            )}
+            <p className="text-xs text-teal mt-1">Based on current cycle</p>
           </CardContent>
         </Card>
 
         <Card className="bg-navy-2 border-border-2 rounded-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-text-muted text-left">
-              Delivery Rate
+              Delivery Rate (30d)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">99.8%</div>
+            {isLoading ? (
+              <div className="h-8 w-24 bg-card-2 animate-pulse rounded" />
+            ) : (
+              <div className="text-3xl font-bold text-white">
+                {stats?.deliverySuccessRate?.toFixed(1) ?? "100.0"}%
+              </div>
+            )}
             <p className="text-xs text-text-muted mt-1">
               Based on on-chain confirmations
             </p>
@@ -169,9 +188,15 @@ export default function OverviewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">4</div>
+            {isLoading ? (
+              <div className="h-8 w-24 bg-card-2 animate-pulse rounded" />
+            ) : (
+              <div className="text-3xl font-bold text-white">
+                {stats?.activeWebhooks ?? 0}
+              </div>
+            )}
             <p className="text-xs text-text-muted mt-1">
-              Listening to 12 events
+              Currently listening to events
             </p>
           </CardContent>
         </Card>

@@ -4,8 +4,8 @@ import { DefaultSession } from "next-auth";
 declare module "next-auth" {
   interface User {
     id: string;
-    protocolId: string;
-    role: "owner" | "admin" | "developer" | "read_only";
+    protocolId: string | null;
+    role: "owner" | "admin" | "developer" | "read_only" | null;
     tier: number;
     accessToken: string;
     refreshToken: string;
@@ -22,8 +22,8 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    protocolId: string;
-    role: "owner" | "admin" | "developer" | "read_only";
+    protocolId: string | null;
+    role: "owner" | "admin" | "developer" | "read_only" | null;
     tier: number;
     accessToken: string;
     refreshToken: string;
