@@ -20,12 +20,12 @@ export function KeyRevealModal({ isOpen, onClose, plainTextKey }: KeyRevealModal
           <code className="font-mono text-lg text-teal flex-1 overflow-x-auto whitespace-nowrap">
             {plainTextKey}
           </code>
-          <CopyButton text={plainTextKey} size="sm" variant="primary" />
+          <CopyButton text={plainTextKey} size="sm" />
         </div>
       </div>
       
       <div className="flex items-center justify-end mt-4">
-        <Button variant="primary" onClick={onClose}>
+        <Button onClick={onClose}>
           I&apos;ve copied it &mdash; Close
         </Button>
       </div>

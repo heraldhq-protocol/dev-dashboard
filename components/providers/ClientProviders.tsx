@@ -6,6 +6,9 @@ import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "sonner";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -23,16 +26,21 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect>
-            <WalletModalProvider>
-              {children}
-            </WalletModalProvider>
-          </WalletProvider>
-        </ConnectionProvider>
-      </QueryClientProvider>
-    </SessionProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <SessionProvider>
+        <QueryClientProvider client={queryClient}>
+          <ConnectionProvider endpoint={endpoint}>
+            <WalletProvider wallets={wallets} autoConnect>
+              <WalletModalProvider>
+                <TooltipProvider>
+                  {children}
+                </TooltipProvider>
+              </WalletModalProvider>
+            </WalletProvider>
+          </ConnectionProvider>
+        </QueryClientProvider>
+      </SessionProvider>
+      <Toaster position="bottom-right" />
+    </ThemeProvider>
   );
 }

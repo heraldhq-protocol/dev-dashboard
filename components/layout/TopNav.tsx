@@ -3,6 +3,7 @@
 import { useUiStore } from "@/lib/stores/ui.store";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import Image from "next/image";
 
 export function TopNav() {
@@ -14,7 +15,7 @@ export function TopNav() {
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleMobileSidebar}
-          className="lg:hidden text-text-secondary hover:text-white"
+          className="lg:hidden text-text-secondary hover:text-text-primary"
         >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -22,7 +23,7 @@ export function TopNav() {
         </button>
         <button 
           onClick={toggleDesktopSidebar}
-          className="hidden lg:block text-text-secondary hover:text-white transition-colors"
+          className="hidden lg:block text-text-secondary hover:text-text-primary transition-colors"
           title={desktopSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -31,16 +32,18 @@ export function TopNav() {
         </button>
         <div className="flex items-center gap-2 lg:hidden">
           <Image src="/logo.svg" alt="Herald Logo" width={24} height={24} className="h-6 w-6 object-contain" />
-          <span className="text-xl font-extrabold tracking-tight text-white">Herald</span>
+          <span className="text-xl font-extrabold tracking-tight text-text-primary">Herald</span>
         </div>
       </div>
 
       <div className="flex items-center gap-4 border-l border-border pl-4">
+        <ThemeToggle />
+        
         <div className="flex items-center gap-2 rounded-lg bg-card-2 p-1">
           <button
             onClick={() => setEnvironment("sandbox")}
             className={`rounded-md px-3 py-1 text-xs font-bold transition-all ${
-              activeEnvironment === "sandbox" ? "bg-gold text-navy shadow-sm" : "text-text-muted hover:text-white"
+              activeEnvironment === "sandbox" ? "bg-gold text-navy shadow-sm" : "text-text-muted hover:text-text-primary"
             }`}
           >
             SANDBOX
@@ -48,7 +51,7 @@ export function TopNav() {
           <button
             onClick={() => setEnvironment("live")}
             className={`rounded-md px-3 py-1 text-xs font-bold transition-all ${
-              activeEnvironment === "live" ? "bg-teal text-navy shadow-sm" : "text-text-muted hover:text-white"
+              activeEnvironment === "live" ? "bg-teal text-navy shadow-sm" : "text-text-muted hover:text-text-primary"
             }`}
           >
             LIVE

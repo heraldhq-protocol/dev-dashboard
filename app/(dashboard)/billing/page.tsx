@@ -142,7 +142,7 @@ export default function BillingPage() {
                 </ul>
 
                 <Button
-                  variant={isCurrent ? "outline" : "primary"}
+                  variant={isCurrent ? "outline" : "default"}
                   disabled={isCurrent || upgrading}
                   onClick={handleUpgrade}
                   className="w-full"

@@ -60,7 +60,7 @@ export function CurrentPlanCard({ plan, onUpgradeClick }: CurrentPlanCardProps) 
         </div>
         
         {plan.tier < 3 && (
-          <Button variant="primary" onClick={onUpgradeClick} className="w-full md:w-auto shadow-[0_0_20px_rgba(0,200,150,0.2)]">
+          <Button onClick={onUpgradeClick} className="w-full md:w-auto shadow-[0_0_20px_rgba(0,200,150,0.2)]">
             Upgrade Plan
           </Button>
         )}

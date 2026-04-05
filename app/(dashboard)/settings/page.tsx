@@ -133,7 +133,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="pt-6 flex items-center gap-4 border-t border-border">
-            <Button type="submit" variant="primary" isLoading={isSaving}>
+            <Button type="submit" disabled={isSaving}>
               Save Changes
             </Button>
             {saved && (
@@ -164,7 +164,7 @@ export default function SettingsPage() {
           Deleting your project will permanently drop all notification queues,
           revoke all active API keys, and terminate your webhook streams.
         </p>
-        <Button onClick={() => setModalOpen(true)} variant="danger" size="sm">
+        <Button onClick={() => setModalOpen(true)} variant="destructive" size="sm">
           Delete Project...
         </Button>
       </div>
@@ -172,17 +172,17 @@ export default function SettingsPage() {
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
         title="Delete Project"
-        className="bg-red/10 border border-red/30"
+        className="border border-red/30"
         >
           <div className="flex flex-col items-center justify-center p-2 space-y-1.5">
             <h2 className="text-lg font-bold text-white">Are you sure you want to delete this project?</h2>
             <p className="text-sm text-text-muted mt-1">This action cannot be undone</p>
-            <Input type="text" placeholder="Enter project name" value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="w-full border border-red/30 focus-visible:border-red focus-visible:ring-red"/>
+            <Input type="text" placeholder="Enter project name" value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="w-full"/>
             <div className="mt-5 flex items-center justify-center gap-4">
               <Button onClick={() => setModalOpen(false)} variant="secondary">
                 Cancel
               </Button>
-              <Button disabled={!isValid} onClick={() => setModalOpen(false)} variant="danger">
+              <Button disabled={!isValid} onClick={() => setModalOpen(false)} variant="destructive">
                 Delete
               </Button>
             </div>

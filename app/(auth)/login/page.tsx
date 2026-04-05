@@ -107,7 +107,7 @@ export default function LoginPage() {
           )}
 
           <Button
-            variant="primary"
+            variant="default"
             className="w-full text-base shadow-[0_0_15px_rgba(0,200,150,0.15)]"
             onClick={handleWalletLogin}
             disabled={loading}

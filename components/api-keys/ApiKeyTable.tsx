@@ -48,7 +48,7 @@ export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right">
                 <Button 
-                  variant="danger" 
+                  variant="destructive" 
                   size="sm" 
                   onClick={() => onRevokeClick(k)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity"

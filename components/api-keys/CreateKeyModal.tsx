@@ -63,7 +63,7 @@ export function CreateKeyModal({ isOpen, onClose, onConfirm, isCreating }: Creat
 
         <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-border">
           <Button type="button" variant="ghost" onClick={onClose} disabled={isCreating}>Cancel</Button>
-          <Button type="submit" variant="primary" isLoading={isCreating} disabled={!name.trim()}>Generate Token</Button>
+          <Button type="submit" disabled={isCreating || !name.trim()}>Generate Token</Button>
         </div>
       </form>
     </Modal>

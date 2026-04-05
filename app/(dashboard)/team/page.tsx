@@ -202,7 +202,7 @@ export default function TeamPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={!inviteEmail}>
+            <Button type="submit" disabled={!inviteEmail}>
               Send Invite
             </Button>
           </div>

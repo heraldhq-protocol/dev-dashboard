@@ -32,10 +32,9 @@ export function WebhookTestButton({ webhookId, endpointUrl }: WebhookTestButtonP
 
   return (
     <Button
-      variant={status === "error" ? "danger" : status === "success" ? "primary" : "outline"}
+      variant={status === "error" ? "destructive" : status === "success" ? "default" : "outline"}
       size="sm"
       onClick={handleTest}
-      isLoading={status === "sending"}
       disabled={status === "sending"}
       className="min-w-[100px] text-xs"
     >

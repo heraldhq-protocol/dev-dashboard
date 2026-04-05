@@ -190,7 +190,7 @@ export default function WebhooksPage() {
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              variant="default"
               disabled={!newUrl.trim() || selectedEvents.length === 0}
             >
               Create Webhook

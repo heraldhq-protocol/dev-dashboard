@@ -22,7 +22,7 @@ export function RevokeKeyModal({ isOpen, onClose, onConfirm, keyName, isRevoking
       
       <div className="flex items-center justify-end gap-3 mt-8">
         <Button variant="ghost" onClick={onClose} disabled={isRevoking}>Cancel</Button>
-        <Button variant="danger" onClick={onConfirm} isLoading={isRevoking}>
+        <Button variant="destructive" onClick={onConfirm} disabled={isRevoking}>
           Yes, Revoke Key
         </Button>
       </div>

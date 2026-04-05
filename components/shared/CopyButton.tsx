@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button, ButtonProps } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
+
+type ButtonProps = React.ComponentProps<typeof Button>;
 
 interface CopyButtonProps extends Omit<ButtonProps, "onClick"> {
   text: string;
