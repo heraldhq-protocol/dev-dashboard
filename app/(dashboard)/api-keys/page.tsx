@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { useApiKeys, ApiKey } from "@/hooks/useApiKeys";
+import { useApiKeys, DashboardApiKey } from "@/hooks/useApiKeys";
 import { ApiKeyTable } from "@/components/api-keys/ApiKeyTable";
 import { CreateKeyModal } from "@/components/api-keys/CreateKeyModal";
 import { KeyRevealModal } from "@/components/api-keys/KeyRevealModal";
@@ -18,7 +18,7 @@ export default function ApiKeysPage() {
   // Modal states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [revealKeyData, setRevealKeyData] = useState<string | null>(null);
-  const [revokeTarget, setRevokeTarget] = useState<ApiKey | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<DashboardApiKey | null>(null);
 
   const handleCreate = async (data: {
     name: string;
@@ -54,6 +54,7 @@ export default function ApiKeysPage() {
           </p>
         </div>
         <Button
+          size={"sm"}
           onClick={() => setIsCreateOpen(true)}
           className="gap-2 shrink-0"
         >

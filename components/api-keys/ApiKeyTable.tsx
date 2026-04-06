@@ -1,11 +1,11 @@
-import { ApiKey } from "@/hooks/useApiKeys";
+import { DashboardApiKey } from "@/hooks/useApiKeys";
 import { Button } from "@/components/ui/Button";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 
 interface ApiKeyTableProps {
-  keys: ApiKey[];
-  onRevokeClick: (key: ApiKey) => void;
+  keys: DashboardApiKey[];
+  onRevokeClick: (key: DashboardApiKey) => void;
 }
 
 export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
@@ -38,9 +38,21 @@ export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
               <td className="px-6 py-4 whitespace-nowrap font-mono text-text-muted">
                 {k.prefix}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex gap-2">
-                  {k.scopes.map(s => <Badge key={s} variant="secondary">{s.replace("_", " ")}</Badge>)}
+              <td className="px-6 py-4">
+                <div className="flex flex-wrap gap-2 max-w-[400px]">
+                  {k.scopes.map((s) => {
+                    const isWrite = s.includes(":write") || s.includes("manage");
+                    const label = s.replace(/[:_]/g, " ");
+                    return (
+                      <Badge
+                        key={s}
+                        variant={isWrite ? "default" : "secondary"}
+                        className="capitalize"
+                      >
+                        {label}
+                      </Badge>
+                    );
+                  })}
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">

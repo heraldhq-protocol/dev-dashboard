@@ -3,39 +3,76 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ProtocolProfileDto } from "@/types/api";
+
 import { Modal } from "@/components/ui/Modal";
 
 
-const MOCK_PROFILE: ProtocolProfileDto = {
-  id: "prt_1",
-  name: "LiquidStake Protocol",
-  websiteUrl: "https://liquidstake.xyz",
-  logoUrl: "https://liquidstake.xyz/logo.png",
-  fromName: "LiquidStake Alerts",
-};
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { getProtocol, updateProtocol, deactivateProtocol } from "@/lib/api/protocol";
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<ProtocolProfileDto>(MOCK_PROFILE);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isModalOpen, setModalOpen]= useState(false)
-  const [saved, setSaved] = useState(false);
-  const [inputValue, setInputValue] = useState("")
+  const queryClient = useQueryClient();
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
-  const isValid = inputValue.toLowerCase().trim() === profile.name.toLowerCase().trim()
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["protocol", "me"],
+    queryFn: getProtocol,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: updateProtocol,
+    onSuccess: () => {
+      toast.success("Settings saved successfully");
+      queryClient.invalidateQueries({ queryKey: ["protocol"] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to save settings");
+    },
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: deactivateProtocol,
+    onSuccess: () => {
+      toast.success("Project deactivated");
+      setModalOpen(false);
+      window.location.href = "/login";
+    },
+  });
+
+  const [formData, setFormData] = useState({
+    name: "",
+    websiteUrl: "",
+    logoUrl: "",
+    fromName: "",
+  });
+
+  // Sync form data when profile loads
+  if (profile && !formData.name && profile.name) {
+    setFormData({
+      name: profile.name || "",
+      websiteUrl: profile.website || "",
+      logoUrl: profile.logoUrl || "",
+      fromName: profile.customFromName || "",
+    });
+  }
+
+  const isValid = inputValue.toLowerCase().trim() === profile?.name?.toLowerCase().trim();
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    setSaved(false);
-
-    // MOCK: simulate network request
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    setIsSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    updateMutation.mutate({
+      protocolName: formData.name,
+      website: formData.websiteUrl,
+      logoUrl: formData.logoUrl,
+      customFromName: formData.fromName,
+    });
   };
+
+  if (isLoading || !profile) {
+    return <div className="text-text-muted">Loading settings…</div>;
+  }
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -60,7 +97,7 @@ export default function SettingsPage() {
                 Protocol ID
               </label>
               <Input
-                value={profile.id}
+                value={profile?.protocolId || ""}
                 disabled
                 className="w-full bg-card-2 text-text-muted cursor-not-allowed font-mono text-xs"
               />
@@ -74,9 +111,9 @@ export default function SettingsPage() {
                 Project Name
               </label>
               <Input
-                value={profile.name}
+                value={formData.name}
                 onChange={(e) =>
-                  setProfile((p) => ({ ...p, name: e.target.value }))
+                  setFormData((p) => ({ ...p, name: e.target.value }))
                 }
                 required
                 className="w-full"
@@ -89,9 +126,9 @@ export default function SettingsPage() {
               </label>
               <Input
                 type="url"
-                value={profile.websiteUrl || ""}
+                value={formData.websiteUrl}
                 onChange={(e) =>
-                  setProfile((p) => ({ ...p, websiteUrl: e.target.value }))
+                  setFormData((p) => ({ ...p, websiteUrl: e.target.value }))
                 }
                 placeholder="https://..."
                 className="w-full"
@@ -104,9 +141,9 @@ export default function SettingsPage() {
               </label>
               <Input
                 type="url"
-                value={profile.logoUrl || ""}
+                value={formData.logoUrl}
                 onChange={(e) =>
-                  setProfile((p) => ({ ...p, logoUrl: e.target.value }))
+                  setFormData((p) => ({ ...p, logoUrl: e.target.value }))
                 }
                 placeholder="https://..."
                 className="w-full"
@@ -120,9 +157,9 @@ export default function SettingsPage() {
           <div className="space-y-1.5 max-w-md">
             <label className="text-sm font-medium text-text-secondary">{`"From" Name`}</label>
             <Input
-              value={profile.fromName || ""}
+              value={formData.fromName}
               onChange={(e) =>
-                setProfile((p) => ({ ...p, fromName: e.target.value }))
+                setFormData((p) => ({ ...p, fromName: e.target.value }))
               }
               placeholder="e.g. Herald Updates"
               className="w-full"
@@ -133,10 +170,10 @@ export default function SettingsPage() {
           </div>
 
           <div className="pt-6 flex items-center gap-4 border-t border-border">
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" variant="default" isLoading={updateMutation.isPending}>
               Save Changes
             </Button>
-            {saved && (
+            {updateMutation.isSuccess && (
               <span className="text-sm text-green flex items-center gap-1.5 animate-in fade-in duration-300">
                 <svg
                   className="w-4 h-4"
@@ -182,7 +219,7 @@ export default function SettingsPage() {
               <Button onClick={() => setModalOpen(false)} variant="secondary">
                 Cancel
               </Button>
-              <Button disabled={!isValid} onClick={() => setModalOpen(false)} variant="destructive">
+              <Button disabled={!isValid || deactivateMutation.isPending} isLoading={deactivateMutation.isPending} onClick={() => deactivateMutation.mutate()} variant="destructive">
                 Delete
               </Button>
             </div>

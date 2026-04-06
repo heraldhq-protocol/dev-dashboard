@@ -33,6 +33,8 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+
+//TODO: PUSH CHANGES, I UPDATED THE COMPONENTS
 function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
