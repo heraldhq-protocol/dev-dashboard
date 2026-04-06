@@ -129,7 +129,7 @@ export default function StatusPage() {
           must be confirmed on-chain prior to resuming service. If you are experiencing an attack,
           suspend your webhooks instead.
         </p>
-        <Button variant="danger">Request Deactivation</Button>
+        <Button variant="destructive">Request Deactivation</Button>
       </div>
     </div>
   );

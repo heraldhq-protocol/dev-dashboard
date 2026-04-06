@@ -162,3 +162,46 @@ export interface BillingPlanDto {
   currentUsage: number;
   nextBillingDate: string;
 }
+
+export interface BillingStatusDto {
+  protocolId: string;
+  protocolPubkey: string;
+  tier: number;
+  tierName: string;
+  isActive: boolean;
+  status: string;           // 'active' | 'inactive' | 'cancelled'
+  expiresAt: string | null;
+  daysRemaining: number;
+  sendsThisPeriod: number;
+  sendsLimit: number;
+  usagePercent: number;
+  periodResetAt: string;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface PaymentDto {
+  id: string;
+  amountUsdc: number;
+  tokenSymbol: string;
+  paymentSource: string;
+  periodStart: string;
+  periodEnd: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface UsageStatsDto {
+  sendsThisPeriod: number;
+  sendsLimit: number;
+  sendsRemaining: number;
+  usagePercent: number;
+  periodResetAt: string;
+}
+
+export interface TierInfo {
+  tier: number;
+  name: string;
+  priceUsdc: number;
+  limit: number;
+}
+
