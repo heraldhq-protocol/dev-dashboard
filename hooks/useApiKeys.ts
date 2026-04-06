@@ -4,6 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiKeys, createApiKey, revokeApiKey } from "@/lib/api/keys";
 import type { ApiKey } from "@/types/api";
 
+export type DashboardApiKey = Omit<ApiKey, "environment"> & {
+  environment: "live" | "test";
+};
+
 export type { ApiKey };
 
 
@@ -23,7 +27,7 @@ export function useApiKeys() {
 
   const query = useQuery({
     queryKey: ["apiKeys"],
-    queryFn: async () => {
+    queryFn: async (): Promise<DashboardApiKey[]> => {
       const keys = await getApiKeys();
       return keys.map((k) => ({
         ...k,
