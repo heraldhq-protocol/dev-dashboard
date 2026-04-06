@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { WebhookList } from "@/components/webhooks/WebhookList";
+import { WebhookDeliveryLog } from "@/components/webhooks/WebhookDeliveryLog";
+import { WebhookSecretReveal } from "@/components/webhooks/WebhookSecretReveal";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -15,6 +17,10 @@ export default function WebhooksPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+  
+  // Modals state
+  const [newSecret, setNewSecret] = useState<string | null>(null);
+  const [viewLogsId, setViewLogsId] = useState<string | null>(null);
 
   const { data: webhooks = [], isLoading } = useQuery({
     queryKey: ["webhooks"],
@@ -28,11 +34,10 @@ export default function WebhooksPage() {
       setNewUrl("");
       setSelectedEvents([]);
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
-      // Important to show secret if applicable, but WebhookDto has it in response depending on backend logic
+      
       toast.success("Webhook created successfully.");
       if (data.secret) {
-        // Maybe open modal to show secret, but for now simple toast/alert
-        alert(`Your webhook secret is: ${data.secret}. Please save it!`);
+        setNewSecret(data.secret);
       }
     },
     onError: (err: any) => {
@@ -66,8 +71,8 @@ export default function WebhooksPage() {
     "apikey.revoked",
   ];
 
-  const handleToggle = useCallback((webhook: any) => {
-    updateMutation.mutate({ id: webhook.id, dto: { isActive: !webhook.active } });
+  const handleToggle = useCallback((id: string, currentStatus: boolean) => {
+    updateMutation.mutate({ id, dto: { isActive: !currentStatus } });
   }, [updateMutation]);
 
   const handleDelete = useCallback((id: string) => {
@@ -133,6 +138,19 @@ export default function WebhooksPage() {
         webhooks={webhooks}
         onToggle={handleToggle}
         onDelete={handleDelete}
+        onViewLogs={setViewLogsId}
+      />
+
+      {/* Modals for Feature 2 */}
+      <WebhookDeliveryLog 
+        webhookId={viewLogsId} 
+        onClose={() => setViewLogsId(null)} 
+      />
+
+      <WebhookSecretReveal 
+        isOpen={!!newSecret} 
+        onClose={() => setNewSecret(null)} 
+        secret={newSecret || ""} 
       />
 
       {/* Create Webhook Modal */}

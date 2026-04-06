@@ -1,73 +1,91 @@
 "use client";
 
-import { useState } from "react";
-import { CurrentPlanCard } from "@/components/billing/CurrentPlanCard";
-import { BillingPlanDto } from "@/types/api";
 import { Button } from "@/components/ui/Button";
+import { CurrentPlanCard } from "@/components/billing/CurrentPlanCard";
+import { PaymentHistory } from "@/components/billing/PaymentHistory";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getBillingStatus,
+  getTiers,
+  createCheckout,
+  cancelSubscription,
+  getPaymentHistory,
+} from "@/lib/api/billing";
+import { toast } from "sonner";
 
-// Mock Data
-const MOCK_PLAN: BillingPlanDto = {
-  tier: 0,
-  name: "Developer",
-  monthlyPrice: 0,
-  sendLimit: 5000,
-  currentUsage: 3950,
-  nextBillingDate: new Date(Date.now() + 15 * 86400000).toISOString(),
+// Static features per tier for the comparison cards
+const TIER_FEATURES: Record<number, string[]> = {
+  0: [
+    "Community Support",
+    "API Access",
+    "Standard Latency",
+    "1 Webhook Endpoint",
+  ],
+  1: [
+    "Email Support",
+    "Advanced Analytics",
+    "Reduced Latency",
+    "5 Webhook Endpoints",
+  ],
+  2: [
+    "Priority Support",
+    "SLA Guarantee",
+    "Ultra-low Latency",
+    "Unlimited Webhooks",
+  ],
+  3: [
+    "Dedicated Account Manager",
+    "Custom SLA",
+    "White-glove Onboarding",
+    "Unlimited Everything",
+  ],
 };
 
-const TIERS = [
-  {
-    level: 0,
-    name: "Developer",
-    price: "$0",
-    sends: "5,000",
-    features: [
-      "Community Support",
-      "API Access",
-      "Standard Latency",
-      "1 Webhook Endpoint",
-    ],
-  },
-  {
-    level: 1,
-    name: "Growth",
-    price: "$49",
-    sends: "50,000",
-    features: [
-      "Email Support",
-      "Advanced Analytics",
-      "Reduced Latency",
-      "5 Webhook Endpoints",
-    ],
-  },
-  {
-    level: 2,
-    name: "Scale",
-    price: "$199",
-    sends: "250,000",
-    features: [
-      "Priority Support",
-      "SLA Guarantee",
-      "Ultra-low Latency",
-      "Unlimited Webhooks",
-    ],
-  },
-];
-
 export default function BillingPage() {
-  const [upgrading, setUpgrading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleUpgrade = () => {
-    setUpgrading(true);
-    // In real app, this would redirect to a Stripe Checkout session
-    setTimeout(() => {
-      alert("Redirecting to Checkout...");
-      setUpgrading(false);
-    }, 1500);
-  };
+  const { data: status, isLoading: statusLoading } = useQuery({
+    queryKey: ["billingStatus"],
+    queryFn: getBillingStatus,
+  });
+
+  const { data: tiers = [], isLoading: tiersLoading } = useQuery({
+    queryKey: ["billingTiers"],
+    queryFn: getTiers,
+  });
+
+  const { data: paymentData } = useQuery({
+    queryKey: ["paymentHistory"],
+    queryFn: () => getPaymentHistory(1, 10),
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: (tier: number) => createCheckout(tier),
+    onSuccess: (data) => {
+      window.location.href = data.checkoutUrl;
+    },
+    onError: () => {
+      toast.error("Failed to create checkout session.");
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: cancelSubscription,
+    onSuccess: (data) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries({ queryKey: ["billingStatus"] });
+    },
+    onError: () => {
+      toast.error("Failed to cancel subscription.");
+    },
+  });
+
+  const currentTier = status?.tier ?? 0;
+  const isLoading = statusLoading || tiersLoading;
 
   return (
     <div className="space-y-10 max-w-6xl">
+      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Billing & Usage
@@ -77,16 +95,28 @@ export default function BillingPage() {
         </p>
       </div>
 
-      <CurrentPlanCard plan={MOCK_PLAN} onUpgradeClick={handleUpgrade} />
+      {/* Current Plan Card component */}
+      <CurrentPlanCard
+        status={status}
+        isLoading={statusLoading}
+        onUpgradeClick={() => checkoutMutation.mutate(currentTier + 1)}
+        onCancelClick={() => cancelMutation.mutate()}
+        isCanceling={cancelMutation.isPending}
+      />
 
+      {/* Compare Plans */}
       <div>
         <h2 className="text-xl font-bold text-foreground mb-6">Compare Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TIERS.map((tier) => {
-            const isCurrent = tier.level === MOCK_PLAN.tier;
+          {(tiers.length > 0 ? tiers.filter((t) => t.tier <= 2) : [
+            { tier: 0, name: "Developer", priceUsdc: 0, limit: 1000 },
+            { tier: 1, name: "Growth", priceUsdc: 99, limit: 50000 },
+            { tier: 2, name: "Scale", priceUsdc: 299, limit: 500000 },
+          ]).map((tier) => {
+            const isCurrent = tier.tier === currentTier;
             return (
               <div
-                key={tier.level}
+                key={tier.tier}
                 className={`relative bg-card rounded-2xl p-6 flex flex-col border ${
                   isCurrent
                     ? "border-teal shadow-[0_0_30px_rgba(0,200,150,0.1)]"
@@ -104,7 +134,7 @@ export default function BillingPage() {
                     {tier.name}
                   </h3>
                   <div className="mt-2 flex items-baseline text-3xl font-bold text-foreground">
-                    {tier.price}
+                    ${tier.priceUsdc}
                     <span className="ml-1 text-sm font-medium text-text-muted">
                       /mo
                     </span>
@@ -113,13 +143,15 @@ export default function BillingPage() {
 
                 <div className="mb-6 pb-6 border-b border-border">
                   <span className="text-sm text-text-primary">
-                    <span className="font-bold text-foreground">{tier.sends}</span>{" "}
+                    <span className="font-bold text-foreground">
+                      {tier.limit.toLocaleString()}
+                    </span>{" "}
                     Notifications
                   </span>
                 </div>
 
                 <ul className="flex-1 space-y-4 mb-8">
-                  {tier.features.map((feature, i) => (
+                  {(TIER_FEATURES[tier.tier] ?? []).map((feature, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <svg
                         className="h-5 w-5 text-teal shrink-0"
@@ -143,11 +175,12 @@ export default function BillingPage() {
 
                 <Button
                   variant={isCurrent ? "outline" : "default"}
-                  disabled={isCurrent || upgrading}
-                  onClick={handleUpgrade}
+                  disabled={isCurrent || tier.tier < currentTier || checkoutMutation.isPending}
+                  onClick={() => checkoutMutation.mutate(tier.tier)}
+                  isLoading={checkoutMutation.isPending}
                   className="w-full"
                 >
-                  {isCurrent ? "Active" : "Upgrade"}
+                  {isCurrent ? "Active" : tier.tier < currentTier ? "Downgrade" : "Upgrade"}
                 </Button>
               </div>
             );
@@ -155,9 +188,14 @@ export default function BillingPage() {
         </div>
       </div>
 
+      {/* Payment History component */}
+      {paymentData && <PaymentHistory payments={paymentData.payments} />}
+
       {/* Enterprise CTA */}
       <div className="bg-navy border border-border-2 rounded-xl p-8 text-center mt-12">
-        <h3 className="text-lg font-bold text-foreground mb-2">Need more volume?</h3>
+        <h3 className="text-lg font-bold text-foreground mb-2">
+          Need more volume?
+        </h3>
         <p className="text-sm text-text-muted mb-4 max-w-lg mx-auto">
           Contact us for custom enterprise plans with massive notification
           volumes, dedicated IP addresses, and white-glove onboarding.

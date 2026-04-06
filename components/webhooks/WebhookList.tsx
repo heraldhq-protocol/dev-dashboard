@@ -8,11 +8,12 @@ import { WebhookDto } from "@/types/api";
 
 interface WebhookListProps {
   webhooks: WebhookDto[];
-  onToggle: (id: string) => void;
+  onToggle: (id: string, currentStatus: boolean) => void;
   onDelete: (id: string) => void;
+  onViewLogs: (id: string) => void;
 }
 
-export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) {
+export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs }: WebhookListProps) {
   if (webhooks.length === 0) {
     return (
       <div className="bg-card border border-border rounded-xl p-16 text-center">
@@ -64,11 +65,18 @@ export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) 
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-2 sm:shrink-0">
+            <div className="flex items-center gap-2 sm:shrink-0 flex-wrap">
+              <button
+                onClick={() => onViewLogs(wh.id)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-navy-3 border border-border text-text-muted hover:text-foreground transition-all"
+              >
+                Logs
+              </button>
+
               <WebhookTestButton webhookId={wh.id} endpointUrl={wh.url} />
 
               <button
-                onClick={() => onToggle(wh.id)}
+                onClick={() => onToggle(wh.id, wh.isActive)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                   wh.isActive
                     ? "bg-green/10 border-green/20 text-green hover:bg-green/20"
