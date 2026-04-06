@@ -14,7 +14,6 @@ import { registerProtocol } from "@/lib/api/protocol";
 import { createSignInChallenge } from "@/lib/auth-utils";
 
 const STEPS = ["Welcome", "Connect Wallet", "Protocol Details", "Register", "Success"] as const;
-type Step = (typeof STEPS)[number];
 
 function StepIndicator({ current }: { current: number }) {
   return (
@@ -194,7 +193,7 @@ export default function OnboardingPage() {
               {!isNotProtocol ? (
                 <div className="flex flex-col w-full gap-3">
                   <Button
-                    variant="primary"
+                    variant="default"
                     className="w-full text-base py-6"
                     onClick={() => setStep(1)}
                   >
@@ -248,7 +247,7 @@ export default function OnboardingPage() {
                 </p>
               </div>
               <Button
-                variant="primary"
+                variant="default"
                 className="w-full text-base"
                 onClick={handleConnectWallet}
               >
@@ -329,7 +328,7 @@ export default function OnboardingPage() {
                 </Button>
                 <Button
                   type="submit"
-                  variant="primary"
+                  variant="default"
                   className="flex-1"
                   disabled={!protocolName.trim() || !adminEmail.trim()}
                 >
@@ -378,7 +377,7 @@ export default function OnboardingPage() {
                   Back
                 </Button>
                 <Button
-                  variant="primary"
+                  variant="default"
                   className="flex-1"
                   onClick={handleRegister}
                   isLoading={loading}
@@ -433,7 +432,7 @@ export default function OnboardingPage() {
               </p>
 
               <Button
-                variant="primary"
+                variant="default"
                 className="w-full"
                 onClick={() => router.push("/overview")}
               >

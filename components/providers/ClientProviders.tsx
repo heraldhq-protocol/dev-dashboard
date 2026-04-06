@@ -24,6 +24,9 @@ const RPC_ENDPOINT =
   RPC_ENDPOINTS[CLUSTER] ||
   RPC_ENDPOINTS["mainnet-beta"];
 
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -38,26 +41,30 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   const wallets = useState(() => [new PhantomWalletAdapter()])[0];
 
   return (
-    <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        <ConnectionProvider endpoint={RPC_ENDPOINT}>
-          <WalletProvider wallets={wallets} autoConnect>
-            <WalletModalProvider>
-              {children}
-              <Toaster
-                position="bottom-right"
-                toastOptions={{
-                  style: {
-                    background: "#112240",
-                    border: "1px solid #1A3A52",
-                    color: "#E2E8F0",
-                  },
-                }}
-              />
-            </WalletModalProvider>
-          </WalletProvider>
-        </ConnectionProvider>
-      </QueryClientProvider>
-    </SessionProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <SessionProvider>
+        <QueryClientProvider client={queryClient}>
+          <ConnectionProvider endpoint={RPC_ENDPOINT}>
+            <WalletProvider wallets={wallets} autoConnect>
+              <WalletModalProvider>
+                <TooltipProvider>
+                  {children}
+                </TooltipProvider>
+                <Toaster
+                  position="bottom-right"
+                  toastOptions={{
+                    style: {
+                      background: "#112240",
+                      border: "1px solid #1A3A52",
+                      color: "#E2E8F0",
+                    },
+                  }}
+                />
+              </WalletModalProvider>
+            </WalletProvider>
+          </ConnectionProvider>
+        </QueryClientProvider>
+      </SessionProvider>
+    </ThemeProvider>
   );
 }

@@ -29,9 +29,8 @@ export function DataTable<TData, TValue>({
 
   const table = useReactTable(tableOptions);
 
-  // Memoize computed values for stable references
-  const rows = useMemo(() => table.getRowModel().rows, [table]);
-  const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
+  const rows = table.getRowModel().rows;
+  const headerGroups = table.getHeaderGroups();
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-x-auto">

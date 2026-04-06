@@ -5,7 +5,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import bs58 from "bs58";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { acceptInvite } from "@/lib/api/team";
@@ -85,7 +84,7 @@ export default function InviteAcceptPage() {
                     {publicKey.toBase58().slice(0, 20)}…
                   </div>
                   <Button
-                    variant="primary"
+                    variant="default"
                     className="w-full"
                     onClick={handleAccept}
                     isLoading={loading}
@@ -101,7 +100,7 @@ export default function InviteAcceptPage() {
                 </div>
               ) : (
                 <Button
-                  variant="primary"
+                  variant="default"
                   className="w-full"
                   onClick={() => setVisible(true)}
                 >

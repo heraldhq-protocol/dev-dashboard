@@ -9,10 +9,8 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import bs58 from "bs58";
 import { createSignInChallenge } from "@/lib/auth-utils";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { publicKey, signMessage, wallet, connect, connected } = useWallet();
   const { setVisible } = useWalletModal();
 

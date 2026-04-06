@@ -39,7 +39,7 @@ export function WebhookList({ webhooks, onToggle, onDelete }: WebhookListProps) 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
                 <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${wh.isActive ? "bg-green shadow-[0_0_8px_#27AE60]" : "bg-text-muted/40"}`} />
-                <code className="text-sm font-mono text-white truncate block">{wh.url}</code>
+                <code className="text-sm font-mono text-foreground truncate block">{wh.url}</code>
               </div>
 
               <div className="flex flex-wrap gap-1.5 mt-3 ml-5">
