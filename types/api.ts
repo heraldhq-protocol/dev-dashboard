@@ -205,3 +205,24 @@ export interface TierInfo {
   limit: number;
 }
 
+export interface TestSendDto {
+  walletAddress: string;
+  subject: string;
+  body: string;
+  category: 'defi' | 'governance' | 'system' | 'marketing';
+  previewOnly?: boolean;
+}
+
+export interface TestSendResult {
+  notificationId: string;
+  status: 'sent' | 'previewed' | 'failed';
+  renderedHtml?: string;
+  error?: string;
+}
+
+export interface PaginatedNotifications {
+  items: any[];
+  total: number;
+  page: number;
+  limit: number;
+}
