@@ -7,7 +7,7 @@ interface EmailPreviewProps {
 
 export function EmailPreview({ htmlSnippet, isLoading }: EmailPreviewProps) {
   return (
-    <div className="bg-card border border-border rounded-xl shadow-sm h-full flex flex-col overflow-hidden">
+    <div className="bg-card border border-border rounded-xl shadow-sm h-full min-h-[500px] lg:min-h-0 flex flex-col overflow-hidden">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-navy-2 shrink-0">
         <h3 className="text-lg font-bold text-foreground">Live Preview</h3>
         <div className="flex gap-1.5">

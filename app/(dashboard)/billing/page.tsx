@@ -39,6 +39,12 @@ const TIER_FEATURES: Record<number, string[]> = {
     "White-glove Onboarding",
     "Unlimited Everything",
   ],
+  4: [
+    "Dedicated Account Manager",
+    "Custom SLA",
+    "White-glove Onboarding",
+    "Unlimited Everything",
+  ],
 };
 
 export default function BillingPage() {
@@ -106,14 +112,27 @@ export default function BillingPage() {
 
       {/* Compare Plans */}
       <div>
-        <h2 className="text-xl font-bold text-foreground mb-6">Compare Plans</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {(tiers.length > 0 ? tiers.filter((t) => t.tier <= 2) : [
-            { tier: 0, name: "Developer", priceUsdc: 0, limit: 1000 },
-            { tier: 1, name: "Growth", priceUsdc: 99, limit: 50000 },
-            { tier: 2, name: "Scale", priceUsdc: 299, limit: 500000 },
-          ]).map((tier) => {
+        <h2 className="text-xl font-bold text-foreground mb-6">
+          Compare Plans
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {(tiers.length > 0
+            ? tiers
+            : [
+                { tier: 0, name: "Developer", priceUsdc: 0, limit: 1000 },
+                { tier: 1, name: "Growth", priceUsdc: 99, limit: 50000 },
+                { tier: 2, name: "Scale", priceUsdc: 299, limit: 500000 },
+                {
+                  tier: 3,
+                  name: "Enterprise",
+                  priceUsdc: 999,
+                  limit: 10000000,
+                },
+              ]
+          ).map((tier, index, array) => {
             const isCurrent = tier.tier === currentTier;
+            const isCenteredLast = array.length === 4 && index === 3;
+            
             return (
               <div
                 key={tier.tier}
@@ -121,7 +140,7 @@ export default function BillingPage() {
                   isCurrent
                     ? "border-teal shadow-[0_0_30px_rgba(0,200,150,0.1)]"
                     : "border-border"
-                }`}
+                } ${isCenteredLast ? "lg:col-start-2" : ""}`}
               >
                 {isCurrent && (
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-teal text-navy px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
@@ -175,12 +194,20 @@ export default function BillingPage() {
 
                 <Button
                   variant={isCurrent ? "outline" : "default"}
-                  disabled={isCurrent || tier.tier < currentTier || checkoutMutation.isPending}
+                  disabled={
+                    isCurrent ||
+                    tier.tier < currentTier ||
+                    checkoutMutation.isPending
+                  }
                   onClick={() => checkoutMutation.mutate(tier.tier)}
                   isLoading={checkoutMutation.isPending}
                   className="w-full"
                 >
-                  {isCurrent ? "Active" : tier.tier < currentTier ? "Downgrade" : "Upgrade"}
+                  {isCurrent
+                    ? "Active"
+                    : tier.tier < currentTier
+                      ? "Downgrade"
+                      : "Upgrade"}
                 </Button>
               </div>
             );

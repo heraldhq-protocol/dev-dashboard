@@ -48,7 +48,7 @@ export default function PlaygroundPage() {
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
+    <div className="flex flex-col lg:h-[calc(100vh-8rem)] space-y-6">
       <div className="mb-6 shrink-0">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Email Playground
