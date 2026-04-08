@@ -6,38 +6,56 @@ import { DeliveryStatusDonut } from "@/components/analytics/DeliveryStatusDonut"
 import { CategoryBreakdownBars } from "@/components/analytics/CategoryBreakdownBars";
 import { DateRangePicker } from "@/components/analytics/DateRangePicker";
 
-const kpiCards = [
-  {
-    label: "Total Delivered",
-    value: "16,532",
-    delta: "+12.4%",
-    deltaType: "positive" as const,
-    detail: "vs. last 30 days",
-  },
-  {
-    label: "Failed",
-    value: "1,945",
-    delta: "-3.2%",
-    deltaType: "negative" as const,
-    detail: "vs. last 30 days",
-  },
-  {
-    label: "Avg. Latency",
-    value: "142ms",
-    delta: "-8ms",
-    deltaType: "positive" as const,
-    detail: "p95 response time",
-  },
-  {
-    label: "Unique Wallets",
-    value: "2,847",
-    delta: "+18.9%",
-    deltaType: "positive" as const,
-    detail: "active recipients",
-  },
-];
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getAnalyticsTrends } from "@/lib/api/analytics";
+import { format, subDays } from "date-fns";
 
 export default function AnalyticsPage() {
+  const [days, setDays] = useState(7);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["analyticsTrends", days],
+    queryFn: () => getAnalyticsTrends(days),
+  });
+
+  const totalVolume = data?.totalVolume || 0;
+  const delivered = data?.statusBreakdown.find(s => s.status.toLowerCase() === "delivered")?._count?.id || 0;
+  const failed = data?.statusBreakdown.find(s => s.status.toLowerCase() === "failed")?._count?.id || 0;
+
+  const kpiCards = [
+    {
+      label: "Total Delivered",
+      value: delivered.toLocaleString(),
+      delta: "",
+      deltaType: "positive" as const,
+      detail: `last ${days} days`,
+    },
+    {
+      label: "Failed",
+      value: failed.toLocaleString(),
+      delta: "",
+      deltaType: "negative" as const,
+      detail: `last ${days} days`,
+    },
+    {
+      label: "Avg. Latency",
+      value: "142ms", // Mocked as it's not in the trends DTO
+      delta: "-8ms",
+      deltaType: "positive" as const,
+      detail: "p95 response time",
+    },
+    {
+      label: "Message Volume",
+      value: totalVolume.toLocaleString(),
+      delta: "",
+      deltaType: "positive" as const,
+      detail: `last ${days} days`,
+    },
+  ];
+
+  const dateRangeStr = `${format(subDays(new Date(), days), "MMM d")} – ${format(new Date(), "MMM d")}`;
+
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -50,7 +68,7 @@ export default function AnalyticsPage() {
             Deep dive into your protocol&apos;s notification performance.
           </p>
         </div>
-        <DateRangePicker />
+        <DateRangePicker days={days} setDays={setDays} />
       </div>
 
       {/* KPI Summary Row */}
@@ -91,7 +109,7 @@ export default function AnalyticsPage() {
             {/* Value section with divider */}
             <div className="relative border-t border-border/40 pt-3">
               <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-                {kpi.value}
+                {isLoading ? "..." : kpi.value}
               </p>
               <p className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">{kpi.detail}</p>
             </div>
@@ -110,23 +128,23 @@ export default function AnalyticsPage() {
                   Message Volume
                 </CardTitle>
                 <div className="flex items-baseline gap-3 mt-2">
-                  <span className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">19,450</span>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                    +14%
+                  <span className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+                    {isLoading ? "..." : totalVolume.toLocaleString()}
                   </span>
                 </div>
               </div>
               <div className="flex sm:flex-col items-center sm:items-end gap-1 text-[11px] text-text-muted">
                 <span>This period</span>
-                <span className="text-text-secondary font-mono">Mar 1 – Mar 31</span>
+                <span className="text-text-secondary font-mono">{dateRangeStr}</span>
               </div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
-            <SendsBarChart />
+            {!isLoading && data ? (
+              <SendsBarChart data={data.dailyVolume || []} />
+            ) : (
+              <div className="h-[250px] w-full flex items-center justify-center text-text-muted">Loading chart...</div>
+            )}
           </CardContent>
         </Card>
 
@@ -146,7 +164,11 @@ export default function AnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col items-center pt-2">
-              <DeliveryStatusDonut />
+              {!isLoading && data ? (
+                <DeliveryStatusDonut data={data.statusBreakdown || []} />
+              ) : (
+                <div className="h-[180px] w-full flex items-center justify-center text-text-muted">Loading...</div>
+              )}
             </CardContent>
           </Card>
 
@@ -163,7 +185,11 @@ export default function AnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <CategoryBreakdownBars />
+              {!isLoading && data ? (
+                <CategoryBreakdownBars data={data.categoryBreakdown || []} />
+              ) : (
+                <div className="mt-3 py-6 flex items-center justify-center text-sm text-text-muted">Loading...</div>
+              )}
             </CardContent>
           </Card>
         </div>

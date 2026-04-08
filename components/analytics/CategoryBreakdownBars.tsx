@@ -1,16 +1,36 @@
 "use client";
 
-const categories = [
-  { name: "DeFi Alerts", value: 45, count: "8,753", color: "bg-red-400", dot: "bg-red-400" },
-  { name: "Governance", value: 30, count: "5,835", color: "bg-purple-400", dot: "bg-purple-400" },
-  { name: "Marketing", value: 15, count: "2,918", color: "bg-slate-400", dot: "bg-slate-400" },
-  { name: "System Events", value: 10, count: "1,944", color: "bg-amber-400", dot: "bg-amber-400" },
-];
+interface CategoryBreakdownBarsProps {
+  data: { category: string; _count: { id: number } }[];
+}
 
-export function CategoryBreakdownBars() {
+const categoryColors: Record<string, { bg: string; dot: string }> = {
+  defi: { bg: "bg-red-400", dot: "bg-red-400" },
+  governance: { bg: "bg-purple-400", dot: "bg-purple-400" },
+  marketing: { bg: "bg-slate-400", dot: "bg-slate-400" },
+  system: { bg: "bg-amber-400", dot: "bg-amber-400" },
+};
+
+export function CategoryBreakdownBars({ data }: CategoryBreakdownBarsProps) {
+  const total = data.reduce((sum, item) => sum + item._count.id, 0);
+
+  if (total === 0) {
+    return <div className="mt-3 py-6 flex items-center justify-center text-sm text-text-muted">No data available</div>;
+  }
+
+  const chartData = data
+    .map(d => ({
+      name: d.category.charAt(0).toUpperCase() + d.category.slice(1),
+      value: Math.round((d._count.id / total) * 100),
+      count: d._count.id.toLocaleString(),
+      color: categoryColors[d.category]?.bg || "bg-teal",
+      dot: categoryColors[d.category]?.dot || "bg-teal"
+    }))
+    .sort((a, b) => b.value - a.value);
+
   return (
     <div className="mt-3 flex flex-col gap-4">
-      {categories.map((cat) => (
+      {chartData.map((cat) => (
         <div key={cat.name} className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">

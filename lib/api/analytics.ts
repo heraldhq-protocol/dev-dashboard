@@ -11,10 +11,12 @@ export interface DashboardStats {
   queryTime: string;
 }
 
-export interface NotificationTrends {
+export interface AnalyticsTrends {
   statusBreakdown: { status: string; _count: { id: number } }[];
   categoryBreakdown: { category: string; _count: { id: number } }[];
   timeframeDays: number;
+  totalVolume: number;
+  dailyVolume: { date: string; volume: number }[];
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -22,8 +24,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   return data;
 }
 
-export async function getNotificationTrends(days = 7): Promise<NotificationTrends> {
-  const { data } = await apiClient.get<NotificationTrends>("/analytics/trends", {
+export async function getAnalyticsTrends(days = 7): Promise<AnalyticsTrends> {
+  const { data } = await apiClient.get<AnalyticsTrends>("/analytics/trends", {
     params: { days },
   });
   return data;
