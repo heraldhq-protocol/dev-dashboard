@@ -19,6 +19,8 @@ export function NotificationsTable({ page, onPageChange, statusFilter, categoryF
   const router = useRouter();
   const { data, isLoading } = useNotificationLog(page, statusFilter, categoryFilter, search);
 
+
+  
   if (isLoading) {
     return (
       <div className="w-full h-64 flex items-center justify-center text-text-muted">
@@ -27,7 +29,7 @@ export function NotificationsTable({ page, onPageChange, statusFilter, categoryF
     );
   }
 
-  const logs = data?.data || [];
+  const logs = data?.items || [];
   const totalPages = Math.ceil((data?.total || 0) / 10);
 
   return (
@@ -56,10 +58,10 @@ export function NotificationsTable({ page, onPageChange, statusFilter, categoryF
                     {log.id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(log.queuedAt), { addSuffix: true })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap font-mono text-teal">
-                    {log.wallet}
+                    {log.walletHash.slice(0, 5)}...{log.walletHash.slice(-5)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap capitalize">
                     {log.category}
@@ -68,14 +70,24 @@ export function NotificationsTable({ page, onPageChange, statusFilter, categoryF
                     <StatusBadge status={log.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ReceiptProof signature={log.txSignature} />
+                    <ReceiptProof signature={log.receiptTx} />
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-text-muted">
-                  No notifications found matching your filters.
+                <td colSpan={6} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-card-2 border border-border">
+                      <svg className="h-6 w-6 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-base font-semibold text-foreground mt-2">No notifications found</p>
+                    <p className="text-sm text-text-muted max-w-[250px]">
+                      We couldn't find any notifications matching your current filters.
+                    </p>
+                  </div>
                 </td>
               </tr>
             )}

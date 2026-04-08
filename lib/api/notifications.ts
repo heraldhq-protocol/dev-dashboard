@@ -8,9 +8,15 @@ export async function testSend(dto: TestSendDto): Promise<TestSendResult> {
   return data;
 }
 
-export async function listNotifications(page = 1, limit = 20): Promise<PaginatedNotifications> {
+export async function listNotifications(
+  page = 1, 
+  limit = 20,
+  status?: string,
+  category?: string,
+  search?: string
+): Promise<PaginatedNotifications> {
   const { data } = await apiClient.get<PaginatedNotifications>(BASE, {
-    params: { page, limit },
+    params: { page, limit, status, category, search },
   });
   return data;
 }

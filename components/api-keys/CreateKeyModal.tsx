@@ -62,7 +62,7 @@ export function CreateKeyModal({
             placeholder="e.g. Lambda Marketing Worker"
             autoFocus
             required
-            className="w-full"
+            className="w-full mt-2"
           />
         </div>
 

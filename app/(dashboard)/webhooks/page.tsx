@@ -171,7 +171,7 @@ export default function WebhooksPage() {
               type="url"
               required
               autoFocus
-              className="w-full font-mono text-sm"
+              className="w-full font-mono text-sm mt-2"
             />
           </div>
 

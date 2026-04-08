@@ -85,12 +85,14 @@ export interface ApiKey {
 
 export interface NotificationDto {
   id: string;
-  walletAddress: string;
+  protocolId: string;
+  walletHash: string;
   category: "defi" | "governance" | "system" | "marketing";
   status: "delivered" | "failed" | "queued" | "processing";
-  subject: string;
-  sentAt: string;
-  receiptTxHash?: string;
+  subjectHash: string;
+  queuedAt: string;
+  deliveredAt: string | null;
+  receiptTx: string | undefined;
 }
 
 // ── Webhooks ──────────────────────────────────────────────────────────────────
@@ -169,7 +171,7 @@ export interface BillingStatusDto {
   tier: number;
   tierName: string;
   isActive: boolean;
-  status: string;           // 'active' | 'inactive' | 'cancelled'
+  status: string; // 'active' | 'inactive' | 'cancelled'
   expiresAt: string | null;
   daysRemaining: number;
   sendsThisPeriod: number;
@@ -209,20 +211,22 @@ export interface TestSendDto {
   walletAddress: string;
   subject: string;
   body: string;
-  category: 'defi' | 'governance' | 'system' | 'marketing';
+  category: "defi" | "governance" | "system" | "marketing";
   previewOnly?: boolean;
 }
 
 export interface TestSendResult {
   notificationId: string;
-  status: 'sent' | 'previewed' | 'failed';
+  status: "sent" | "previewed" | "failed";
   renderedHtml?: string;
   error?: string;
 }
 
 export interface PaginatedNotifications {
-  items: any[];
+  items: NotificationDto[];
   total: number;
   page: number;
   limit: number;
 }
+
+
