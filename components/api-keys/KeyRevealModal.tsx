@@ -10,7 +10,7 @@ interface KeyRevealModalProps {
 
 export function KeyRevealModal({ isOpen, onClose, plainTextKey }: KeyRevealModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={() => {}} title="Save Your API Key" className="w-[calc(100%-2rem)] sm:w-auto sm:max-w-fit">
+    <Modal isOpen={isOpen} onClose={() => {}} title="Save Your API Key">
       <div className="bg-navy border border-teal rounded-xl p-6 mb-6 mt-4 relative shadow-[0_0_30px_rgba(0,200,150,0.1)]">
         <p className="text-foreground text-sm font-medium mb-4 leading-relaxed max-w-[500px]">
           Please copy this key and store it securely. For your protection, <span className="text-gold font-bold">you will not be able to see it again.</span>
