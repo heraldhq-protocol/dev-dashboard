@@ -5,6 +5,12 @@ import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import Image from "next/image";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function TopNav() {
   const { toggleMobileSidebar, toggleDesktopSidebar, desktopSidebarCollapsed, activeEnvironment, setEnvironment } = useUiStore();
@@ -39,7 +45,8 @@ export function TopNav() {
       <div className="flex items-center gap-4 border-l border-border pl-4">
         <ThemeToggle />
         
-        <div className="flex items-center gap-2 rounded-lg bg-card-2 p-1">
+        {/* Desktop: Segmented buttons */}
+        <div className="hidden sm:flex items-center gap-2 rounded-lg bg-card-2 p-1">
           <button
             onClick={() => setEnvironment("sandbox")}
             className={`rounded-md px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
@@ -56,6 +63,56 @@ export function TopNav() {
           >
             LIVE
           </button>
+        </div>
+
+        {/* Mobile: Dropdown */}
+        <div className="sm:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={`flex items-center gap-2 rounded-lg bg-card-2 px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                  activeEnvironment === "live" ? "bg-teal" : "bg-gold"
+                } text-navy`}
+              >
+                {activeEnvironment === "live" ? "LIVE" : "SANDBOX"}
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  className="opacity-70"
+                >
+                  <path
+                    d="M2.5 4.5L6 8L9.5 4.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[120px]">
+              <DropdownMenuItem
+                onClick={() => setEnvironment("sandbox")}
+                className={`text-xs font-bold cursor-pointer ${
+                  activeEnvironment === "sandbox" ? "bg-accent" : ""
+                }`}
+              >
+                <span className="mr-2 inline-block h-2 w-2 rounded-full bg-gold" />
+                SANDBOX
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setEnvironment("live")}
+                className={`text-xs font-bold cursor-pointer ${
+                  activeEnvironment === "live" ? "bg-accent" : ""
+                }`}
+              >
+                <span className="mr-2 inline-block h-2 w-2 rounded-full bg-teal" />
+                LIVE
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         <div className="hidden border-l border-border pl-4 sm:flex items-center gap-4">
