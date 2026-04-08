@@ -42,7 +42,7 @@ export function TopNav() {
         <div className="flex items-center gap-2 rounded-lg bg-card-2 p-1">
           <button
             onClick={() => setEnvironment("sandbox")}
-            className={`rounded-md px-3 py-1 text-xs font-bold transition-all ${
+            className={`rounded-md px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
               activeEnvironment === "sandbox" ? "bg-gold text-navy shadow-sm" : "text-text-muted hover:text-text-primary"
             }`}
           >
@@ -50,7 +50,7 @@ export function TopNav() {
           </button>
           <button
             onClick={() => setEnvironment("live")}
-            className={`rounded-md px-3 py-1 text-xs font-bold transition-all ${
+            className={`rounded-md px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
               activeEnvironment === "live" ? "bg-teal text-navy shadow-sm" : "text-text-muted hover:text-text-primary"
             }`}
           >

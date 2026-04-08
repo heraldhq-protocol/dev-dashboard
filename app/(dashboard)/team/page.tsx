@@ -10,7 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { listTeam, inviteMember, removeMember } from "@/lib/api/team";
+import { listTeam, inviteMember, removeMember, updateMemberRole } from "@/lib/api/team";
 
 export default function TeamPage() {
   const queryClient = useQueryClient();
@@ -56,6 +56,21 @@ export default function TeamPage() {
     if (confirm("Are you sure you want to remove this member?")) {
       removeMutation.mutate(id);
     }
+  };
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, role }: { id: string; role: string }) => updateMemberRole(id, role),
+    onSuccess: () => {
+      toast.success("Role updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to update role");
+    },
+  });
+
+  const handleRoleChange = (id: string, newRole: string) => {
+    updateRoleMutation.mutate({ id, role: newRole });
   };
 
   if (isLoading) {
@@ -123,8 +138,21 @@ export default function TeamPage() {
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap capitalize text-text-muted">
-                  {m.role.replace("_", " ")}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {m.role === "owner" ? (
+                    <span className="capitalize text-text-muted">Owner</span>
+                  ) : (
+                    <select
+                      className="bg-navy-2 border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:border-teal capitalize cursor-pointer disabled:opacity-50"
+                      value={m.role}
+                      onChange={(e) => handleRoleChange(m.id, e.target.value)}
+                      disabled={updateRoleMutation.isPending}
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="developer">Developer</option>
+                      <option value="read_only">Read Only</option>
+                    </select>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Badge
@@ -163,7 +191,7 @@ export default function TeamPage() {
         onClose={() => setIsInviteOpen(false)}
         title="Invite Team Member"
       >
-        <form onSubmit={handleInvite} className="flex flex-col gap-6 mt-4">
+        <form onSubmit={handleInvite} className="flex flex-col gap-6 mt-4 rounded-2xl">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-text-secondary">
               Email Address
