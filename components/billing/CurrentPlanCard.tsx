@@ -2,6 +2,7 @@
 
 import { BillingStatusDto } from "@/types/api";
 import { Button } from "@/components/ui/Button";
+import { UsageProgressBar } from "./UsageProgressBar";
 
 interface CurrentPlanCardProps {
   status?: BillingStatusDto;
@@ -79,45 +80,23 @@ export function CurrentPlanCard({
         </div>
 
         {/* Usage progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-text-muted">Notification Usage</span>
-            {isLoading ? (
-              <div className="h-4 w-20 bg-card-2 animate-pulse rounded" />
-            ) : (
-              <span className="text-foreground font-semibold">
-                {status?.sendsThisPeriod.toLocaleString() ?? 0}{" "}
-                <span className="text-text-muted font-normal">
-                  / {status?.sendsLimit.toLocaleString() ?? 0}
-                </span>
-              </span>
-            )}
+        <UsageProgressBar 
+          used={status?.sendsThisPeriod ?? 0} 
+          quota={status?.sendsLimit ?? 0}
+          label="Notification Usage"
+        />
+
+        {status?.periodResetAt && (
+          <div className="flex items-center justify-end text-[10px] text-text-muted mt-1 italic">
+            <span>
+              Resets{" "}
+              {new Date(status.periodResetAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
           </div>
-          <div className="h-2.5 bg-card-2 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700 ease-out"
-              style={{
-                width: `${Math.min(status?.usagePercent ?? 0, 100)}%`,
-                background:
-                  (status?.usagePercent ?? 0) > 90
-                    ? "linear-gradient(90deg, #E8920A, #D63031)"
-                    : "linear-gradient(90deg, #00C896, #00E5A8)",
-              }}
-            />
-          </div>
-          <div className="flex items-center justify-between text-xs text-text-muted">
-            <span>{(status?.usagePercent ?? 0).toFixed(1)}% used</span>
-            {status?.periodResetAt && (
-              <span>
-                Resets{" "}
-                {new Date(status.periodResetAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* Remaining + Days */}
         {!isLoading && status && (

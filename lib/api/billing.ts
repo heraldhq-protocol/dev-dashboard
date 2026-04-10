@@ -4,6 +4,9 @@ import type {
   PaymentDto,
   UsageStatsDto,
   TierInfo,
+  OverageStatusResponse,
+  OverageSettingsDto,
+  OverageInvoiceDto,
 } from "@/types/api";
 
 const BASE = "/billing";
@@ -43,5 +46,22 @@ export async function getPaymentHistory(
   const { data } = await apiClient.get(`${BASE}/payments`, {
     params: { page, limit },
   });
+  return data;
+}
+
+export async function getOverageStatus(): Promise<OverageStatusResponse> {
+  const { data } = await apiClient.get<OverageStatusResponse>(`${BASE}/overage/status`);
+  return data;
+}
+
+export async function updateOverageSettings(
+  settings: Partial<OverageSettingsDto>
+): Promise<OverageSettingsDto> {
+  const { data } = await apiClient.patch<OverageSettingsDto>(`${BASE}/overage/settings`, settings);
+  return data;
+}
+
+export async function getOverageInvoices(): Promise<OverageInvoiceDto[]> {
+  const { data } = await apiClient.get<OverageInvoiceDto[]>(`${BASE}/overage/invoices`);
   return data;
 }

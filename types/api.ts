@@ -200,6 +200,44 @@ export interface UsageStatsDto {
   periodResetAt: string;
 }
 
+// ── Overage ──────────────────────────────────────────────────────────────────
+
+export interface OverageSettingsDto {
+  optInOverage: boolean;
+  maxOverageUsdc: string;
+  overageAlertAtUsdc: string;
+  overageHardCapEnabled: boolean;
+}
+
+export interface OverageUsageDto {
+  overagesThisPeriod: number;
+  overageUsdcThisPeriod: string;
+}
+
+export interface OverageStatusResponse {
+  settings: OverageSettingsDto;
+  usage: OverageUsageDto;
+  pricing: string;
+}
+
+export interface OverageInvoiceDto {
+  id: string;
+  periodStart: string;
+  periodEnd: string;
+  totalOverages: string;
+  totalUsdc: string;
+  status: "pending" | "paid" | "failed";
+  collectionMethod: string | null;
+  helioPaymentLink: string | null;
+  helioTransactionId: string | null;
+  solanaTxSignature: string | null;
+  issuedAt: string;
+  dueAt: string;
+  paidAt: string | null;
+  failedAt: string | null;
+  failureReason: string | null;
+}
+
 export interface TierInfo {
   tier: number;
   name: string;

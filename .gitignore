@@ -48,3 +48,4 @@ next-env.d.ts
 implementation_plan.md
 
 __tests__
+/lib/generated/prisma

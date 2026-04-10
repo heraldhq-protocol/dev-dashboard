@@ -12,6 +12,8 @@ import {
   getPaymentHistory,
 } from "@/lib/api/billing";
 import { toast } from "sonner";
+import { OverageManagement } from "@/components/billing/OverageManagement";
+import { Separator } from "@/components/ui/separator";
 
 // Static features per tier for the comparison cards
 const TIER_FEATURES: Record<number, string[]> = {
@@ -115,7 +117,7 @@ export default function BillingPage() {
         <h2 className="text-xl font-bold text-foreground mb-6">
           Compare Plans
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-3">
           {(tiers.length > 0
             ? tiers
             : [
@@ -131,7 +133,6 @@ export default function BillingPage() {
               ]
           ).map((tier, index, array) => {
             const isCurrent = tier.tier === currentTier;
-            const isCenteredLast = array.length === 4 && index === 3;
             
             return (
               <div
@@ -140,10 +141,10 @@ export default function BillingPage() {
                   isCurrent
                     ? "border-teal shadow-[0_0_30px_rgba(0,200,150,0.1)]"
                     : "border-border"
-                } ${isCenteredLast ? "lg:col-start-2" : ""}`}
+                }`}
               >
                 {isCurrent && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-teal text-navy px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-teal text-navy px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                     Current Plan
                   </div>
                 )}
@@ -216,6 +217,12 @@ export default function BillingPage() {
       </div>
 
       {/* Payment History component */}
+      <Separator className="bg-border" />
+      
+      <OverageManagement />
+
+      <Separator className="bg-border" />
+
       {paymentData && <PaymentHistory payments={paymentData.payments} />}
 
       {/* Enterprise CTA */}
