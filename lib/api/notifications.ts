@@ -3,18 +3,22 @@ import { TestSendDto, TestSendResult, PaginatedNotifications } from "@/types/api
 
 const BASE = "/notifications";
 
-export interface ApiKeyInfo {
+export interface PlaygroundApiKey {
   id: string;
   key: string;
   keyPrefix: string;
   environment: string;
   name: string;
-  isRevoked: boolean;
 }
 
-export async function getApiKeys(): Promise<ApiKeyInfo[]> {
-  const { data } = await apiClient.get<{ items: ApiKeyInfo[] }>("/api-keys/me");
-  return data.items?.filter((k) => !k.isRevoked) || [];
+export async function getPlaygroundApiKey(): Promise<PlaygroundApiKey | null> {
+  try {
+    const { data } = await apiClient.get<PlaygroundApiKey>("/api-keys/playground");
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch playground API key:", error);
+    return null;
+  }
 }
 
 export async function testSend(dto: TestSendDto, apiKey: string): Promise<TestSendResult> {
