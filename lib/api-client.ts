@@ -13,7 +13,9 @@ export class HeraldApiError extends Error {
   }
 }
 
-const ADMIN_API_URL = process.env.NEXT_PUBLIC_HERALD_ADMIN_API_URL || "https://admin-api.herald.xyz";
+const ADMIN_API_URL =
+  process.env.NEXT_PUBLIC_HERALD_ADMIN_API_URL ||
+  "https://admin-api.useherald.xyz";
 
 export const apiClient = axios.create({
   baseURL: ADMIN_API_URL,
@@ -36,14 +38,16 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor for token refresh & error normalization
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // Handle 401 Unauthorized (Token expiry)
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -52,7 +56,7 @@ apiClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         // Calling getSession triggers NextAuth's JWT callback which handles the refresh logic internally
         const session = await getSession();
-        
+
         if (session?.error === "RefreshAccessTokenError") {
           // Hard token expiry/revocation — kick user
           signIn("wallet");
@@ -67,9 +71,14 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const message = (error.response?.data as { message?: string })?.message || error.message || "An unexpected error occurred";
+    const message =
+      (error.response?.data as { message?: string })?.message ||
+      error.message ||
+      "An unexpected error occurred";
     const statusCode = error.response?.status || 500;
-    
-    return Promise.reject(new HeraldApiError(message, statusCode, error.response?.data));
-  }
+
+    return Promise.reject(
+      new HeraldApiError(message, statusCode, error.response?.data),
+    );
+  },
 );

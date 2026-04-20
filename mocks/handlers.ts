@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 
-const API_BASE = "https://admin-api.herald.xyz/v1";
+const API_BASE = "https://admin-api.useherald.xyz/v1";
 
 export const handlers = [
   // Auth Mocks
@@ -21,7 +21,7 @@ export const handlers = [
       fromName: "LiquidStake Alerts",
     });
   }),
-  
+
   http.get(`${API_BASE}/protocols/me/status`, () => {
     return HttpResponse.json({
       tier: 0,
@@ -55,18 +55,24 @@ export const handlers = [
   }),
 
   http.post(`${API_BASE}/api-keys`, async ({ request }) => {
-    const data = await request.json() as { name: string, environment: string };
-    return HttpResponse.json({
-      keyInfo: {
-        id: "key_new",
-        name: data.name,
-        prefix: `hrld_${data.environment}_NEW0...`,
-        environment: data.environment,
-        scopes: ["notify:write"],
-        createdAt: new Date().toISOString(),
+    const data = (await request.json()) as {
+      name: string;
+      environment: string;
+    };
+    return HttpResponse.json(
+      {
+        keyInfo: {
+          id: "key_new",
+          name: data.name,
+          prefix: `hrld_${data.environment}_NEW0...`,
+          environment: data.environment,
+          scopes: ["notify:write"],
+          createdAt: new Date().toISOString(),
+        },
+        plainTextKey: `hrld_${data.environment}_NEW0_SUPER_SECRET_KEY_NEVER_SHOWN_AGAIN`,
       },
-      plainTextKey: `hrld_${data.environment}_NEW0_SUPER_SECRET_KEY_NEVER_SHOWN_AGAIN`,
-    }, { status: 201 });
+      { status: 201 },
+    );
   }),
 
   // Analytics Drop Mocks
@@ -86,7 +92,7 @@ export const handlers = [
         governance: 3205,
         marketing: 1500,
         system: 1100,
-      }
+      },
     });
-  })
+  }),
 ];
