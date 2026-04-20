@@ -49,3 +49,24 @@ export async function registerProtocol(
   );
   return data;
 }
+
+export interface SandboxSettings {
+  testEmail?: string | null;
+  testTelegramId?: string | null;
+  testPhone?: string | null;
+}
+
+export async function getSandboxSettings(): Promise<SandboxSettings> {
+  const { data } = await apiClient.get<SandboxSettings>(`${BASE}/me/sandbox`);
+  return data;
+}
+
+export async function updateSandboxSettings(
+  dto: SandboxSettings
+): Promise<SandboxSettings> {
+  const { data } = await apiClient.patch<SandboxSettings>(
+    `${BASE}/me/sandbox`,
+    dto
+  );
+  return data;
+}
