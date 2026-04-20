@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { TestSendDto } from "@/types/api";
 
-interface EmailComposerProps {
+interface TelegramComposerProps {
   onPreview: (dto: TestSendDto) => void;
   onSend: (dto: TestSendDto) => void;
   isLoading: boolean;
@@ -13,17 +13,23 @@ interface EmailComposerProps {
 
 const CATEGORIES = ["defi", "governance", "system", "marketing"] as const;
 
-const MARKDOWN_HELP = `Markdown Syntax:
-**bold** or __underline__
-*italic* or ~~strikethrough~~
-\`code\`
-[text](https://example.com) for links
+const MARKDOWN_HELP = `Telegram HTML Formatting:
+<b>bold</b> or <i>italic</i>
+<code>inline code</code>
+<pre>code block</pre>
+<a href="https://example.com">link</a>
+
+Markdown Shortcuts (auto-converted):
+**bold** → <b>bold</b>
+*italic* → <i>italic</i>
+\`code\` → <code>code</code>
+[text](url) → inline button
 `;
 
-export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerProps) {
+export function TelegramComposer({ onPreview, onSend, isLoading }: TelegramComposerProps) {
   const [walletAddress, setWalletAddress] = useState("HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH");
-  const [subject, setSubject] = useState("Your liquidation is at risk");
-  const [body, setBody] = useState("Your margin account on the Solend protocol is nearing its liquidation threshold.\n\nPlease deposit more collateral to avoid liquidation.\n\n**Action Required:** [Click here](https://solend.fi) to view your account.\n\nYou can also use \`code\` for inline code.");
+  const [subject, setSubject] = useState("Liquidation Warning");
+  const [body, setBody] = useState("Your margin account is nearing liquidation threshold.\n\n*Action Required:* Deposit more collateral to avoid liquidation.\n\nCheck your [dashboard](https://solend.fi) for details.");
   const [category, setCategory] = useState<TestSendDto["category"]>("defi");
 
   const buildDto = (previewOnly = false): TestSendDto => ({
@@ -36,9 +42,9 @@ export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerPro
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 shadow-sm h-full flex flex-col">
-      <h3 className="text-lg font-bold text-foreground mb-4">Compose</h3>
+      <h3 className="text-lg font-bold text-foreground mb-4">Telegram Composer</h3>
       
-      <div className="space-y-4 flex-1">
+      <div className="space-y-4 flex-1 overflow-y-auto">
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             Target Wallet
@@ -82,25 +88,24 @@ export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerPro
 
         <div className="space-y-1.5 flex-1 flex flex-col">
           <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-            Content (Markdown)
+            Message (Markdown)
           </label>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            className="w-full flex-1 min-h-[200px] bg-card-2 border border-border text-foreground text-sm rounded-lg px-3 py-3 focus:outline-none focus:border-teal/50 focus:ring-1 focus:ring-teal/50 transition-colors resize-none font-mono"
-            placeholder="Write your email body here..."
+            className="w-full flex-1 min-h-[150px] bg-card-2 border border-border text-foreground text-sm rounded-lg px-3 py-3 focus:outline-none focus:border-teal/50 focus:ring-1 focus:ring-teal/50 transition-colors resize-none font-mono"
+            placeholder="Write your message here..."
             required
           />
           <details className="mt-2">
             <summary className="text-xs text-text-muted cursor-pointer hover:text-foreground transition-colors">
-              View Markdown syntax & link formatting
+              View formatting syntax
             </summary>
             <pre className="mt-2 p-2 bg-card-2 rounded text-xs text-text-muted overflow-x-auto whitespace-pre-wrap font-mono">
 {MARKDOWN_HELP}
             </pre>
             <p className="mt-2 text-xs text-text-muted">
-              <strong>Tip:</strong> Use <code>[Button Text](https://url)</code> to create clickable links.
-              For Telegram, these become inline keyboard buttons.
+              <strong>Tip:</strong> Links like <code>[Dashboard](https://url)</code> become inline keyboard buttons in Telegram.
             </p>
           </details>
         </div>
@@ -112,7 +117,7 @@ export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerPro
           onClick={() => onPreview(buildDto(true))}
           disabled={isLoading || !walletAddress || !subject || !body}
         >
-          Preview HTML
+          Preview
         </Button>
         <Button 
           variant="default"

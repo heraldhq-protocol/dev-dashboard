@@ -25,6 +25,47 @@ export const apiClient = axios.create({
   },
 });
 
+// Notification Gateway API URL (dynamic based on environment)
+export function getNotificationGatewayUrl(): string {
+  if (process.env.NEXT_PUBLIC_NOTIFICATION_GATEWAY_URL) {
+    return process.env.NEXT_PUBLIC_NOTIFICATION_GATEWAY_URL;
+  }
+  // Default to local in development, production API otherwise
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:3002";
+  }
+  return "https://api.useherald.xyz";
+}
+
+export function getNotificationApiClient(apiKey: string) {
+  const client = axios.create({
+    baseURL: getNotificationGatewayUrl(),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
+
+  client.interceptors.response.use(
+    (response) => response,
+    (error: AxiosError) => {
+      const message =
+        (error.response?.data as { message?: string })?.message ||
+        error.message ||
+        "Notification gateway error";
+      return Promise.reject(
+        new HeraldApiError(
+          message,
+          error.response?.status || 500,
+          error.response?.data,
+        ),
+      );
+    },
+  );
+
+  return client;
+}
+
 // Request interceptor for injecting auth token
 apiClient.interceptors.request.use(
   async (config) => {

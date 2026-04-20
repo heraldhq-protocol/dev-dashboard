@@ -70,3 +70,41 @@ export async function updateSandboxSettings(
   );
   return data;
 }
+
+export interface ProtocolAsset {
+  id: string;
+  assetType: "banner" | "video" | "logo";
+  url: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export async function getProtocolAssets(): Promise<ProtocolAsset[]> {
+  const { data } = await apiClient.get<ProtocolAsset[]>(`${BASE}/me/assets`);
+  return data;
+}
+
+export async function createProtocolAsset(
+  dto: Pick<ProtocolAsset, "assetType" | "url"> & { isActive?: boolean }
+): Promise<ProtocolAsset> {
+  const { data } = await apiClient.post<ProtocolAsset>(
+    `${BASE}/me/assets`,
+    dto
+  );
+  return data;
+}
+
+export async function updateProtocolAsset(
+  assetId: string,
+  dto: Partial<Pick<ProtocolAsset, "url" | "isActive">>
+): Promise<ProtocolAsset> {
+  const { data } = await apiClient.patch<ProtocolAsset>(
+    `${BASE}/me/assets/${assetId}`,
+    dto
+  );
+  return data;
+}
+
+export async function deleteProtocolAsset(assetId: string): Promise<void> {
+  await apiClient.delete(`${BASE}/me/assets/${assetId}`);
+}

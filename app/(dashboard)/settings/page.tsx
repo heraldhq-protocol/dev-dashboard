@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings } from "@/lib/api/protocol";
+import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset, type ProtocolAsset } from "@/lib/api/protocol";
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -77,6 +77,45 @@ export default function SettingsPage() {
       toast.error(error?.response?.data?.message || "Failed to save sandbox settings");
     },
   });
+
+  // Protocol Assets state
+  const [newAssetUrl, setNewAssetUrl] = useState("");
+  const [newAssetType, setNewAssetType] = useState<"banner" | "video" | "logo">("banner");
+
+  const { data: assets } = useQuery({
+    queryKey: ["protocol", "assets"],
+    queryFn: getProtocolAssets,
+  });
+
+  const createAssetMutation = useMutation({
+    mutationFn: (dto: { assetType: "banner" | "video" | "logo"; url: string }) =>
+      createProtocolAsset(dto),
+    onSuccess: () => {
+      toast.success("Asset added");
+      setNewAssetUrl("");
+      queryClient.invalidateQueries({ queryKey: ["protocol", "assets"] });
+    },
+    onError: () => {
+      toast.error("Failed to add asset");
+    },
+  });
+
+  const deleteAssetMutation = useMutation({
+    mutationFn: deleteProtocolAsset,
+    onSuccess: () => {
+      toast.success("Asset removed");
+      queryClient.invalidateQueries({ queryKey: ["protocol", "assets"] });
+    },
+    onError: () => {
+      toast.error("Failed to remove asset");
+    },
+  });
+
+  const handleAddAsset = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAssetUrl) return;
+    createAssetMutation.mutate({ assetType: newAssetType, url: newAssetUrl });
+  };
 
   const handleSandboxSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -319,6 +358,71 @@ export default function SettingsPage() {
             )}
           </div>
         </form>
+      </div>
+
+      {/* Protocol Assets */}
+      <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+        <h2 className="text-lg font-bold text-foreground mb-6">
+          Brand Assets
+        </h2>
+        <p className="text-sm text-text-muted mb-4">
+          Add banner, video, and logo assets for rich notifications on Telegram and Email.
+        </p>
+
+        <form onSubmit={handleAddAsset} className="flex items-end gap-3 mb-6">
+          <div className="flex-1">
+            <label className="text-sm font-medium text-text-secondary block mb-1.5">
+              Asset Type
+            </label>
+            <select
+              value={newAssetType}
+              onChange={(e) => setNewAssetType(e.target.value as any)}
+              className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground text-sm"
+            >
+              <option value="banner">Banner</option>
+              <option value="video">Video</option>
+              <option value="logo">Logo</option>
+            </select>
+          </div>
+          <div className="flex-[2]">
+            <label className="text-sm font-medium text-text-secondary block mb-1.5">
+              Asset URL
+            </label>
+            <Input
+              value={newAssetUrl}
+              onChange={(e) => setNewAssetUrl(e.target.value)}
+              placeholder="https://..."
+              className="w-full"
+            />
+          </div>
+          <Button type="submit" variant="default" isLoading={createAssetMutation.isPending} disabled={!newAssetUrl}>
+            Add
+          </Button>
+        </form>
+
+        <div className="space-y-2">
+          {assets?.map((asset) => (
+            <div key={asset.id} className="flex items-center justify-between p-3 bg-card-2 rounded-lg border border-border">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium uppercase px-2 py-1 bg-primary/10 text-primary rounded">
+                  {asset.assetType}
+                </span>
+                <span className="text-sm text-text-muted truncate max-w-md">{asset.url}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => deleteAssetMutation.mutate(asset.id)}
+                className="text-red hover:text-red"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+          {(!assets || assets.length === 0) && (
+            <p className="text-sm text-text-muted italic">No assets added yet</p>
+          )}
+        </div>
       </div>
 
       <div className="bg-red/10 border border-red/30 rounded-xl p-6">

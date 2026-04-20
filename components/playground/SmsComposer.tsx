@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { TestSendDto } from "@/types/api";
 
-interface EmailComposerProps {
+interface SmsComposerProps {
   onPreview: (dto: TestSendDto) => void;
   onSend: (dto: TestSendDto) => void;
   isLoading: boolean;
@@ -13,18 +13,25 @@ interface EmailComposerProps {
 
 const CATEGORIES = ["defi", "governance", "system", "marketing"] as const;
 
-const MARKDOWN_HELP = `Markdown Syntax:
-**bold** or __underline__
-*italic* or ~~strikethrough~~
-\`code\`
-[text](https://example.com) for links
-`;
+const SMS_LIMITS = {
+  defi: 320,
+  system: 320,
+  governance: 160,
+  marketing: 160,
+};
 
-export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerProps) {
+export function SmsComposer({ onPreview, onSend, isLoading }: SmsComposerProps) {
   const [walletAddress, setWalletAddress] = useState("HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH");
-  const [subject, setSubject] = useState("Your liquidation is at risk");
-  const [body, setBody] = useState("Your margin account on the Solend protocol is nearing its liquidation threshold.\n\nPlease deposit more collateral to avoid liquidation.\n\n**Action Required:** [Click here](https://solend.fi) to view your account.\n\nYou can also use \`code\` for inline code.");
+  const [subject, setSubject] = useState("Alert");
+  const [body, setBody] = useState("Your account requires attention. Please check your dashboard.");
   const [category, setCategory] = useState<TestSendDto["category"]>("defi");
+
+  const maxChars = SMS_LIMITS[category] || 160;
+  const prefix = `[${subject}]: `;
+  const suffix = " (via Herald)";
+  const bodyLimit = maxChars - prefix.length - suffix.length;
+  const charCount = body.length;
+  const isOverLimit = charCount > bodyLimit;
 
   const buildDto = (previewOnly = false): TestSendDto => ({
     walletAddress,
@@ -36,9 +43,9 @@ export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerPro
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 shadow-sm h-full flex flex-col">
-      <h3 className="text-lg font-bold text-foreground mb-4">Compose</h3>
+      <h3 className="text-lg font-bold text-foreground mb-4">SMS Composer</h3>
       
-      <div className="space-y-4 flex-1">
+      <div className="space-y-4 flex-1 overflow-y-auto">
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             Target Wallet
@@ -54,7 +61,7 @@ export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerPro
 
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-            Category
+            Category (affects length limit)
           </label>
           <select
             value={category}
@@ -62,47 +69,50 @@ export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerPro
             className="w-full bg-card-2 border border-border text-foreground text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-teal/50 focus:ring-1 focus:ring-teal/50 transition-colors"
           >
             {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c.toUpperCase()}</option>
+              <option key={c} value={c}>
+                {c.toUpperCase()} ({SMS_LIMITS[c]} chars)
+              </option>
             ))}
           </select>
         </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-            Subject
+            Short Subject
           </label>
           <Input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="Notification Subject"
+            placeholder="Alert"
             className="w-full font-medium"
+            maxLength={20}
             required
           />
+          <p className="text-xs text-text-muted">Keep it brief — SMS has character limits</p>
         </div>
 
         <div className="space-y-1.5 flex-1 flex flex-col">
-          <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-            Content (Markdown)
+          <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex justify-between">
+            <span>Body</span>
+            <span className={isOverLimit ? "text-red font-normal" : "text-text-muted font-normal"}>
+              {charCount}/{bodyLimit} chars
+            </span>
           </label>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            className="w-full flex-1 min-h-[200px] bg-card-2 border border-border text-foreground text-sm rounded-lg px-3 py-3 focus:outline-none focus:border-teal/50 focus:ring-1 focus:ring-teal/50 transition-colors resize-none font-mono"
-            placeholder="Write your email body here..."
+            className={`w-full flex-1 min-h-[100px] bg-card-2 border text-foreground text-sm rounded-lg px-3 py-3 focus:outline-none focus:border-teal/50 focus:ring-1 focus:ring-teal/50 transition-colors resize-none font-mono ${isOverLimit ? "border-red" : "border-border"}`}
+            placeholder="Write your SMS body here..."
             required
           />
-          <details className="mt-2">
-            <summary className="text-xs text-text-muted cursor-pointer hover:text-foreground transition-colors">
-              View Markdown syntax & link formatting
-            </summary>
-            <pre className="mt-2 p-2 bg-card-2 rounded text-xs text-text-muted overflow-x-auto whitespace-pre-wrap font-mono">
-{MARKDOWN_HELP}
-            </pre>
-            <p className="mt-2 text-xs text-text-muted">
-              <strong>Tip:</strong> Use <code>[Button Text](https://url)</code> to create clickable links.
-              For Telegram, these become inline keyboard buttons.
+          {isOverLimit && (
+            <p className="text-xs text-red">
+              Text will be truncated. Reduce {charCount - bodyLimit} characters.
             </p>
-          </details>
+          )}
+          <p className="text-xs text-text-muted">
+            <strong>Tip:</strong> Links are automatically stripped from SMS (use Telegram or Email for links).
+          </p>
         </div>
       </div>
 
@@ -110,14 +120,14 @@ export function EmailComposer({ onPreview, onSend, isLoading }: EmailComposerPro
         <Button 
           variant="secondary" 
           onClick={() => onPreview(buildDto(true))}
-          disabled={isLoading || !walletAddress || !subject || !body}
+          disabled={isLoading || !walletAddress || !subject || !body || isOverLimit}
         >
-          Preview HTML
+          Preview
         </Button>
         <Button 
           variant="default"
           isLoading={isLoading}
-          disabled={isLoading || !walletAddress || !subject || !body}
+          disabled={isLoading || !walletAddress || !subject || !body || isOverLimit}
           onClick={() => onSend(buildDto(false))}
           className="shadow-[0_0_15px_rgba(0,200,150,0.2)]"
         >
