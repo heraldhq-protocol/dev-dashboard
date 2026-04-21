@@ -93,51 +93,6 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
-    // ── Email + TOTP sign-in ──────────────────────────────────────────
-    CredentialsProvider({
-      id: "email",
-      name: "Email and TOTP",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-        totp: { label: "TOTP", type: "text" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        try {
-          const res = await fetch(`${ADMIN_API_URL}/auth/email-login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-              totpCode: credentials.totp || undefined,
-            }),
-          });
-
-          if (!res.ok) return null;
-
-          const data = await res.json();
-
-          const payload = JSON.parse(
-            Buffer.from(data.accessToken.split(".")[1], "base64url").toString()
-          );
-
-          return {
-            id: payload.sub,
-            protocolId: payload.protocolId ?? null,
-            role: payload.role,
-            tier: 0,
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            accessTokenExpires: Date.now() + 14 * 60 * 1000,
-          };
-        } catch {
-          return null;
-        }
-      },
-    }),
   ],
 
   callbacks: {
