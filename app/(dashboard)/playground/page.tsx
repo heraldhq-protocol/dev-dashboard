@@ -7,7 +7,7 @@ import { EmailComposer } from "@/components/playground/EmailComposer";
 import { TelegramComposer } from "@/components/playground/TelegramComposer";
 import { SmsComposer } from "@/components/playground/SmsComposer";
 import { EmailPreview } from "@/components/playground/EmailPreview";
-import { testSend, getPlaygroundApiKey, type PlaygroundApiKey } from "@/lib/api/notifications";
+import { testSend, previewNotification, getPlaygroundApiKey, type PlaygroundApiKey } from "@/lib/api/notifications";
 import { Button } from "@/components/ui/Button";
 import { TestSendDto } from "@/types/api";
 import { isAxiosError } from "axios";
@@ -35,11 +35,15 @@ export default function PlaygroundPage() {
       if (!apiKey?.key) {
         throw new Error("No API key available");
       }
-      return testSend({ ...dto, previewOnly: true }, apiKey.key);
+      return previewNotification(dto, apiKey.key, activeTab as "email" | "telegram" | "sms");
     },
     onSuccess: (data) => {
-      if (data.renderedHtml) {
+      if (activeTab === "email" && data.renderedHtml) {
         setHtmlSnippet(data.renderedHtml);
+      } else if (activeTab === "telegram" && data.telegramText) {
+        setHtmlSnippet(data.telegramText);
+      } else if (activeTab === "sms" && data.smsText) {
+        setHtmlSnippet(data.smsText);
       }
     },
     onError: (err: unknown) => {
@@ -57,10 +61,10 @@ export default function PlaygroundPage() {
       if (!apiKey?.key) {
         throw new Error("No API key available");
       }
-      return testSend({ ...dto, previewOnly: false }, apiKey.key);
+      return testSend({ ...dto, previewOnly: false }, apiKey.key, activeTab as "email" | "telegram" | "sms");
     },
     onSuccess: (data) => {
-      toast.success("Test notification sent!");
+      toast.success(`Test notification sent via ${activeTab}!`);
       if (data.renderedHtml) {
         setHtmlSnippet(data.renderedHtml);
       }
