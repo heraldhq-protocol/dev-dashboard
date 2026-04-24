@@ -55,7 +55,7 @@ export default function TemplatesPage() {
 
   const loadTemplates = async () => {
     try {
-      const { data } = await axios.get("/v1/templates");
+      const { data } = await axios.get("/templates");
       setTemplates(data.data || []);
     } catch (error) {
       console.error("Failed to load templates:", error);
@@ -67,7 +67,7 @@ export default function TemplatesPage() {
   const handleCreate = async () => {
     setIsCreating(true);
     try {
-      const { data } = await axios.post("/v1/templates", newTemplate);
+      const { data } = await axios.post("/templates", newTemplate);
       if (data.success) {
         setShowCreateModal(false);
         setNewTemplate({
@@ -90,7 +90,7 @@ export default function TemplatesPage() {
     if (!newTemplate.htmlSource) return;
     setIsPreviewLoading(true);
     try {
-      const { data } = await axios.post("/v1/templates/preview", {
+      const { data } = await axios.post("/templates/preview", {
         htmlSource: newTemplate.htmlSource,
         subjectTemplate: newTemplate.subjectTemplate,
         variables: previewVars,
@@ -114,7 +114,7 @@ export default function TemplatesPage() {
   const handleDelete = async (templateId: string) => {
     if (!confirm("Are you sure you want to delete this template?")) return;
     try {
-      await axios.delete(`/v1/templates/${templateId}`);
+      await axios.delete(`/templates/${templateId}`);
       loadTemplates();
     } catch (error) {
       console.error("Failed to delete template:", error);

@@ -66,7 +66,7 @@ export default function TemplateEditorPage() {
 
   const loadTemplate = async () => {
     try {
-      const { data } = await axios.get(`/v1/templates/${templateId}`);
+      const { data } = await axios.get(`/templates/${templateId}`);
       setTemplate(data);
       setEditForm({
         name: data.name || "",
@@ -87,7 +87,7 @@ export default function TemplateEditorPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { data } = await axios.put(`/v1/templates/${templateId}`, editForm);
+      const { data } = await axios.put(`/templates/${templateId}`, editForm);
       if (data.success) {
         loadTemplate();
       }
@@ -102,7 +102,7 @@ export default function TemplateEditorPage() {
     if (!editForm.htmlSource) return;
     setIsPreviewLoading(true);
     try {
-      const { data } = await axios.post(`/v1/templates/preview`, {
+      const { data } = await axios.post(`/templates/preview`, {
         htmlSource: editForm.htmlSource,
         subjectTemplate: editForm.subjectTemplate,
         variables: { ...previewVars, ...customVars },

@@ -122,15 +122,15 @@ export default function DomainsPage() {
   if (isLoading || status === "loading") {
     return (
       <div className="flex items-center justify-center h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
 
   if (status === "unauthenticated") {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px]">
-        <p className="text-text-muted mb-4">Please sign in to view your domains.</p>
+      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+        <p className="text-muted-foreground">Please sign in to view your domains.</p>
       </div>
     );
   }
@@ -140,7 +140,7 @@ export default function DomainsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Domains</h1>
-          <p className="text-sm text-text-muted mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage custom domains for sending emails with DKIM authentication.
           </p>
         </div>
@@ -150,12 +150,12 @@ export default function DomainsPage() {
       </div>
 
       {domains.length === 0 ? (
-        <Card className="border border-border">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <svg className="w-12 h-12 text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <Card className="border-border">
+          <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
+            <svg className="w-12 h-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945a2 2 0 01-.865 1.175l-.837 1.477a1 125 1 125 0 00-.263 1.002 7 7 0 007.263 7.263l.837-1.477a2.002 2.002 0 011.175-.865H15a2 2 0 012 2v1a2 2 0 01-2 2 2 2 0 01-2-2v-1a2 2 0 00-2-2H5.055z" />
             </svg>
-            <p className="text-text-muted mb-4">No custom domains yet. Add one to get started.</p>
+            <p className="text-muted-foreground">No custom domains yet. Add one to get started.</p>
             <Button onClick={() => setShowAddModal(true)}>
               Add Domain
             </Button>
@@ -164,93 +164,95 @@ export default function DomainsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
           {domains.map((domain) => (
-            <Card key={domain.id} className="border border-border">
+            <Card key={domain.id} className="border-border">
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
                     <CardTitle className="text-base truncate">{domain.domain}</CardTitle>
-                    <CardDescription className="text-xs mt-1">
-                      Selector: <code className="bg-muted px-1 rounded">{domain.selector}</code>
+                    <CardDescription className="text-xs mt-1 flex items-center gap-2">
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-[10px]">{domain.selector}</code>
                     </CardDescription>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded shrink-0 ${
+                  <span className={`text-xs px-2 py-1 rounded shrink-0 font-medium ${
                     domain.dns_verified 
-                      ? "bg-green-500/20 text-green-400" 
-                      : "bg-yellow-500/20 text-yellow-400"
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
+                      : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                   }`}>
-                    {domain.dns_verified ? "Verified" : "Pending"}
+                    {domain.dns_verified ? "✓ Verified" : "Pending"}
                   </span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {!domain.dns_verified && (
-                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                    <p className="text-sm text-blue-300 font-medium mb-2">
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-primary mb-2">
                       DNS Configuration Required
                     </p>
-                    <p className="text-xs text-blue-200/80 mb-3">
-                      Add the following TXT record to your DNS provider to verify ownership.
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Add a TXT record to your DNS provider to verify ownership.
                     </p>
-                    <div className="space-y-2">
+                    
+                    <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-blue-200/80 w-12 shrink-0">Host:</span>
-                        <code className="text-xs bg-blue-500/20 px-2 py-1 rounded flex-1 break-all">
+                        <span className="text-xs text-muted-foreground w-12 shrink-0 font-medium">Host</span>
+                        <code className="text-xs bg-background px-2 py-1.5 rounded flex-1 break-all font-mono">
                           {domain.selector}._domainkey.{domain.domain}
                         </code>
                         <CopyButton 
                           text={`${domain.selector}._domainkey.${domain.domain}`}
                           size="sm"
-                          variant="secondary"
+                          variant="ghost"
                           className="shrink-0"
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-blue-200/80 w-12 shrink-0">Type:</span>
-                        <span className="text-xs">TXT</span>
+                        <span className="text-xs text-muted-foreground w-12 shrink-0 font-medium">Type</span>
+                        <span className="text-xs font-medium">TXT</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-blue-200/80 w-12 shrink-0">Value:</span>
-                        <code className="text-xs bg-blue-500/20 px-2 py-1 rounded flex-1 break-all max-h-20 overflow-y-auto">
-                          v=DKIM1; k=rsa; p={domain.dnsRecordValue?.split('p=')[1] || '...'}
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs text-muted-foreground w-12 shrink-0 font-medium">Value</span>
+                        <code className="text-xs bg-background px-2 py-1.5 rounded flex-1 break-all font-mono max-h-24 overflow-y-auto">
+                          {domain.dnsRecordValue || 'Loading...'}
                         </code>
                         <CopyButton 
-                          text={domain.instructions?.split('Value: ')[1] || domain.dnsRecordValue || ''}
+                          text={domain.dnsRecordValue || ''}
                           size="sm"
-                          variant="secondary"
+                          variant="ghost"
                           className="shrink-0"
                         />
                       </div>
                     </div>
+                    
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
-                      className="mt-3 w-full"
+                      className="mt-4 w-full"
                       onClick={() => toggleConfig(domain.id)}
                     >
-                      {domain.showConfig ? "Hide" : "View"} Full Instructions
+                      {domain.showConfig ? "Hide" : "View"} Setup Guide
                     </Button>
                   </div>
                 )}
 
-                {domain.showConfig && (
-                  <div className="bg-muted rounded-lg p-4 text-xs">
-                    <p className="font-medium mb-2">Configuration Instructions</p>
-                    <ol className="space-y-2 text-text-muted">
-                      <li>1. Log in to your DNS provider (Vercel, Render, Cloudflare, GoDaddy, Namecheap)</li>
-                      <li>2. Navigate to DNS settings for your domain</li>
-                      <li>3. Add a new TXT record:
-                        <ul className="ml-4 mt-1 space-y-1">
-                          <li><strong>Name/Host:</strong> <code className="bg-background px-1 rounded">{domain.selector}._domainkey.{domain.domain}</code></li>
-                          <li><strong>Type:</strong> TXT</li>
-                          <li><strong>Value:</strong> <code className="bg-background px-1 rounded break-all">{domain.instructions?.split('Value: ')[1] || domain.dnsRecordValue}</code></li>
+                {domain.showConfig && !domain.dns_verified && (
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                    <p className="font-semibold mb-3">Setup Instructions</p>
+                    <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
+                      <li>Sign in to your DNS provider</li>
+                      <li>Go to DNS settings for your domain</li>
+                      <li>Add a new TXT record:
+                        <ul className="ml-4 mt-2 space-y-1 text-xs">
+                          <li><span className="font-medium">Host:</span> <code className="bg-background px-1 rounded">{domain.selector}._domainkey</code> (or full name)</li>
+                          <li><span className="font-medium">Type:</span> TXT</li>
+                          <li><span className="font-medium">Value:</span> <code className="bg-background px-1 rounded break-all">{domain.dnsRecordValue}</code></li>
                         </ul>
                       </li>
-                      <li>4. Save the record and wait 5-30 minutes for propagation</li>
-                      <li>5. Click &quot;Verify&quot; to check if the record is active</li>
+                      <li>Wait 5-30 minutes for propagation</li>
+                      <li>Click Verify below</li>
                     </ol>
-                    <div className="mt-3 p-2 bg-yellow-500/20 rounded border border-yellow-500/30">
-                      <p className="text-yellow-300">
-                        <strong>Tip:</strong> Some DNS providers (Vercel, Render) automatically append your root domain. If so, just enter <code className="bg-background px-1 rounded">{domain.selector}._domainkey</code> as the name.
+                    <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                      <p className="text-xs text-amber-400">
+                        <span className="font-semibold">Tip:</span> Some providers auto-append your domain. Try just <code className="bg-background px-1 rounded">{domain.selector}._domainkey</code> as the host.
                       </p>
                     </div>
                   </div>
@@ -258,14 +260,14 @@ export default function DomainsPage() {
 
                 <div className="flex flex-wrap gap-2">
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     onClick={() => handleVerify(domain.id)}
                   >
                     Verify
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     onClick={() => handleSesRegister(domain.id)}
                     disabled={!domain.dns_verified}
@@ -275,7 +277,7 @@ export default function DomainsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-red-400 hover:text-red-400 hover:bg-red-500/10"
+                    className="text-destructive hover:text-destructive"
                     onClick={() => handleDelete(domain.id)}
                   >
                     Remove
@@ -288,8 +290,8 @@ export default function DomainsPage() {
       )}
 
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/80 backdrop-blur-sm p-4">
-          <Card className="w-full max-w-md border border-border">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-md border-border">
             <CardHeader>
               <CardTitle>Add Custom Domain</CardTitle>
               <CardDescription>
@@ -298,21 +300,21 @@ export default function DomainsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-text-secondary">Domain</label>
+                <label className="text-sm font-medium">Domain</label>
                 <Input
                   value={newDomain}
                   onChange={(e) => setNewDomain(e.target.value)}
                   placeholder="e.g., alerts.myprotocol.com"
                 />
               </div>
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                <p className="text-xs text-blue-200">
-                  After adding your domain, you&apos;ll receive step-by-step instructions on how to configure DNS TXT records to verify ownership.
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground">
+                  After adding your domain, you&apos;ll receive instructions to configure DNS TXT records.
                 </p>
               </div>
             </CardContent>
             <div className="flex flex-col sm:flex-row justify-end gap-3 p-4 border-t border-border">
-              <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+              <Button variant="outline" onClick={() => setShowAddModal(false)}>
                 Cancel
               </Button>
               <Button
@@ -328,12 +330,12 @@ export default function DomainsPage() {
       )}
 
       {configModalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/80 backdrop-blur-sm p-4">
-          <Card className="w-full max-w-lg border border-border max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-lg border-border max-h-[85vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
@@ -344,51 +346,51 @@ export default function DomainsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-text-muted">
-                To complete setup, add the following DNS TXT record to your domain provider:
+              <p className="text-sm text-muted-foreground">
+                Add the following TXT record to your DNS provider to verify ownership:
               </p>
 
-              <div className="bg-muted rounded-lg p-4 space-y-3">
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-text-muted w-16 shrink-0">Host:</span>
-                  <code className="bg-background px-2 py-1 rounded text-sm flex-1 break-all">
+                  <span className="text-muted-foreground w-14 shrink-0 font-medium">Host</span>
+                  <code className="bg-background px-2 py-1.5 rounded flex-1 break-all font-mono text-xs">
                     {configModalData.selector}._domainkey.{configModalData.domain}
                   </code>
-                  <CopyButton text={`${configModalData.selector}._domainkey.${configModalData.domain}`} size="sm" variant="secondary" className="shrink-0" />
+                  <CopyButton text={`${configModalData.selector}._domainkey.${configModalData.domain}`} size="sm" variant="ghost" className="shrink-0" />
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-text-muted w-16 shrink-0">Type:</span>
+                  <span className="text-muted-foreground w-14 shrink-0 font-medium">Type</span>
                   <span className="font-medium">TXT</span>
                 </div>
                 <div className="flex items-start gap-2 text-sm">
-                  <span className="text-text-muted w-16 shrink-0">Value:</span>
-                  <code className="bg-background px-2 py-1 rounded text-xs flex-1 break-all max-h-32 overflow-y-auto">
-                    {configModalData.instructions?.split('Value: ')[1] || configModalData.dnsRecordValue}
+                  <span className="text-muted-foreground w-14 shrink-0 font-medium">Value</span>
+                  <code className="bg-background px-2 py-1.5 rounded flex-1 break-all font-mono text-xs max-h-32 overflow-y-auto">
+                    {configModalData.dnsRecordValue || configModalData.instructions?.split('Value: ')[1]}
                   </code>
-                  <CopyButton text={configModalData.instructions?.split('Value: ')[1] || configModalData.dnsRecordValue || ''} size="sm" variant="secondary" className="shrink-0" />
+                  <CopyButton text={configModalData.dnsRecordValue || configModalData.instructions?.split('Value: ')[1] || ''} size="sm" variant="ghost" className="shrink-0" />
                 </div>
               </div>
 
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-                <p className="text-xs text-yellow-300">
-                  <strong>Important:</strong> DNS changes may take 5-30 minutes to propagate. Click &quot;Verify&quot; on the domain card after adding the record.
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <p className="text-xs text-amber-400">
+                  <span className="font-semibold">Note:</span> DNS changes may take 5-30 minutes to propagate. Click Verify after adding the record.
                 </p>
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium">Quick Reference for Popular Providers:</p>
-                <div className="grid gap-2 text-xs text-text-muted">
-                  <div className="bg-muted rounded p-2">
-                    <strong>Vercel:</strong> Settings → Domains → Select domain → DNS Records → Add TXT
+                <p className="text-sm font-medium">Quick Guide:</p>
+                <div className="grid gap-2 text-xs text-muted-foreground">
+                  <div className="bg-muted/50 rounded p-2">
+                    <span className="font-medium">Vercel:</span> Settings → Domains → DNS Records
                   </div>
-                  <div className="bg-muted rounded p-2">
-                    <strong>Render:</strong> Domains → Your domain → Configure DNS → Add Record → TXT
+                  <div className="bg-muted/50 rounded p-2">
+                    <span className="font-medium">Render:</span> Domains → Configure DNS
                   </div>
-                  <div className="bg-muted rounded p-2">
-                    <strong>Cloudflare:</strong> DNS → Records → Add record → Type: TXT
+                  <div className="bg-muted/50 rounded p-2">
+                    <span className="font-medium">Cloudflare:</span> DNS → Add Record
                   </div>
-                  <div className="bg-muted rounded p-2">
-                    <strong>GoDaddy:</strong> DNS → Manage → Add → Type: TXT
+                  <div className="bg-muted/50 rounded p-2">
+                    <span className="font-medium">GoDaddy:</span> DNS → Manage → Add Record
                   </div>
                 </div>
               </div>
