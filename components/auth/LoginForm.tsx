@@ -121,7 +121,7 @@ export default function LoginForm() {
           <p className="text-sm text-text-muted">
             Don't have a registered wallet?{" "}
             <Link 
-              href="https://notify.useherald.xyz" 
+              href="/onboarding" 
               className="font-medium text-teal hover:text-teal-2 transition-colors hover:underline underline-offset-4 decoration-teal/30"
             >
               Register here

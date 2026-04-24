@@ -33,7 +33,7 @@ function StepIndicator({ current }: { current: number }) {
           </div>
           <span
             className={`text-xs hidden sm:block ${
-              i === current ? "text-white font-semibold" : "text-text-dim"
+              i === current ? "text-foreground font-semibold" : "text-text-dim"
             }`}
           >
             {label}
@@ -84,7 +84,8 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (publicKey && step === 1) {
       console.log("Wallet connected, auto-advancing to step 2");
-      setStep(2);
+      const timer = setTimeout(() => setStep(2), 0);
+      return () => clearTimeout(timer);
     }
   }, [publicKey, step]);
 
@@ -121,16 +122,19 @@ export default function OnboardingPage() {
       setApiKey(result.apiKey);
       setApiKeyPrefix(result.apiKeyPrefix);
 
-      // Sign in to establish the session with the new protocolId
-      await signIn("wallet", {
+      // Sign in to establish the session (redirect: false so user sees their API key first)
+      const signInResult = await signIn("wallet", {
         wallet: publicKey.toBase58(),
         signature,
         message,
-        callbackUrl: "/overview",
-        redirect: true,
+        redirect: false,
       });
 
-      // No need for setStep(4) if redirect is true, but keeping it for completeness if someone navigates back
+      if (signInResult?.error) {
+        console.warn("Session creation failed after registration:", signInResult.error);
+        toast.error("Registration succeeded but auto-login failed. Please log in from the login page.");
+      }
+
       setStep(4);
     } catch (err: unknown) {
       toast.error(
@@ -158,7 +162,7 @@ export default function OnboardingPage() {
         {/* Logo */}
         <div className="mb-8 flex items-center justify-center gap-3 mx-auto">
           <Image width={30} height={30} src="/logo.svg" alt="logo" />
-          <span className="text-2xl font-extrabold tracking-tight text-white">
+          <span className="text-2xl font-extrabold tracking-tight text-foreground">
             Herald
           </span>
         </div>
@@ -173,7 +177,7 @@ export default function OnboardingPage() {
                 👋
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">
                   Welcome to Herald
                 </h1>
                 <p className="text-sm text-text-muted mt-2 max-w-xs mx-auto">
@@ -184,7 +188,7 @@ export default function OnboardingPage() {
                   <p className="text-xs font-semibold text-teal uppercase tracking-widest mb-1">
                     Please Confirm
                   </p>
-                  <p className="text-sm text-white font-medium">
+                  <p className="text-sm text-foreground font-medium">
                     Are you onboarding as a Protocol Developer or Team?
                   </p>
                 </div>
@@ -238,7 +242,7 @@ export default function OnboardingPage() {
                 🔗
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">
+                <h1 className="text-xl font-bold text-foreground">
                   Connect Your Wallet
                 </h1>
                 <p className="text-sm text-text-muted mt-2 max-w-xs mx-auto">
@@ -272,7 +276,7 @@ export default function OnboardingPage() {
           {step === 2 && (
             <form onSubmit={handleDetailsNext} className="flex flex-col gap-5">
               <div>
-                <h1 className="text-xl font-bold text-white">Protocol Details</h1>
+                <h1 className="text-xl font-bold text-foreground">Protocol Details</h1>
                 <p className="text-sm text-text-muted mt-1">
                   Tell us about your protocol.
                 </p>
@@ -342,7 +346,7 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-xl font-bold text-white">Sign & Register</h1>
+                <h1 className="text-xl font-bold text-foreground">Sign & Register</h1>
                 <p className="text-sm text-text-muted mt-1">
                   Your wallet will sign a message verifying ownership. No gas fees
                   — this is off-chain.
@@ -352,17 +356,17 @@ export default function OnboardingPage() {
               <div className="rounded-xl border border-border bg-navy-2 p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-text-muted">Protocol Name</span>
-                  <span className="text-white font-semibold">{protocolName}</span>
+                  <span className="text-foreground font-semibold">{protocolName}</span>
                 </div>
                 {website && (
                   <div className="flex justify-between text-sm">
                     <span className="text-text-muted">Website</span>
-                    <span className="text-white font-mono text-xs">{website}</span>
+                    <span className="text-foreground font-mono text-xs">{website}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-text-muted">Admin Email</span>
-                  <span className="text-white">{adminEmail}</span>
+                  <span className="text-foreground">{adminEmail}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text-muted">Owner Wallet</span>
@@ -395,7 +399,7 @@ export default function OnboardingPage() {
                 <div className="h-14 w-14 rounded-full bg-teal/15 border border-teal/30 flex items-center justify-center text-2xl">
                   ✓
                 </div>
-                <h1 className="text-xl font-bold text-white">
+                <h1 className="text-xl font-bold text-foreground">
                   Protocol Registered!
                 </h1>
                 <p className="text-sm text-text-muted max-w-xs mx-auto">

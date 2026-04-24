@@ -51,8 +51,9 @@ export const authOptions: NextAuthOptions = {
           !credentials?.wallet ||
           !credentials?.signature ||
           !credentials?.message
-        )
+        ) {
           return null;
+        }
 
         try {
           const res = await fetch(`${ADMIN_API_URL}/auth/wallet-login`, {
@@ -66,13 +67,13 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!res.ok) {
-            console.error("Wallet login backend error:", res.status, await res.text());
+            const errorText = await res.text();
+            console.error("[AUTH] Backend error:", res.status, errorText);
             return null;
           }
 
           const data = await res.json();
 
-          // Decode the access token to get protocolId + role without a library
           // Decode the access token to get protocolId + role safely
           const base64Url = data.accessToken.split(".")[1];
           const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
@@ -87,7 +88,8 @@ export const authOptions: NextAuthOptions = {
             refreshToken: data.refreshToken ?? "",
             accessTokenExpires: Date.now() + 14 * 60 * 1000,
           };
-        } catch {
+        } catch (err) {
+          console.error("[AUTH] authorize() error:", err);
           return null;
         }
       },

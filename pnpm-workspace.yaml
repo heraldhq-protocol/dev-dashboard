@@ -2,5 +2,4 @@ ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
 
-overrides:
-  '@herald-protocol/sdk': link:../herald-sdk-ts
+
