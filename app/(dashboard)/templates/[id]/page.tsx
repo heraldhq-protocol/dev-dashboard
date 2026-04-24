@@ -31,6 +31,7 @@ export default function TemplateEditorPage() {
   const [template, setTemplate] = useState<Template | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"editor" | "preview">("editor");
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [noAnimations, setNoAnimations] = useState(true);
