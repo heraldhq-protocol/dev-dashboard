@@ -55,6 +55,7 @@ export default function DomainsPage() {
     } else {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session]);
 
   const handleCreate = async () => {
@@ -94,7 +95,7 @@ export default function DomainsPage() {
 
   const handleSesRegister = async (domainId: string) => {
     try {
-      const { data } = await axios.post(`/domains/${domainId}/ses-register`);
+      await axios.post(`/domains/${domainId}/ses-register`);
       toast.success("Domain registered with SES");
       loadDomains();
     } catch (error: any) {

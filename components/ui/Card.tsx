@@ -2,19 +2,29 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+type CardVariant = "default" | "glass" | "glow" | "flat";
+
+const cardVariantStyles: Record<CardVariant, string> = {
+  default: "rounded-xl border border-border bg-card text-text-primary shadow-sm",
+  glass:
+    "rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm text-text-primary shadow-sm dark:bg-white/5 dark:border-white/10",
+  glow:
+    "rounded-xl border border-border bg-card text-text-primary shadow-sm transition-all duration-300 hover:border-teal/20 hover:shadow-[var(--card-glow-hover)]",
+  flat: "rounded-xl border-0 bg-card-2 text-text-primary",
+};
+
 function Card({
   className,
   size = "default",
+  variant = "default",
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: React.ComponentProps<"div"> & { size?: "default" | "sm"; variant?: CardVariant }) {
   return (
     <div
       data-slot="card"
       data-size={size}
-      className={cn(
-        "rounded-xl border border-border bg-card text-text-primary shadow-sm",
-        className,
-      )}
+      data-variant={variant}
+      className={cn(cardVariantStyles[variant], className)}
       {...props}
     />
   );

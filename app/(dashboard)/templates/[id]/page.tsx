@@ -63,6 +63,7 @@ export default function TemplateEditorPage() {
     if (templateId) {
       loadTemplate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId]);
 
   const loadTemplate = async () => {
@@ -133,8 +134,9 @@ export default function TemplateEditorPage() {
   };
 
   const removeCustomVar = (key: string) => {
-    const { [key]: _, ...rest } = customVars;
-    setCustomVars(rest);
+    const newVars = { ...customVars };
+    delete newVars[key];
+    setCustomVars(newVars);
   };
 
   if (isLoading) {
@@ -440,6 +442,7 @@ export default function TemplateEditorPage() {
                     size="sm"
                     onClick={handlePreview}
                     disabled={!editForm.htmlSource}
+                    isLoading={isPreviewLoading}
                     className="flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

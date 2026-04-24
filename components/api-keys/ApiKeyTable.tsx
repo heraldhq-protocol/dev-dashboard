@@ -8,12 +8,17 @@ interface ApiKeyTableProps {
   onRevokeClick: (key: DashboardApiKey) => void;
 }
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Key } from "lucide-react";
+
 export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
   if (keys.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl p-12 text-center text-text-muted text-sm">
-        No API keys found for this environment.
-      </div>
+      <EmptyState
+        icon={<Key className="w-6 h-6" />}
+        title="No API Keys Found"
+        description="Create an API key to authenticate your requests to the Herald API in this environment."
+      />
     );
   }
 

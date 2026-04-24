@@ -120,6 +120,15 @@
   --color-gold: #e8920a;
   --color-purple: #5b35d5;
 
+  /* Semantic status aliases */
+  --color-status-ok: var(--color-teal);
+  --color-status-warn: var(--color-gold);
+  --color-status-error: var(--color-red);
+
+  /* Card glow */
+  --card-glow: 0 0 30px rgba(0, 200, 150, 0.08);
+  --card-glow-hover: 0 0 40px rgba(0, 200, 150, 0.14);
+
   /* Typography */
   --font-sans: "Syne", system-ui, sans-serif;
   --font-heading: "Syne", system-ui, sans-serif;
@@ -188,4 +197,46 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
+}
+
+/* ─── Dot Grid Background ──────────────────────────────── */
+
+.bg-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(0, 200, 150, 0.06) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+}
+
+/* ─── Shimmer Animation ────────────────────────────────── */
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-card-2) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ─── Accessibility: Reduced Motion ────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

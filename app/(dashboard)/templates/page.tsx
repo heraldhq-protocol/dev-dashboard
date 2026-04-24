@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { useApi } from "@/components/providers/QueryProvider";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 
 interface Template {
@@ -51,6 +51,7 @@ export default function TemplatesPage() {
 
   useEffect(() => {
     loadTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadTemplates = async () => {
@@ -414,6 +415,7 @@ export default function TemplatesPage() {
                         size="sm"
                         onClick={handlePreview}
                         disabled={!newTemplate.htmlSource}
+                        isLoading={isPreviewLoading}
                         className="flex items-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

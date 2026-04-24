@@ -11,7 +11,7 @@ import {
   updateOverageSettings, 
   getOverageInvoices 
 } from "@/lib/api/billing";
-import { formatUsdc } from "@/lib/utils";
+
 import { UsageProgressBar } from "./UsageProgressBar";
 
 export function OverageManagement() {
@@ -49,7 +49,7 @@ export function OverageManagement() {
   const { settings, usage, pricing } = overageData;
   const currentSpend = Number(usage.overageUsdcThisPeriod) / 1_000_000;
   const maxSpend = Number(settings.maxOverageUsdc) / 1_000_000;
-  const usagePercent = Math.min((currentSpend / maxSpend) * 100, 100);
+
 
   return (
     <div className="space-y-6">

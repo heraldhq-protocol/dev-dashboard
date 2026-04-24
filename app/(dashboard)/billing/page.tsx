@@ -57,7 +57,7 @@ export default function BillingPage() {
     queryFn: getBillingStatus,
   });
 
-  const { data: tiers = [], isLoading: tiersLoading } = useQuery({
+  const { data: tiers = [] } = useQuery({
     queryKey: ["billingTiers"],
     queryFn: getTiers,
   });
@@ -89,7 +89,6 @@ export default function BillingPage() {
   });
 
   const currentTier = status?.tier ?? 0;
-  const isLoading = statusLoading || tiersLoading;
 
   return (
     <div className="space-y-10 max-w-6xl">
@@ -131,7 +130,7 @@ export default function BillingPage() {
                   limit: 10000000,
                 },
               ]
-          ).map((tier, index, array) => {
+          ).map((tier) => {
             const isCurrent = tier.tier === currentTier;
             
             return (
