@@ -148,7 +148,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-navy px-4 overflow-x-hidden">
+    <div className="relative min-h-[70%] flex flex-col items-center justify-center bg-navy px-4 overflow-x-hidden">
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="h-[500px] w-[700px] max-w-full rounded-full bg-teal/6 blur-[140px]" />

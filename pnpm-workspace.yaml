@@ -2,5 +2,13 @@ ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
 
-overrides:
-  '@herald-protocol/sdk': link:../herald-sdk-ts
+onlyBuiltDependencies:
+  - '@stellar/stellar-sdk'
+  - bcrypt
+  - blake-hash
+  - bufferutil
+  - msw
+  - protobufjs
+  - tiny-secp256k1
+  - usb
+  - utf-8-validate

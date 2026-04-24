@@ -1,9 +1,16 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
+import { apiClient } from "@/lib/api-client";
 
-export function QueryProvider({ children }: { children: React.ReactNode }) {
+interface UseApiReturn {
+  axios: typeof apiClient;
+}
+
+const ApiContext = createContext<UseApiReturn>({ axios: apiClient });
+
+export function QueryProvider({ children }: { children: ReactNode }) {
   const [client] = useState(
     () =>
       new QueryClient({
@@ -20,5 +27,13 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       })
   );
 
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={client}>
+      <ApiContext.Provider value={{ axios: apiClient }}>{children}</ApiContext.Provider>
+    </QueryClientProvider>
+  );
+}
+
+export function useApi(): UseApiReturn {
+  return useContext(ApiContext);
 }
