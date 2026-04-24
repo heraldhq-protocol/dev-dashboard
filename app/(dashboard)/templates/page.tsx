@@ -7,6 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useApi } from "@/components/providers/QueryProvider";
 
 import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Template {
   id: string;
@@ -293,16 +300,20 @@ export default function TemplatesPage() {
                         </svg>
                         Category
                       </label>
-                      <select
+                      <Select
                         value={newTemplate.category}
-                        onChange={(e) => setNewTemplate({ ...newTemplate, category: e.target.value })}
-                        className="w-full bg-card-2 border border-border text-foreground text-sm rounded-lg px-3 py-2.5"
+                        onValueChange={(val) => setNewTemplate({ ...newTemplate, category: val })}
                       >
-                        <option value="defi">DeFi Alert</option>
-                        <option value="governance">Governance</option>
-                        <option value="system">System</option>
-                        <option value="marketing">Marketing</option>
-                      </select>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="defi">DeFi Alerts</SelectItem>
+                          <SelectItem value="governance">Governance</SelectItem>
+                          <SelectItem value="marketing">Marketing</SelectItem>
+                          <SelectItem value="system">System Events</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="space-y-2">

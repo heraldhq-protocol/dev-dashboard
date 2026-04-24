@@ -7,6 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useApi } from "@/components/providers/QueryProvider";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Template {
   id: string;
@@ -279,17 +286,21 @@ export default function TemplateEditorPage() {
                         </svg>
                         Herald Footer
                       </label>
-                      <select
+                      <Select
                         value={editForm.heraldFooter}
-                        onChange={(e) => setEditForm({ ...editForm, heraldFooter: e.target.value })}
-                        className="w-full bg-card-2 border border-border text-foreground text-sm rounded-lg px-3 py-2.5"
+                        onValueChange={(val) => setEditForm({ ...editForm, heraldFooter: val })}
                       >
-                        <option value="full">Full (Developer)</option>
-                        <option value="small">Small (Growth)</option>
-                        <option value="minimal">Minimal (Scale)</option>
-                        <option value="none">None (Enterprise)</option>
-                        <option value="enterprise">Enterprise (Custom)</option>
-                      </select>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select footer type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="full">Full (Developer)</SelectItem>
+                          <SelectItem value="small">Small (Growth)</SelectItem>
+                          <SelectItem value="minimal">Minimal (Scale)</SelectItem>
+                          <SelectItem value="none">None (Enterprise)</SelectItem>
+                          <SelectItem value="enterprise">Enterprise (Custom)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg">
                       <input

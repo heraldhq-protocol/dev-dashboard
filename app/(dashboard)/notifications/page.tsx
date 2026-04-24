@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 import { NotificationsTable } from "@/components/notifications/NotificationsTable";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function NotificationsPage() {
   const [page, setPage] = useState(1);
@@ -35,35 +42,43 @@ export default function NotificationsPage() {
           }}
         />
 
-        <select
-          className="bg-card border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
-          value={params.status}
-          onChange={(e) => {
-            setParams((p) => ({ ...p, status: e.target.value }));
+        <Select
+          value={params.status || "all"}
+          onValueChange={(val) => {
+            setParams((p) => ({ ...p, status: val === "all" ? "" : val }));
             setPage(1);
           }}
         >
-          <option value="">All Statuses</option>
-          <option value="delivered">Delivered</option>
-          <option value="failed">Failed</option>
-          <option value="queued">Queued</option>
-          <option value="processing">Processing</option>
-        </select>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+            <SelectItem value="queued">Queued</SelectItem>
+            <SelectItem value="processing">Processing</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <select
-          className="bg-card border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
-          value={params.category}
-          onChange={(e) => {
-            setParams((p) => ({ ...p, category: e.target.value }));
+        <Select
+          value={params.category || "all"}
+          onValueChange={(val) => {
+            setParams((p) => ({ ...p, category: val === "all" ? "" : val }));
             setPage(1);
           }}
         >
-          <option value="">All Categories</option>
-          <option value="defi">DeFi Alerts</option>
-          <option value="governance">Governance</option>
-          <option value="marketing">Marketing</option>
-          <option value="system">System Events</option>
-        </select>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="defi">DeFi Alerts</SelectItem>
+            <SelectItem value="governance">Governance</SelectItem>
+            <SelectItem value="marketing">Marketing</SelectItem>
+            <SelectItem value="system">System Events</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <NotificationsTable

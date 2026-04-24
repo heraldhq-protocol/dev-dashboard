@@ -11,6 +11,13 @@ import { Modal } from "@/components/ui/Modal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listTeam, inviteMember, removeMember, updateMemberRole } from "@/lib/api/team";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function TeamPage() {
   const queryClient = useQueryClient();
@@ -142,16 +149,20 @@ export default function TeamPage() {
                   {m.role === "owner" ? (
                     <span className="capitalize text-text-muted">Owner</span>
                   ) : (
-                    <select
-                      className="bg-navy-2 border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:border-teal capitalize cursor-pointer disabled:opacity-50"
+                    <Select
                       value={m.role}
-                      onChange={(e) => handleRoleChange(m.id, e.target.value)}
+                      onValueChange={(val) => handleRoleChange(m.id, val)}
                       disabled={updateRoleMutation.isPending}
                     >
-                      <option value="admin">Admin</option>
-                      <option value="developer">Developer</option>
-                      <option value="read_only">Read Only</option>
-                    </select>
+                      <SelectTrigger size="sm" className="w-[120px] capitalize">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="developer">Developer</SelectItem>
+                        <SelectItem value="read_only">Read Only</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -211,19 +222,21 @@ export default function TeamPage() {
             <label className="text-sm font-medium text-text-secondary">
               Role Assignment
             </label>
-            <select
-              className="w-full bg-card border border-border rounded-lg px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-teal cursor-pointer"
+            <Select
               value={inviteRole}
-              onChange={(e) =>
-                setInviteRole(e.target.value as TeamMemberDto["role"])
-              }
+              onValueChange={(val) => setInviteRole(val as any)}
             >
-              <option value="admin">Admin (Full Access)</option>
-              <option value="developer">
-                Developer (API Keys & Logs only)
-              </option>
-              <option value="read_only">Read Only (Analytics only)</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin (Full Access)</SelectItem>
+                <SelectItem value="developer">
+                  Developer (API Keys & Logs only)
+                </SelectItem>
+                <SelectItem value="read_only">Read Only (Analytics only)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-border">

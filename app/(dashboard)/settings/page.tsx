@@ -8,6 +8,13 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset } from "@/lib/api/protocol";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -397,15 +404,19 @@ export default function SettingsPage() {
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Asset Type
             </label>
-            <select
+            <Select
               value={newAssetType}
-              onChange={(e) => setNewAssetType(e.target.value as any)}
-              className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground text-sm"
+              onValueChange={(val) => setNewAssetType(val as any)}
             >
-              <option value="banner">Banner</option>
-              <option value="video">Video</option>
-              <option value="logo">Logo</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="banner">Banner</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
+                <SelectItem value="logo">Logo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex-2">
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
