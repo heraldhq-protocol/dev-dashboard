@@ -68,9 +68,6 @@ export default function ApiKeysPage() {
           >
             <Plus className="h-4 w-4" />
             Create Key
-            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 font-mono text-[10px] font-medium text-white/50 bg-black/20 rounded border border-white/10 ml-2 group-hover:bg-black/30 transition-colors">
-              Ctrl N
-            </kbd>
           </Button>
         }
       />

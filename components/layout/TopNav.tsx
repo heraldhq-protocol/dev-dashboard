@@ -123,7 +123,7 @@ function EnvSwitcher({
           }`}
         >
           {!isLive && (
-            <span className="h-1.5 w-1.5 rounded-full bg-gold flex-shrink-0" />
+            <span className="h-1.5 w-1.5 rounded-full bg-gold shrink-0" />
           )}
           SANDBOX
         </button>
@@ -136,7 +136,7 @@ function EnvSwitcher({
           }`}
         >
           {isLive && (
-            <span className="h-1.5 w-1.5 rounded-full bg-teal animate-pulse flex-shrink-0" />
+            <span className="h-1.5 w-1.5 rounded-full bg-teal animate-pulse shrink-0" />
           )}
           LIVE
         </button>
@@ -154,7 +154,7 @@ function EnvSwitcher({
               }`}
             >
               <span
-                className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${isLive ? "bg-teal animate-pulse" : "bg-gold"}`}
+                className={`h-1.5 w-1.5 rounded-full shrink-0 ${isLive ? "bg-teal animate-pulse" : "bg-gold"}`}
               />
               {isLive ? "LIVE" : "SANDBOX"}
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="opacity-70 ml-0.5">
@@ -196,9 +196,6 @@ function SearchBadge() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
       <span className="font-medium">Search…</span>
-      <kbd className="ml-1 rounded border border-border px-1 py-0.5 font-mono text-[10px] text-text-muted">
-        ⌘K
-      </kbd>
     </button>
   );
 }

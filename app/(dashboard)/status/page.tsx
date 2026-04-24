@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { FiShield, FiActivity, FiZap } from "react-icons/fi";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 export default function StatusPage() {
   const { data: status, isLoading, error } = useQuery({
@@ -39,16 +40,14 @@ export default function StatusPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">System Status</h1>
-        <p className="text-sm text-text-muted mt-1">
-          Monitor your protocol&apos;s on-chain health and messaging quotas.
-        </p>
-      </div>
+    <div className="space-y-6 max-w-6xl">
+      <PageHeader
+        title="System Status"
+        description="Monitor your protocol's on-chain health and messaging quotas."
+      />
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="flex flex-col gap-2 p-5 bg-navy-2 border-border">
+        <Card variant="glow" className="flex flex-col gap-2 p-5 bg-card border-border">
           <div className="flex items-center gap-2 text-text-muted text-sm font-medium mb-1">
             <FiActivity size={16} />
             Protocol Status
@@ -73,7 +72,7 @@ export default function StatusPage() {
           </div>
         </Card>
 
-        <Card className="flex flex-col gap-2 p-5 bg-navy-2 border-border">
+        <Card variant="glow" className="flex flex-col gap-2 p-5 bg-card border-border">
           <div className="flex items-center gap-2 text-text-muted text-sm font-medium mb-1">
             <FiShield size={16} />
             On-Chain Program
@@ -122,9 +121,14 @@ export default function StatusPage() {
         </Card>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h2 className="text-lg font-bold text-white mb-2">Protocol Deactivation</h2>
-        <p className="text-sm text-text-muted max-w-2xl mb-6">
+      <div className="bg-linear-to-br from-red/10 to-transparent border border-red/30 rounded-xl p-8 shadow-[0_0_20px_rgba(255,0,0,0.05)] mt-8">
+        <h2 className="text-red font-bold text-lg mb-2 flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          Protocol Deactivation
+        </h2>
+        <p className="text-red/80 text-sm max-w-2xl mb-6">
           Deactivating your protocol will pause all outgoing notifications immediately. This action
           must be confirmed on-chain prior to resuming service. If you are experiencing an attack,
           suspend your webhooks instead.

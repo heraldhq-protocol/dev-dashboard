@@ -136,14 +136,14 @@ export default function BillingPage() {
             return (
               <div
                 key={tier.tier}
-                className={`relative bg-card rounded-2xl p-6 flex flex-col border ${
+                className={`relative rounded-2xl p-6 flex flex-col border transition-all duration-300 group ${
                   isCurrent
-                    ? "border-teal shadow-[0_0_30px_rgba(0,200,150,0.1)]"
-                    : "border-border"
+                    ? "bg-linear-to-b from-teal/10 to-card border-teal shadow-[0_0_30px_rgba(0,200,150,0.15)] scale-105 z-10"
+                    : "bg-card border-border hover:border-border-2 hover:bg-card-2/50"
                 }`}
               >
                 {isCurrent && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-teal text-navy px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-linear-to-r from-teal to-teal-2 text-navy px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-lg">
                     Current Plan
                   </div>
                 )}
@@ -225,15 +225,24 @@ export default function BillingPage() {
       {paymentData && <PaymentHistory payments={paymentData.payments} />}
 
       {/* Enterprise CTA */}
-      <div className="bg-navy border border-border-2 rounded-xl p-8 text-center mt-12">
-        <h3 className="text-lg font-bold text-foreground mb-2">
-          Need more volume?
-        </h3>
-        <p className="text-sm text-text-muted mb-4 max-w-lg mx-auto">
-          Contact us for custom enterprise plans with massive notification
-          volumes, dedicated IP addresses, and white-glove onboarding.
-        </p>
-        <Button variant="secondary">Contact Sales</Button>
+      <div className="relative rounded-2xl border border-teal/20 bg-linear-to-br from-navy-2 via-navy to-teal/10 overflow-hidden mt-12">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-teal/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+        <div className="relative p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <h3 className="text-xl font-bold text-foreground flex items-center justify-center md:justify-start gap-2">
+              <svg className="w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Need more volume?
+            </h3>
+            <p className="text-sm text-text-muted max-w-xl text-balance">
+              Contact us for custom enterprise plans with massive notification volumes, dedicated IP addresses, custom SLAs, and white-glove onboarding.
+            </p>
+          </div>
+          <Button variant="secondary" className="shrink-0 group">
+            Contact Sales
+          </Button>
+        </div>
       </div>
     </div>
   );

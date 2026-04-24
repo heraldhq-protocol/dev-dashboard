@@ -219,7 +219,7 @@ export default function TemplatesPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/80 backdrop-blur-sm p-4">
           <Card className="w-full max-w-5xl max-h-[90vh] border border-border overflow-hidden flex flex-col">
-            <CardHeader className="flex-shrink-0">
+            <CardHeader className="shrink-0">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Create Template</CardTitle>
@@ -229,7 +229,7 @@ export default function TemplatesPage() {
                 </div>
               </div>
             </CardHeader>
-            <div className="flex border-b border-border px-4 md:px-6 flex-shrink-0 overflow-x-auto">
+            <div className="flex border-b border-border px-4 md:px-6 shrink-0 overflow-x-auto">
               <button
                 onClick={() => setActiveTab("editor")}
                 className={`py-3 px-4 md:px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
@@ -351,13 +351,13 @@ export default function TemplatesPage() {
                 <div className="h-full flex flex-col lg:flex-row gap-6">
                   <div className="flex-1 space-y-4">
                     <div className="p-3 bg-card-2 border border-border rounded-lg">
-                      <label className="text-xs font-medium text-text-muted block mb-2 flex items-center gap-2">
+                      <label className="text-xs font-medium text-text-muted mb-2 flex items-center gap-2">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         Subject Preview
                       </label>
-                      <p className="text-sm text-foreground font-medium break-words">
+                      <p className="text-sm text-foreground font-medium wrap-break-word">
                         {newTemplate.subjectTemplate
                           ? newTemplate.subjectTemplate
                               .replace(/\{\{protocolName\}\}/g, previewVars.protocolName)
@@ -464,7 +464,7 @@ export default function TemplatesPage() {
                 </div>
               )}
             </CardContent>
-            <div className="flex justify-end gap-3 p-4 border-t border-border flex-shrink-0">
+            <div className="flex justify-end gap-3 p-4 border-t border-border shrink-0">
               <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
                 Cancel
               </Button>

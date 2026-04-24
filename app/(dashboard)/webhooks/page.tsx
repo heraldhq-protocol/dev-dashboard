@@ -7,6 +7,8 @@ import { Modal } from "@/components/ui/Modal";
 import { WebhookList } from "@/components/webhooks/WebhookList";
 import { WebhookDeliveryLog } from "@/components/webhooks/WebhookDeliveryLog";
 import { WebhookSecretReveal } from "@/components/webhooks/WebhookSecretReveal";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { Plus, Check } from "lucide-react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -98,41 +100,36 @@ export default function WebhooksPage() {
   };
 
   if (isLoading) {
-    return <div className="text-text-muted">Loading webhooks…</div>;
+    return (
+      <div className="space-y-6">
+        <PageHeader 
+          title="Webhooks" 
+          description="Receive real-time HTTP callbacks when events occur on the Herald network." 
+        />
+        <div className="grid gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-card-2/50 border border-border rounded-xl h-32" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Webhooks
-          </h1>
-          <p className="text-sm text-text-muted mt-1">
-            Receive real-time HTTP callbacks when events occur on the Herald
-            network.
-          </p>
-        </div>
-        <Button
-          onClick={() => setIsCreateOpen(true)}
-          className="gap-2 shrink-0"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      <PageHeader
+        title="Webhooks"
+        description="Receive real-time HTTP callbacks when events occur on the Herald network."
+        actions={
+          <Button
+            onClick={() => setIsCreateOpen(true)}
+            className="gap-2 shrink-0 group"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          Add Endpoint
-        </Button>
-      </div>
+            <Plus className="h-4 w-4" />
+            Add Endpoint
+          </Button>
+        }
+      />
 
       <WebhookList
         webhooks={webhooks}
@@ -193,7 +190,7 @@ export default function WebhooksPage() {
                         : "bg-card border-border text-text-muted hover:border-text-muted hover:bg-card-2"
                     }`}
                   >
-                    {isSelected && <span className="mr-1.5">✓</span>}
+                    {isSelected && <Check className="w-3.5 h-3.5 mr-1.5 inline-block text-teal" />}
                     {event}
                   </button>
                 );

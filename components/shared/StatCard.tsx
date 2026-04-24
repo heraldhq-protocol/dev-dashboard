@@ -159,7 +159,7 @@ export function StatCard({
       className={cn(
         "group relative rounded-xl border border-border bg-navy-2 p-5 overflow-hidden cursor-default",
         "transition-all duration-300",
-        glowOnHover && "hover:border-teal/20 hover:shadow-[var(--card-glow-hover)]",
+        glowOnHover && "hover:border-teal/20 hover:shadow-(--card-glow-hover)",
         className,
       )}
     >

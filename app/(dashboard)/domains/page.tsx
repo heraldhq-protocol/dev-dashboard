@@ -8,7 +8,7 @@ import { useApi } from "@/components/providers/QueryProvider";
 import { toast } from "sonner";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { useSession } from "next-auth/react";
-
+import { Globe } from "lucide-react";
 interface Domain {
   id: string;
   domain: string;
@@ -153,9 +153,7 @@ export default function DomainsPage() {
       {domains.length === 0 ? (
         <Card className="border-border">
           <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
-            <svg className="w-12 h-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945a2 2 0 01-.865 1.175l-.837 1.477a1 125 1 125 0 00-.263 1.002 7 7 0 007.263 7.263l.837-1.477a2.002 2.002 0 011.175-.865H15a2 2 0 012 2v1a2 2 0 01-2 2 2 2 0 01-2-2v-1a2 2 0 00-2-2H5.055z" />
-            </svg>
+            <Globe className="w-12 h-12 text-muted-foreground" />
             <p className="text-muted-foreground">No custom domains yet. Add one to get started.</p>
             <Button onClick={() => setShowAddModal(true)}>
               Add Domain

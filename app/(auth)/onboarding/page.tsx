@@ -152,13 +152,15 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="relative min-h-[70%] flex flex-col items-center justify-center bg-navy px-4 overflow-x-hidden">
-      {/* Background glow */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="h-[500px] w-[700px] max-w-full rounded-full bg-teal/6 blur-[140px]" />
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-navy px-4 overflow-x-hidden selection:bg-teal/30">
+      {/* Premium ambient background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-linear-to-b from-navy-2 via-navy to-navy" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-[600px] bg-teal/10 rounded-full blur-[120px] pointer-events-none opacity-60" />
+        <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[150px] pointer-events-none" />
       </div>
 
-      <div className="relative z-10 w-full max-w-[700px]">
+      <div className="relative z-10 w-full max-w-[700px] py-12">
         {/* Logo */}
         <div className="mb-8 flex items-center justify-center gap-3 mx-auto">
           <Image width={30} height={30} src="/logo.svg" alt="logo" />
@@ -169,7 +171,7 @@ export default function OnboardingPage() {
 
         <StepIndicator current={step} />
 
-        <div className="rounded-2xl border border-border bg-card p-7 shadow-2xl max-w-[640px] mx-auto">
+        <div className="rounded-3xl border border-white/5 bg-navy-2/60 backdrop-blur-xl p-8 sm:p-10 shadow-[0_0_80px_rgba(0,0,0,0.5)] max-w-[640px] mx-auto animate-in fade-in zoom-in-95 duration-500">
           {/* ── Step 0: Welcome / Confirmation ── */}
           {step === 0 && (
             <div className="flex flex-col items-center gap-6 text-center py-4">
@@ -177,14 +179,13 @@ export default function OnboardingPage() {
                 👋
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                <h1 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">
                   Welcome to Herald
                 </h1>
-                <p className="text-sm text-text-muted mt-2 max-w-xs mx-auto">
-                  The Herald Dev Dashboard is a control panel for protocols to
-                  manage notifications and user engagement.
+                <p className="text-sm text-text-muted max-w-sm mx-auto leading-relaxed">
+                  The ultimate notification gateway. Set up your protocol to start sending messages directly to wallets.
                 </p>
-                <div className="mt-6 p-4 rounded-xl bg-navy-2 border border-border text-left">
+                <div className="mt-8 p-5 rounded-2xl bg-black/40 border border-white/5 text-left">
                   <p className="text-xs font-semibold text-teal uppercase tracking-widest mb-1">
                     Please Confirm
                   </p>
@@ -242,12 +243,11 @@ export default function OnboardingPage() {
                 🔗
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">
                   Connect Your Wallet
                 </h1>
-                <p className="text-sm text-text-muted mt-2 max-w-xs mx-auto">
-                  Connect the Solana wallet that will manage your protocol
-                  account.
+                <p className="text-sm text-text-muted mt-2 max-w-sm mx-auto">
+                  Connect the Solana wallet that will be the owner of your protocol account.
                 </p>
               </div>
               <Button
@@ -275,10 +275,10 @@ export default function OnboardingPage() {
           {/* ── Step 2: Protocol Details ── */}
           {step === 2 && (
             <form onSubmit={handleDetailsNext} className="flex flex-col gap-5">
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Protocol Details</h1>
+              <div className="text-center mb-4">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">Protocol Details</h1>
                 <p className="text-sm text-text-muted mt-1">
-                  Tell us about your protocol.
+                  Tell us about your protocol to configure your workspace.
                 </p>
               </div>
 
@@ -345,11 +345,10 @@ export default function OnboardingPage() {
           {/* ── Step 3: Sign & Register ── */}
           {step === 3 && (
             <div className="flex flex-col gap-5">
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Sign & Register</h1>
-                <p className="text-sm text-text-muted mt-1">
-                  Your wallet will sign a message verifying ownership. No gas fees
-                  — this is off-chain.
+              <div className="text-center mb-4">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">Sign & Register</h1>
+                <p className="text-sm text-text-muted mt-1 max-w-sm mx-auto text-balance">
+                  Your wallet will sign a message verifying ownership. No gas fees are required.
                 </p>
               </div>
 
@@ -396,20 +395,21 @@ export default function OnboardingPage() {
           {step === 4 && (
             <div className="flex flex-col gap-5 text-center">
               <div className="flex flex-col items-center gap-3">
-                <div className="h-14 w-14 rounded-full bg-teal/15 border border-teal/30 flex items-center justify-center text-2xl">
+                <div className="h-16 w-16 rounded-full bg-linear-to-br from-teal/20 to-teal/5 border border-teal/30 flex items-center justify-center text-3xl shadow-[0_0_30px_rgba(0,200,150,0.2)]">
                   ✓
                 </div>
-                <h1 className="text-xl font-bold text-foreground">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight mt-2">
                   Protocol Registered!
                 </h1>
-                <p className="text-sm text-text-muted max-w-xs mx-auto">
-                  Your Herald protocol account is live. Save your API key — it
+                <p className="text-sm text-text-muted max-w-sm mx-auto leading-relaxed">
+                  Your Herald protocol account is live. Save your Sandbox API key securely — it
                   won&apos;t be shown again.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-teal/20 bg-teal/5 p-4">
-                <p className="text-xs text-text-muted mb-2 text-left font-semibold uppercase tracking-wider">
+              <div className="rounded-2xl border border-teal/20 bg-linear-to-b from-teal/10 to-transparent p-5 text-left relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-teal/20 blur-3xl -mr-10 -mt-10 pointer-events-none" />
+                <p className="text-xs text-teal mb-3 font-bold uppercase tracking-widest relative z-10">
                   Sandbox API Key
                 </p>
                 <div className="flex items-center gap-2">

@@ -328,13 +328,13 @@ export default function TemplateEditorPage() {
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 space-y-4">
                 <div className="p-3 bg-card-2 border border-border rounded-lg">
-                  <label className="text-xs font-medium text-text-muted block mb-2 flex items-center gap-2">
+                  <label className="text-xs font-medium text-text-muted mb-2 flex items-center gap-2">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Subject Preview
                   </label>
-                  <p className="text-sm text-foreground font-medium break-words">
+                  <p className="text-sm text-foreground font-medium wrap-break-word">
                     {editForm.subjectTemplate
                       ? editForm.subjectTemplate
                           .replace(/\{\{protocolName\}\}/g, previewVars.protocolName)

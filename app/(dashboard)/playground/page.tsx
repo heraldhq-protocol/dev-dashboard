@@ -11,6 +11,8 @@ import { testSend, previewNotification, getPlaygroundApiKey, type PlaygroundApiK
 import { Button } from "@/components/ui/Button";
 import { TestSendDto } from "@/types/api";
 import { isAxiosError } from "axios";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { RotateCcw } from "lucide-react";
 
 type ChannelTab = "email" | "telegram" | "sms";
 
@@ -79,38 +81,44 @@ export default function PlaygroundPage() {
 
   return (
     <div className="flex flex-col lg:h-[calc(100vh-8rem)] space-y-4">
-      <div className="mb-2 shrink-0">
-        <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-foreground">
-          Notification Playground
-        </h1>
-        <p className="text-xs lg:text-sm text-text-muted mt-1">
-          Draft and preview notifications across channels.
-        </p>
-      </div>
-
-      {/* API Key Status */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 bg-card-2 rounded-lg border border-border">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-text-secondary">API Key:</span>
-          {loadingKey ? (
-            <span className="text-sm text-text-muted">Loading...</span>
-          ) : apiKey ? (
-            <span className="text-sm text-foreground font-mono">
-              {apiKey.keyPrefix}... (auto)
-            </span>
-          ) : (
-            <span className="text-sm text-text-muted">No key</span>
-          )}
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => refetchKey()}
-          disabled={loadingKey}
-        >
-          Refresh
-        </Button>
-      </div>
+      <PageHeader
+        title="Notification Playground"
+        description="Draft and preview notifications across channels."
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-card-2 border border-border rounded-full shadow-inner">
+              <span className="text-xs font-medium text-text-muted">API Key:</span>
+              {loadingKey ? (
+                <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              ) : apiKey ? (
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-green shadow-[0_0_8px_#27AE60]" />
+                  <span className="text-xs text-foreground font-mono font-bold tracking-wider">
+                    {apiKey.keyPrefix}••••
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-red shadow-[0_0_8px_#E74C3C]" />
+                  <span className="text-xs text-red font-semibold">Missing</span>
+                </div>
+              )}
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setHtmlSnippet(null);
+                toast.success("Playground reset");
+              }}
+              className="gap-2 shrink-0 group hidden sm:flex"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-text-muted group-hover:text-foreground transition-transform group-hover:-rotate-180 duration-500" />
+              Reset
+            </Button>
+          </div>
+        }
+      />
 
       {/* Channel Tabs */}
       <div className="flex border-b border-border overflow-x-auto">

@@ -180,7 +180,7 @@ export default function OverviewPage() {
 
       {/* Quick Start (Shows only if 0 sends) */}
       {!isLoading && totalSends === 0 && (
-        <Card variant="glow" className="overflow-hidden border-teal/20 bg-gradient-to-br from-card to-teal/5">
+        <Card variant="glow" className="overflow-hidden border-teal/20 bg-linear-to-br from-card to-teal/5">
           <CardContent className="p-6 sm:p-8">
             <div className="max-w-2xl">
               <h2 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">

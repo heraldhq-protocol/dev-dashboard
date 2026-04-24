@@ -256,7 +256,7 @@ export function Sidebar() {
               <span
                 className={cn(
                   "text-xl font-extrabold tracking-tight whitespace-nowrap overflow-hidden",
-                  "bg-gradient-to-r from-foreground via-teal-2 to-foreground bg-clip-text text-transparent",
+                  "bg-linear-to-r from-foreground via-teal-2 to-foreground bg-clip-text text-transparent",
                   "transition-[opacity,max-width] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
                   collapsed
                     ? "lg:max-w-0 lg:opacity-0"
