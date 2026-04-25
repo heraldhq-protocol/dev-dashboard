@@ -73,11 +73,17 @@ export default function ApiKeysPage() {
       />
 
       {/* Info Banner */}
-      <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400">
-        <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-        <div className="text-sm leading-relaxed">
-          <p className="font-semibold mb-1">Keep your keys secure</p>
-          <p className="opacity-90">
+      <div className="flex items-start gap-3 p-3.5 mb-8 rounded-lg border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400 shadow-sm transition-transform hover:-translate-y-0.5">
+        <div className="p-1.5 bg-amber-500/10 rounded-md shrink-0">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <div className="text-[13px] leading-tight mt-0.5">
+          <p className="font-semibold mb-1 flex items-center gap-1.5">
+            Keep your keys secure
+          </p>
+          <p className="opacity-85">
             Live keys bypass the sandbox environment and perform real actions on the network. 
             Do not commit them to version control or expose them in client-side code.
           </p>
@@ -100,7 +106,7 @@ export default function ApiKeysPage() {
       {/* Styled Divider */}
       <div className="relative py-4">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-border border-dashed" />
+          <div className="w-full border-t-2 border-border/60 border-dashed" />
         </div>
         <div className="relative flex justify-center">
           <span className="bg-bg-primary px-3 text-xs uppercase tracking-widest text-text-muted font-medium">

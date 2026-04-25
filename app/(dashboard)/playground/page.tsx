@@ -1,176 +1,169 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { EmailComposer } from "@/components/playground/EmailComposer";
-import { TelegramComposer } from "@/components/playground/TelegramComposer";
-import { SmsComposer } from "@/components/playground/SmsComposer";
-import { EmailPreview } from "@/components/playground/EmailPreview";
-import { testSend, previewNotification, getPlaygroundApiKey, type PlaygroundApiKey } from "@/lib/api/notifications";
-import { Button } from "@/components/ui/Button";
-import { TestSendDto } from "@/types/api";
-import { isAxiosError } from "axios";
+import { useComposerStore } from "@/hooks/use-composer-store";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { RotateCcw } from "lucide-react";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ChannelToggle } from "@/components/playground/channel-toggle";
+import { ComposerEditor } from "@/components/playground/composer-editor";
+import { ComposerPreview } from "@/components/playground/composer-preview";
+import { Button } from "@/components/ui/Button";
+import { Save, Send, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
+// We import and mock the send action just for demonstration in the new UI.
+import { testSend, getPlaygroundApiKey } from "@/lib/api/notifications";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/Input";
 
-type ChannelTab = "email" | "telegram" | "sms";
+export default function ComposersPlaygroundPage() {
+  const store = useComposerStore();
+  const [testSendOpen, setTestSendOpen] = useState(false);
+  const [recipient, setRecipient] = useState("");
 
-export default function PlaygroundPage() {
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<ChannelTab>("email");
-  const [htmlSnippet, setHtmlSnippet] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState<"html" | "telegram" | "sms">("html");
-  const [apiKey, setApiKey] = useState<PlaygroundApiKey | null>(null);
-
-  const { data: keyData, isLoading: loadingKey, refetch: refetchKey } = useQuery({
+  const { data: apiKeyData } = useQuery({
     queryKey: ["playground-api-key"],
     queryFn: getPlaygroundApiKey,
   });
 
-  if (keyData && !apiKey) {
-    setApiKey(keyData);
-  }
-
-  const previewMutation = useMutation({
-    mutationFn: (dto: TestSendDto) => {
-      if (!apiKey?.key) {
-        throw new Error("No API key available");
-      }
-      return previewNotification(dto, apiKey.key, activeTab as "email" | "telegram" | "sms");
-    },
-    onSuccess: (data) => {
-      if (activeTab === "email" && data.renderedHtml) {
-        setHtmlSnippet(data.renderedHtml);
-      } else if (activeTab === "telegram" && data.telegramText) {
-        setHtmlSnippet(data.telegramText);
-      } else if (activeTab === "sms" && data.smsText) {
-        setHtmlSnippet(data.smsText);
-      }
-    },
-    onError: (err: unknown) => {
-      if (isAxiosError(err)) {
-        toast.error(err?.response?.data?.message || "Failed to render preview");
-      }
-      if (err instanceof Error) {
-        toast.error(err.message);
-      }
-    },
-  });
-
   const sendMutation = useMutation({
-    mutationFn: (dto: TestSendDto) => {
-      if (!apiKey?.key) {
-        throw new Error("No API key available");
-      }
-      return testSend({ ...dto, previewOnly: false }, apiKey.key, activeTab as "email" | "telegram" | "sms");
+    mutationFn: async () => {
+      if (!apiKeyData?.key) throw new Error("No API key available");
+      if (!recipient) throw new Error("Recipient required");
+      
+      const content = 
+        store.activeChannel === "email" ? store.emailContent :
+        store.activeChannel === "telegram" ? store.telegramContent :
+        store.smsContent;
+
+      return testSend(
+        { 
+          walletAddress: recipient, 
+          subject: store.emailSubject,
+          body: content, 
+          category: "system",
+          previewOnly: false 
+        },
+        apiKeyData.key,
+        store.activeChannel
+      );
     },
-    onSuccess: (data) => {
-      toast.success(`Test notification sent via ${activeTab}!`);
-      if (data.renderedHtml) {
-        setHtmlSnippet(data.renderedHtml);
-      }
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    onSuccess: () => {
+      toast.success(`Test notification sent via ${store.activeChannel}!`);
+      setTestSendOpen(false);
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || "Failed to send notification");
     },
   });
 
-  const isLoading = previewMutation.isPending || sendMutation.isPending;
+  const handleSaveDraft = () => {
+    // We already persist locally via Zustand. We could sync to API here.
+    toast.success("Draft saved locally");
+  };
+
+  const handleReset = () => {
+    store.resetDraft(store.activeChannel);
+    toast.success(`${store.activeChannel} draft reset`);
+  };
 
   return (
-    <div className="flex flex-col lg:h-[calc(100vh-8rem)] space-y-4">
+    <div className="flex flex-col h-[calc(100vh-8rem)]">
       <PageHeader
-        title="Notification Playground"
-        description="Draft and preview notifications across channels."
+        title="Composers Playground"
+        description="Draft and preview multi-channel notifications in real-time."
         actions={
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 px-4 py-2 bg-navy-2/60 backdrop-blur-md border border-white/5 rounded-full shadow-2xl">
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Live API</span>
-              {loadingKey ? (
-                <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-              ) : apiKey ? (
-                <div className="flex items-center gap-2.5">
-                  <div className="h-2 w-2 rounded-full bg-green shadow-[0_0_10px_#27AE60]" />
-                  <span className="text-xs text-foreground font-mono font-bold tracking-widest bg-white/5 px-2 py-0.5 rounded">
-                    {apiKey.keyPrefix}<span className="opacity-30">••••</span>
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-red shadow-[0_0_10px_#E74C3C]" />
-                  <span className="text-[10px] text-red/80 font-bold uppercase">Missing</span>
-                </div>
-              )}
-            </div>
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => {
-                setHtmlSnippet(null);
-                toast.success("Playground reset");
-              }}
-              className="gap-2 shrink-0 group hidden sm:flex bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-4"
+              onClick={handleReset}
+              className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-4"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-text-muted group-hover:text-primary transition-transform group-hover:-rotate-180 duration-700" />
-              <span className="text-xs font-bold uppercase tracking-tighter">Reset</span>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Reset</span>
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleSaveDraft}
+              className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-4"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Save Draft</span>
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setTestSendOpen(true)}
+              className="gap-2 rounded-full px-5"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Send Test</span>
             </Button>
           </div>
         }
       />
 
-      {/* Channel Tabs */}
-      <div className="flex border-b border-white/5 overflow-x-auto mb-2">
-        {(["email", "telegram", "sms"] as ChannelTab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 text-sm font-bold capitalize transition-all border-b-2 -mb-px whitespace-nowrap ${
-              activeTab === tab
-                ? "text-primary border-primary"
-                : "text-text-muted border-transparent hover:text-foreground hover:bg-white/5"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Composer + Preview Grid */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 min-h-0">
-        <div className="min-h-[400px] lg:min-h-0">
-          {activeTab === "email" && (
-            <EmailComposer
-              onPreview={(dto) => previewMutation.mutate(dto)}
-              onSend={(dto) => sendMutation.mutate(dto)}
-              isLoading={isLoading}
-            />
-          )}
-          {activeTab === "telegram" && (
-            <TelegramComposer
-              onPreview={(dto) => previewMutation.mutate(dto)}
-              onSend={(dto) => sendMutation.mutate(dto)}
-              isLoading={isLoading}
-            />
-          )}
-          {activeTab === "sms" && (
-            <SmsComposer
-              onPreview={(dto) => previewMutation.mutate(dto)}
-              onSend={(dto) => sendMutation.mutate(dto)}
-              isLoading={isLoading}
-            />
-          )}
-        </div>
-
-        {/* Preview Panel */}
-        <div className="flex flex-col min-h-[400px] lg:min-h-0">
-          <EmailPreview
-            htmlSnippet={htmlSnippet}
-            isLoading={previewMutation.isPending}
-          />
+      <div className="flex-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col min-h-0 mt-4">
+        <ChannelToggle />
+        
+        <div className="flex-1 min-h-0">
+          <ResizablePanelGroup orientation="horizontal" className="h-full">
+            <ResizablePanel defaultSize={45} minSize={30} className="flex flex-col">
+              <ComposerEditor />
+            </ResizablePanel>
+            
+            <ResizableHandle withHandle className="bg-border border-x border-border hover:bg-primary/20 transition-colors" />
+            
+            <ResizablePanel defaultSize={55} minSize={30}>
+              <ComposerPreview />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       </div>
+
+      <Dialog open={testSendOpen} onOpenChange={setTestSendOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Test Notification</DialogTitle>
+            <DialogDescription>
+              Send a test {store.activeChannel} to verify delivery. Variables will be replaced with your Test Data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Recipient ({store.activeChannel})</label>
+              <Input
+                placeholder={
+                  store.activeChannel === "email" ? "test@example.com" :
+                  store.activeChannel === "telegram" ? "@username or ID" :
+                  "+1234567890"
+                }
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTestSendOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={() => sendMutation.mutate()} 
+              disabled={!recipient || sendMutation.isPending}
+              isLoading={sendMutation.isPending}
+            >
+              Send Test
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

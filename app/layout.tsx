@@ -34,7 +34,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("h-full", "antialiased", syne.variable, jetbrainsMono.variable, "font-sans")}
     >
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col" suppressHydrationWarning>
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

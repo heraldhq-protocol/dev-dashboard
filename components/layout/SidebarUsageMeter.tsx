@@ -97,9 +97,9 @@ export function SidebarUsageMeter({ collapsed }: { collapsed: boolean }) {
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-1000 ease-out",
-                    fillPct > 0 ? barColor : "",
+                    pct === 0 ? "bg-teal/10" : fillPct > 0 ? barColor : "",
                   )}
-                  style={{ width: `${fillPct}%` }}
+                  style={{ width: pct === 0 ? "100%" : `${fillPct}%` }}
                 />
               </div>
             );

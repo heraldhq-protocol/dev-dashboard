@@ -53,8 +53,8 @@ export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
                     return (
                       <Badge
                         key={s}
-                        variant={isWrite ? "default" : "secondary"}
-                        className="capitalize text-[10px] px-2 py-0.5"
+                        variant={isWrite ? "default" : "outline"}
+                        className={`capitalize text-[10px] px-2 py-0.5 ${!isWrite ? "bg-card-2/50" : ""}`}
                       >
                         {label}
                       </Badge>
@@ -88,7 +88,7 @@ export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
           </thead>
           <tbody className="divide-y divide-border bg-card">
             {keys.map((k) => (
-              <tr key={k.id} className="hover:bg-card-2/50 transition-colors group">
+              <tr key={k.id} className="hover:bg-muted/30 transition-colors group">
                 <td className="px-6 py-4 whitespace-nowrap text-foreground font-medium">
                   {k.name}
                 </td>
@@ -103,8 +103,8 @@ export function ApiKeyTable({ keys, onRevokeClick }: ApiKeyTableProps) {
                       return (
                         <Badge
                           key={s}
-                          variant={isWrite ? "default" : "secondary"}
-                          className="capitalize"
+                          variant={isWrite ? "default" : "outline"}
+                          className={`capitalize ${!isWrite ? "bg-card-2/50" : ""}`}
                         >
                           {label}
                         </Badge>

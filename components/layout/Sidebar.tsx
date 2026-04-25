@@ -142,7 +142,7 @@ function NavItem({
               // Left accent bar
               "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:bg-teal before:shadow-[0_0_8px_rgba(0,200,150,0.6)]",
             ]
-          : "text-text-secondary hover:bg-card-2 hover:text-primary hover:ring-1 hover:ring-teal/10",
+          : "text-text-secondary hover:bg-white/5 hover:text-primary hover:translate-x-1",
       )}
     >
       <svg

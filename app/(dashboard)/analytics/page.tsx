@@ -57,6 +57,8 @@ export default function AnalyticsPage() {
           delta="—"
           deltaType="neutral"
           detail={`last ${days} days`}
+          sparklineData={delivered > 0 ? undefined : [0, 0, 0, 0, 0, 0]}
+          sparklineColor="#7f91a4"
           isLoading={isLoading}
         />
         <StatCard
@@ -65,6 +67,8 @@ export default function AnalyticsPage() {
           delta="—"
           deltaType="neutral"
           detail={`last ${days} days`}
+          sparklineData={failed > 0 ? undefined : [0, 0, 0, 0, 0, 0]}
+          sparklineColor="#7f91a4"
           isLoading={isLoading}
         />
         <StatCard
@@ -73,6 +77,8 @@ export default function AnalyticsPage() {
           delta="↓ 8ms"
           deltaType="positive"
           detail="p95 response time"
+          sparklineData={[180, 160, 150, 148, 145, 142]}
+          className="border-teal/30 shadow-[0_0_15px_rgba(0,200,150,0.1)] ring-1 ring-teal/10"
           isLoading={isLoading}
         />
         <StatCard
@@ -81,6 +87,8 @@ export default function AnalyticsPage() {
           delta="—"
           deltaType="neutral"
           detail={`last ${days} days`}
+          sparklineData={totalVolume > 0 ? undefined : [0, 0, 0, 0, 0, 0]}
+          sparklineColor="#7f91a4"
           isLoading={isLoading}
         />
       </div>
@@ -133,7 +141,24 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="pt-4">
             {!isLoading && data ? (
-              <SendsBarChart data={data.dailyVolume || []} type={chartType} />
+              totalVolume > 0 ? (
+                <SendsBarChart data={data.dailyVolume || []} type={chartType} />
+              ) : (
+                <div className="h-[250px] w-full flex flex-col items-center justify-center gap-3 bg-[url('/grid-pattern.svg')] bg-center bg-repeat opacity-80">
+                  <div className="h-12 w-12 rounded-full bg-card-2 flex items-center justify-center border border-border">
+                    <svg className="w-6 h-6 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-foreground">No notifications sent yet</p>
+                    <p className="text-xs text-text-muted mt-1">Send a notification to see volume metrics.</p>
+                  </div>
+                  <Button variant="outline" size="sm" className="mt-2 text-xs" onClick={() => window.location.href = '/playground'}>
+                    Send your first notification &rarr;
+                  </Button>
+                </div>
+              )
             ) : (
               <div className="h-[250px] w-full flex items-center justify-center">
                 <div className="animate-shimmer h-full w-full rounded-md opacity-20" />
@@ -159,7 +184,16 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent className="flex flex-col items-center pt-4">
               {!isLoading && data ? (
-                <DeliveryStatusDonut data={data.statusBreakdown || []} />
+                totalVolume > 0 ? (
+                  <DeliveryStatusDonut data={data.statusBreakdown || []} />
+                ) : (
+                  <div className="h-[180px] w-full flex flex-col items-center justify-center gap-2">
+                    <div className="h-10 w-10 rounded-full border-2 border-dashed border-border/60 flex items-center justify-center text-text-muted">
+                      <span className="text-[10px] font-bold">0%</span>
+                    </div>
+                    <p className="text-xs text-text-muted mt-2">No delivery data</p>
+                  </div>
+                )
               ) : (
                 <div className="h-[180px] w-full flex items-center justify-center">
                   <div className="animate-shimmer h-32 w-32 rounded-full opacity-20" />
@@ -182,7 +216,16 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent className="pt-4">
               {!isLoading && data ? (
-                <CategoryBreakdownBars data={data.categoryBreakdown || []} />
+                totalVolume > 0 ? (
+                  <CategoryBreakdownBars data={data.categoryBreakdown || []} />
+                ) : (
+                  <div className="h-[180px] w-full flex flex-col items-center justify-center gap-2">
+                    <svg className="w-8 h-8 text-text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    <p className="text-xs text-text-muted mt-2">No category data</p>
+                  </div>
+                )
               ) : (
                 <div className="h-[180px] w-full flex flex-col gap-4 mt-2">
                   <div className="animate-shimmer h-8 w-full rounded-md opacity-20" />
