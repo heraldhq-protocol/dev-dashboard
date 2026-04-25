@@ -23,6 +23,7 @@ export default function WebhooksPage() {
   // Modals state
   const [newSecret, setNewSecret] = useState<string | null>(null);
   const [viewLogsId, setViewLogsId] = useState<string | null>(null);
+  const [webhookToDelete, setWebhookToDelete] = useState<string | null>(null);
 
   const { data: webhooks = [], isLoading } = useQuery({
     queryKey: ["webhooks"],
@@ -62,6 +63,7 @@ export default function WebhooksPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
       toast.success("Webhook deleted");
+      setWebhookToDelete(null);
     },
   });
 
@@ -78,10 +80,14 @@ export default function WebhooksPage() {
   }, [updateMutation]);
 
   const handleDelete = useCallback((id: string) => {
-    if (confirm("Are you sure you want to delete this webhook?")) {
-      deleteMutation.mutate(id);
+    setWebhookToDelete(id);
+  }, []);
+
+  const confirmDelete = () => {
+    if (webhookToDelete) {
+      deleteMutation.mutate(webhookToDelete);
     }
-  }, [deleteMutation]);
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,6 +227,38 @@ export default function WebhooksPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Webhook Modal */}
+      <Modal
+        isOpen={!!webhookToDelete}
+        onClose={() => setWebhookToDelete(null)}
+        title="Delete Webhook"
+      >
+        <div className="flex flex-col gap-6 mt-2">
+          <p className="text-sm text-text-muted">
+            Are you sure you want to delete this webhook? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-border">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setWebhookToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="bg-red hover:bg-red/90 text-white"
+              disabled={deleteMutation.isPending}
+              isLoading={deleteMutation.isPending}
+              onClick={confirmDelete}
+            >
+              Delete Webhook
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
