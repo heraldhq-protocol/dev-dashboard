@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts";
 import { FiAlertTriangle, FiActivity, FiZap, FiCode, FiKey } from "react-icons/fi";
@@ -22,6 +22,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats, getAnalyticsTrends } from "@/lib/api/analytics";
 import { listNotifications } from "@/lib/api/notifications";
 import Link from "next/link";
+import { BarChart3 } from "lucide-react";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 
@@ -174,33 +176,33 @@ export default function OverviewPage() {
               </p>
               
               <div className="grid sm:grid-cols-3 gap-4">
-                <div className="bg-card-2 border border-border rounded-lg p-4">
+                <div className="bg-card-2 border border-border rounded-lg p-4 transition-all duration-200 hover:border-border-2 hover:-translate-y-px hover:shadow-(--card-glow-hover) group">
                   <div className="h-8 w-8 rounded-full bg-navy border border-border flex items-center justify-center mb-3">
                     <FiKey className="text-teal w-4 h-4" />
                   </div>
-                  <h3 className="text-sm font-bold text-foreground mb-1">1. Create API Key</h3>
+                  <h3 className="text-sm font-bold text-foreground mb-1 group-hover:text-teal transition-colors">1. Create API Key</h3>
                   <p className="text-xs text-text-muted mb-3">Generate a live or test key to authenticate requests.</p>
                   <Button variant="outline" size="sm" asChild className="w-full">
                     <Link href="/api-keys">Go to API Keys</Link>
                   </Button>
                 </div>
                 
-                <div className="bg-card-2 border border-border rounded-lg p-4">
+                <div className="bg-card-2 border border-border rounded-lg p-4 transition-all duration-200 hover:border-border-2 hover:-translate-y-px hover:shadow-(--card-glow-hover) group">
                   <div className="h-8 w-8 rounded-full bg-navy border border-border flex items-center justify-center mb-3">
                     <FiCode className="text-purple w-4 h-4" />
                   </div>
-                  <h3 className="text-sm font-bold text-foreground mb-1">2. Read the Docs</h3>
+                  <h3 className="text-sm font-bold text-foreground mb-1 group-hover:text-purple transition-colors">2. Read the Docs</h3>
                   <p className="text-xs text-text-muted mb-3">Learn how to format payloads and trigger sends.</p>
                   <Button variant="outline" size="sm" className="w-full">
                     View Documentation
                   </Button>
                 </div>
 
-                <div className="bg-card-2 border border-border rounded-lg p-4">
+                <div className="bg-card-2 border border-border rounded-lg p-4 transition-all duration-200 hover:border-border-2 hover:-translate-y-px hover:shadow-(--card-glow-hover) group">
                   <div className="h-8 w-8 rounded-full bg-navy border border-border flex items-center justify-center mb-3">
                     <FiActivity className="text-gold w-4 h-4" />
                   </div>
-                  <h3 className="text-sm font-bold text-foreground mb-1">3. Send First Event</h3>
+                  <h3 className="text-sm font-bold text-foreground mb-1 group-hover:text-gold transition-colors">3. Send First Event</h3>
                   <p className="text-xs text-text-muted mb-3">Use the playground to test your first notification.</p>
                   <Button variant="default" size="sm" asChild className="w-full">
                     <Link href="/playground">Open Playground</Link>
@@ -234,10 +236,21 @@ export default function OverviewPage() {
         />
         <StatCard
           label="Avg Latency"
-          value="142ms"
+          value={
+            <TooltipProvider>
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help border-b border-dashed border-text-muted/50 pb-0.5">142ms</span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  p95 response time
+                </TooltipContent>
+              </UITooltip>
+            </TooltipProvider>
+          }
           delta="↓ 8ms"
           deltaType="positive"
-          detail="p95 response time"
+          detail="Last 30 days"
           sparklineData={latencySparkline}
           isLoading={isLoading}
         />
@@ -246,7 +259,14 @@ export default function OverviewPage() {
           value={isLoading ? "..." : stats?.activeWebhooks ?? 0}
           delta="—"
           deltaType="neutral"
+          topRight={(stats?.activeWebhooks ?? 0) === 0 ? (
+            <Link href="/webhooks" className="text-teal text-[10px] font-bold hover:underline transition-colors">
+              Set up webhooks &rarr;
+            </Link>
+          ) : undefined}
           detail="Listening endpoints"
+          sparklineData={(stats?.activeWebhooks ?? 0) === 0 ? [0,0,0,0,0,0,0] : undefined}
+          sparklineColor="#7f91a4"
           isLoading={isLoading}
         />
       </div>
@@ -301,6 +321,16 @@ export default function OverviewPage() {
                     ))}
                   </div>
                 </div>
+              ) : (trends?.totalVolume ?? 0) === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center">
+                  <div className="h-10 w-10 rounded-lg bg-card-2 border border-border flex items-center justify-center mb-3 shadow-sm">
+                    <BarChart3 className="w-5 h-5 text-text-muted" />
+                  </div>
+                  <p className="text-sm font-medium text-foreground">No notifications sent yet</p>
+                  <Link href="/playground" className="text-teal text-xs font-bold hover:underline mt-1.5 transition-colors">
+                    Send your first notification &rarr;
+                  </Link>
+                </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
@@ -316,7 +346,7 @@ export default function OverviewPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-alt)" vertical={false} />
                     <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
                     <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} dx={-10} />
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{ backgroundColor: "var(--bg-card-2)", border: "1px solid var(--border-alt)", borderRadius: "8px", color: "var(--text-main)" }}
                       itemStyle={{ color: "#00c896", fontWeight: "bold" }}
                     />
@@ -332,24 +362,21 @@ export default function OverviewPage() {
         <Card className="lg:col-span-3 flex flex-col overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 pb-4 shrink-0">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-base">Recent Failures</CardTitle>
+              <CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-wider text-left">Recent Failures</CardTitle>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-red/10 border border-red/20 px-2 py-0.5 text-[10px] font-bold text-red uppercase tracking-wider">
                 <span className="h-1.5 w-1.5 rounded-full bg-red animate-pulse" />
                 {recentFailures.length}
               </span>
             </div>
-            <Link href="/notifications">
-              <Button variant="outline" size="xs" className="gap-1.5">
-                View All
-              </Button>
+            <Link href="/notifications" className="text-teal text-[11px] font-bold hover:underline transition-colors flex items-center gap-1 uppercase tracking-wider">
+              View all &rarr;
             </Link>
           </CardHeader>
 
           <div className="flex-1 flex flex-col py-0 overflow-y-auto bg-card-2/30">
             {recentFailures.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-32 text-text-dim gap-2">
-                <FiActivity className="w-6 h-6 opacity-30" />
-                <p className="text-xs">No recent failures</p>
+              <div className="flex flex-col items-center justify-center h-32 text-text-muted gap-2">
+                <p className="text-[10px] text-text-dim">No recent delivery failures</p>
               </div>
             ) : (
               recentFailures.map((log) => (
@@ -369,7 +396,7 @@ export default function OverviewPage() {
           <div className="shrink-0 border-t border-border/30 px-5 py-3 bg-card-2/50">
             <p className="text-[11px] text-text-dim flex justify-between">
               <span>Showing last {recentFailures.length} failures</span>
-              <Link href="/notifications" className="text-teal hover:underline font-medium">View all logs →</Link>
+              <Link href="/notifications" className="text-teal hover:underline font-bold transition-colors">View all &rarr;</Link>
             </p>
           </div>
         </Card>

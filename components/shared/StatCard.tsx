@@ -113,10 +113,11 @@ function DeltaBadge({ delta, type }: { delta: string; type: DeltaType }) {
 
 export interface StatCardProps {
   label: string;
-  value: string | number;
+  value: string | number | ReactNode;
   delta?: string;
   deltaType?: DeltaType;
-  detail?: string;
+  topRight?: ReactNode;
+  detail?: string | ReactNode;
   sparklineData?: number[];
   sparklineColor?: string;
   icon?: ReactNode;
@@ -143,6 +144,7 @@ export function StatCard({
   isLoading,
   glowOnHover = true,
   className,
+  topRight,
 }: StatCardProps) {
   if (isLoading) {
     return (
@@ -158,8 +160,8 @@ export function StatCard({
     <div
       className={cn(
         "group relative rounded-xl border border-border bg-navy-2 p-5 overflow-hidden cursor-default",
-        "transition-all duration-300",
-        glowOnHover && "hover:border-teal/20 hover:shadow-(--card-glow-hover)",
+        "transition-all duration-200 ease-in-out",
+        glowOnHover && "hover:border-border-2 hover:shadow-(--card-glow-hover) hover:-translate-y-px",
         className,
       )}
     >
@@ -176,7 +178,7 @@ export function StatCard({
             {label}
           </p>
         </div>
-        {delta && <DeltaBadge delta={delta} type={deltaType} />}
+        {topRight ? topRight : delta && <DeltaBadge delta={delta} type={deltaType} />}
       </div>
 
       {/* Value + sparkline row */}

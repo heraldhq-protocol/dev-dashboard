@@ -68,11 +68,13 @@ export function SidebarUsageMeter({ collapsed }: { collapsed: boolean }) {
       {/* Label + percentage */}
       <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
         <span className="text-text-muted group-hover:text-text-secondary transition-colors truncate">
-          {tierName} Usage
+          {pct === 0 ? "Free tier: 1,000 notifications/month" : `${tierName} Usage`}
         </span>
-        <span className={cn("transition-colors shrink-0 ml-2", pctColor)}>
-          {Math.round(pct)}%
-        </span>
+        {pct > 0 && (
+          <span className={cn("transition-colors shrink-0 ml-2", pctColor)}>
+            {Math.round(pct)}%
+          </span>
+        )}
       </div>
 
       {/* Segmented progress bar */}
