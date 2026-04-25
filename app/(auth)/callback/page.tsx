@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { PulsatingDots } from "@/components/ui/pulsating-loader";
 
 export default function CallbackPage() {
   const router = useRouter();
@@ -13,9 +14,11 @@ export default function CallbackPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-navy">
-      <div className="text-center">
-        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-teal border-t-transparent" />
-        <p className="text-sm font-semibold text-text-muted">Authenticating...</p>
+      <div className="text-center flex flex-col items-center">
+        <div className="mb-4">
+          <PulsatingDots />
+        </div>
+        <p className="text-sm font-semibold text-text-muted mt-2">Authenticating...</p>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { useSession } from "next-auth/react";
 import { Globe } from "lucide-react";
+import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 interface Domain {
   id: string;
   domain: string;
@@ -123,7 +124,7 @@ export default function DomainsPage() {
   if (isLoading || status === "loading") {
     return (
       <div className="flex items-center justify-center h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <RippleWaveLoader />
       </div>
     );
   }

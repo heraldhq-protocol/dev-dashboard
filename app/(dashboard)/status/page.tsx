@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { FiShield, FiActivity, FiZap } from "react-icons/fi";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 
 export default function StatusPage() {
   const {
@@ -21,9 +22,9 @@ export default function StatusPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="h-8 w-8 bg-teal/20 rounded-full" />
-          <div className="text-text-muted">Loading protocol health…</div>
+        <div className="flex flex-col items-center gap-4">
+          <RippleWaveLoader />
+          <div className="text-text-muted mt-2">Loading protocol health…</div>
         </div>
       </div>
     );

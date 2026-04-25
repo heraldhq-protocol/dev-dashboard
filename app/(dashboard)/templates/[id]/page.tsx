@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 
 interface Template {
   id: string;
@@ -149,7 +150,7 @@ export default function TemplateEditorPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal" />
+        <RippleWaveLoader />
       </div>
     );
   }

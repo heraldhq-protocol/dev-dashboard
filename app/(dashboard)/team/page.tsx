@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { TeamMemberDto } from "@/types/api";
 import { formatDistanceToNow } from "date-fns";
 import { Modal } from "@/components/ui/Modal";
+import { useRouter } from "next/navigation";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -19,8 +20,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+
 export default function TeamPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<TeamMemberDto["role"]>("developer");
@@ -29,6 +32,7 @@ export default function TeamPage() {
     queryKey: ["team"],
     queryFn: listTeam,
   });
+
 
   const inviteMutation = useMutation({
     mutationFn: inviteMember,
@@ -40,7 +44,18 @@ export default function TeamPage() {
       toast.success(`Invite created! Token: ${data.inviteToken}`, { duration: 10000 });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to invite member");
+      const data = err?.data || err?.response?.data;
+      if (data?.error === "TEAM_MEMBER_LIMIT") {
+        toast.error("Team member limit reached", {
+          description: data.message || "Upgrade to add more members.",
+          action: {
+            label: "Upgrade Plan",
+            onClick: () => router.push("/billing"),
+          },
+        });
+      } else {
+        toast.error(err?.message || data?.message || "Failed to invite member");
+      }
     },
   });
 
@@ -202,7 +217,7 @@ export default function TeamPage() {
         onClose={() => setIsInviteOpen(false)}
         title="Invite Team Member"
       >
-        <form onSubmit={handleInvite} className="flex flex-col gap-6 mt-4 rounded-2xl">
+        <form onSubmit={handleInvite} className="flex flex-col gap-6 mt-3 rounded-2xl">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-text-secondary">
               Email Address
@@ -214,7 +229,7 @@ export default function TeamPage() {
               placeholder="colleague@example.com"
               autoFocus
               required
-              className="w-full"
+              className="w-full mt-2"
             />
           </div>
 
