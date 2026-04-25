@@ -3,11 +3,11 @@
 import { 
   Eye, 
   Mail, 
-  Loader2, 
   Monitor,
   Smartphone,
   CheckCircle2
 } from "lucide-react";
+import { PulsatingDots } from "@/components/ui/pulsating-loader";
 
 interface EmailPreviewProps {
   htmlSnippet: string | null;
@@ -40,7 +40,9 @@ export function EmailPreview({ htmlSnippet, isLoading }: EmailPreviewProps) {
       <div className="flex-1 bg-[#fcfcfc] relative overflow-hidden m-4 rounded-xl border border-black/10 shadow-inner">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-full min-h-[300px] bg-white">
-            <Loader2 className="w-8 h-8 text-teal animate-spin mb-4" />
+            <div className="mb-4">
+              <PulsatingDots />
+            </div>
             <p className="text-xs font-bold text-navy/40 uppercase tracking-widest">Rendering View...</p>
           </div>
         ) : htmlSnippet ? (

@@ -19,45 +19,11 @@ import { FaCopy } from "react-icons/fa";
 import { FaArrowRight } from "react-icons/fa6";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getDashboardStats } from "@/lib/api/analytics";
+import { getDashboardStats, getAnalyticsTrends } from "@/lib/api/analytics";
+import { listNotifications } from "@/lib/api/notifications";
 import Link from "next/link";
 
-const performanceData = [
-  { date: "Mar 1", sends: 120 },
-  { date: "Mar 2", sends: 340 },
-  { date: "Mar 3", sends: 210 },
-  { date: "Mar 4", sends: 890 },
-  { date: "Mar 5", sends: 1100 },
-  { date: "Mar 6", sends: 950 },
-  { date: "Mar 7", sends: 1450 },
-];
 
-const mockFailedLogs = [
-  {
-    id: "notif_8x2f",
-    wallet: "7aV...9xK",
-    category: "defi",
-    reason: "RPC Timeout",
-    ts: "2m ago",
-    status: "failed",
-  },
-  {
-    id: "notif_9m1p",
-    wallet: "G2z...4rW",
-    category: "governance",
-    reason: "Invalid Signature",
-    ts: "14m ago",
-    status: "retrying",
-  },
-  {
-    id: "notif_2k9l",
-    wallet: "4xP...1tB",
-    category: "system",
-    reason: "Rate Limited",
-    ts: "31m ago",
-    status: "failed",
-  },
-];
 
 const categoryColors: Record<string, string> = {
   defi: "text-red bg-red/10 border-red/20",
@@ -78,7 +44,7 @@ function FailureRow({
   reason,
   ts,
   status,
-}: (typeof mockFailedLogs)[0]) {
+}: { id: string; wallet: string; category: string; reason: string; ts: string; status: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -151,10 +117,27 @@ export default function OverviewPage() {
     queryFn: getDashboardStats,
   });
 
-  const [timeRange, setTimeRange] = useState("7d");
+  const [timeRange, setTimeRange] = useState<"7d" | "30d">("7d");
 
-  // Mock sparkline data
-  const volumeSparkline = [12, 14, 18, 15, 22, 28, 35, 30, 42, 45, 50];
+  const { data: trends, isLoading: trendsLoading } = useQuery({
+    queryKey: ["analyticsTrends", timeRange],
+    queryFn: () => getAnalyticsTrends(timeRange === "7d" ? 7 : 30),
+  });
+
+  const { data: failedNotifs } = useQuery({
+    queryKey: ["recentFailures"],
+    queryFn: () => listNotifications(1, 5, "failed"),
+  });
+
+  const performanceData = (trends?.dailyVolume ?? []).map((d) => ({
+    date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    sends: d.volume,
+  }));
+
+  const recentFailures = failedNotifs?.items ?? [];
+
+  // Sparkline data from trends
+  const volumeSparkline = performanceData.map((d) => d.sends);
   const deliverySparkline = [98, 98.5, 99, 99.1, 99.5, 99.8, 100];
   const latencySparkline = [200, 190, 185, 170, 165, 150, 142];
 
@@ -278,13 +261,22 @@ export default function OverviewPage() {
                 Notification Volume
               </CardTitle>
               <div className="mt-2 text-2xl font-bold text-foreground">
-                1,450 <span className="text-sm font-normal text-text-muted">sends in last 7 days</span>
+                {trendsLoading ? (
+                  <span className="text-text-muted text-base">Loading…</span>
+                ) : (
+                  <>
+                    {(trends?.totalVolume ?? 0).toLocaleString()}{" "}
+                    <span className="text-sm font-normal text-text-muted">
+                      sends in last {timeRange === "7d" ? "7" : "30"} days
+                    </span>
+                  </>
+                )}
               </div>
             </div>
-            
+
             {/* Time range selector */}
             <div className="flex items-center rounded-lg bg-card-2 p-0.5 border border-border">
-              {["7d", "30d"].map((range) => (
+              {(["7d", "30d"] as const).map((range) => (
                 <button
                   key={range}
                   onClick={() => setTimeRange(range)}
@@ -301,58 +293,37 @@ export default function OverviewPage() {
           </CardHeader>
           <CardContent className="flex-1 pl-0 pt-4">
             <div className="h-[280px] w-full min-w-0 pr-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={performanceData}
-                  margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorSends" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00c896" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#00c896" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--border-alt)"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    stroke="var(--text-muted)"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    dy={10}
-                  />
-                  <YAxis
-                    stroke="var(--text-muted)"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${value}`}
-                    dx={-10}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--bg-card-2)",
-                      border: "1px solid var(--border-alt)",
-                      borderRadius: "8px",
-                      color: "var(--text-main)"
-                    }}
-                    itemStyle={{ color: "#00c896", fontWeight: "bold" }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="sends"
-                    stroke="#00c896"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorSends)"
-                    activeDot={{ r: 6, fill: "#00e5a8", stroke: "var(--bg-card)", strokeWidth: 2 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {trendsLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <div className="space-y-2 w-full px-6">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-3 bg-card-2 animate-pulse rounded" style={{ width: `${60 + i * 8}%` }} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={performanceData}
+                    margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="colorSends" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#00c896" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#00c896" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-alt)" vertical={false} />
+                    <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} dx={-10} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "var(--bg-card-2)", border: "1px solid var(--border-alt)", borderRadius: "8px", color: "var(--text-main)" }}
+                      itemStyle={{ color: "#00c896", fontWeight: "bold" }}
+                    />
+                    <Area type="monotone" dataKey="sends" stroke="#00c896" strokeWidth={3} fillOpacity={1} fill="url(#colorSends)" activeDot={{ r: 6, fill: "#00e5a8", stroke: "var(--bg-card)", strokeWidth: 2 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -362,31 +333,43 @@ export default function OverviewPage() {
           <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 pb-4 shrink-0">
             <div className="flex items-center gap-2">
               <CardTitle className="text-base">Recent Failures</CardTitle>
-              {/* Live count badge */}
               <span className="inline-flex items-center gap-1.5 rounded-full bg-red/10 border border-red/20 px-2 py-0.5 text-[10px] font-bold text-red uppercase tracking-wider">
                 <span className="h-1.5 w-1.5 rounded-full bg-red animate-pulse" />
-                {mockFailedLogs.length}
+                {recentFailures.length}
               </span>
             </div>
-            <Button variant="outline" size="xs" className="gap-1.5">
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Retry All
-            </Button>
+            <Link href="/notifications">
+              <Button variant="outline" size="xs" className="gap-1.5">
+                View All
+              </Button>
+            </Link>
           </CardHeader>
 
           <div className="flex-1 flex flex-col py-0 overflow-y-auto bg-card-2/30">
-            {mockFailedLogs.map((log) => (
-              <FailureRow key={log.id} {...log} />
-            ))}
+            {recentFailures.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 text-text-dim gap-2">
+                <FiActivity className="w-6 h-6 opacity-30" />
+                <p className="text-xs">No recent failures</p>
+              </div>
+            ) : (
+              recentFailures.map((log) => (
+                <FailureRow
+                  key={log.id}
+                  id={log.id}
+                  wallet={log.walletHash ? `${log.walletHash.slice(0, 4)}…${log.walletHash.slice(-4)}` : "unknown"}
+                  category={log.category ?? "system"}
+                  reason={log.status === "failed" ? "Delivery failed" : log.status}
+                  ts={new Date(log.queuedAt).toLocaleTimeString()}
+                  status={log.status}
+                />
+              ))
+            )}
           </div>
 
-          {/* Footer hint */}
           <div className="shrink-0 border-t border-border/30 px-5 py-3 bg-card-2/50">
             <p className="text-[11px] text-text-dim flex justify-between">
-              <span>Showing last 3 failures</span>
-              <button className="text-teal hover:underline font-medium">View all logs →</button>
+              <span>Showing last {recentFailures.length} failures</span>
+              <Link href="/notifications" className="text-teal hover:underline font-medium">View all logs →</Link>
             </p>
           </div>
         </Card>

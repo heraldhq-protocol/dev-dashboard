@@ -10,6 +10,73 @@ import { CopyButton } from "@/components/shared/CopyButton";
 import { useSession } from "next-auth/react";
 import { Globe } from "lucide-react";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
+
+function BimiSection({
+  bimi,
+  isLoading,
+  onSave,
+}: {
+  domainId: string;
+  bimi: { logoUrl?: string; vmcUrl?: string; status?: string } | null;
+  isLoading: boolean;
+  onSave: (logoUrl: string) => void;
+}) {
+  const [logoUrl, setLogoUrl] = useState(bimi?.logoUrl ?? "");
+
+  if (isLoading) {
+    return (
+      <div className="mt-4 p-3 bg-muted/30 border border-border rounded-lg text-xs text-text-muted animate-pulse">
+        Loading BIMI config…
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-primary">BIMI (Brand Indicators)</p>
+        {bimi?.status && (
+          <span
+            className={`text-xs px-2 py-0.5 rounded font-medium border ${
+              bimi.status === "active"
+                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                : "bg-amber-500/20 text-amber-400 border-amber-500/30"
+            }`}
+          >
+            {bimi.status}
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Add a brand logo that appears in supported email clients (Gmail, Yahoo Mail) next to your messages.
+      </p>
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-muted-foreground">Logo URL (SVG, square, publicly accessible)</label>
+        <div className="flex gap-2">
+          <Input
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            placeholder="https://yourdomain.com/logo.svg"
+            className="flex-1 text-xs"
+          />
+          <Button
+            size="sm"
+            onClick={() => onSave(logoUrl)}
+            disabled={!logoUrl}
+          >
+            Save
+          </Button>
+        </div>
+      </div>
+      {bimi?.vmcUrl && (
+        <div className="text-xs text-muted-foreground">
+          VMC: <code className="bg-muted px-1 rounded">{bimi.vmcUrl}</code>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Domain {
   id: string;
   domain: string;
@@ -21,8 +88,16 @@ interface Domain {
   created_at: string;
 }
 
+interface BimiConfig {
+  logoUrl?: string;
+  vmcUrl?: string;
+  status?: "pending" | "active" | "unsupported";
+}
+
 interface DomainWithConfig extends Domain {
   showConfig: boolean;
+  bimiData?: BimiConfig | null;
+  bimiLoading?: boolean;
 }
 
 export default function DomainsPage() {
@@ -112,6 +187,32 @@ export default function DomainsPage() {
       loadDomains();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to remove domain");
+    }
+  };
+
+  const handleLoadBimi = async (domainId: string) => {
+    setDomains((prev) =>
+      prev.map((d) => (d.id === domainId ? { ...d, bimiLoading: true } : d))
+    );
+    try {
+      const { data } = await axios.get(`/domains/${domainId}/bimi`);
+      setDomains((prev) =>
+        prev.map((d) => (d.id === domainId ? { ...d, bimiData: data, bimiLoading: false } : d))
+      );
+    } catch {
+      setDomains((prev) =>
+        prev.map((d) => (d.id === domainId ? { ...d, bimiData: null, bimiLoading: false } : d))
+      );
+    }
+  };
+
+  const handleSetBimi = async (domainId: string, logoUrl: string) => {
+    try {
+      await axios.post(`/domains/${domainId}/bimi`, { logoUrl });
+      toast.success("BIMI logo URL saved");
+      handleLoadBimi(domainId);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to save BIMI config");
     }
   };
 
@@ -274,6 +375,18 @@ export default function DomainsPage() {
                   >
                     Register SES
                   </Button>
+                  {domain.dns_verified && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (domain.bimiData === undefined) handleLoadBimi(domain.id);
+                        else handleLoadBimi(domain.id);
+                      }}
+                    >
+                      {domain.bimiLoading ? "Loading…" : "BIMI Config"}
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -283,6 +396,16 @@ export default function DomainsPage() {
                     Remove
                   </Button>
                 </div>
+
+                {/* BIMI Section */}
+                {domain.dns_verified && domain.bimiData !== undefined && (
+                  <BimiSection
+                    domainId={domain.id}
+                    bimi={domain.bimiData}
+                    isLoading={domain.bimiLoading ?? false}
+                    onSave={(logoUrl) => handleSetBimi(domain.id, logoUrl)}
+                  />
+                )}
               </CardContent>
             </Card>
           ))}

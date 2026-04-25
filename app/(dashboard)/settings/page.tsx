@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset } from "@/lib/api/protocol";
+import { apiClient } from "@/lib/api-client";
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setModalOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "danger">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "telegram" | "danger">("general");
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["protocol", "me"],
@@ -120,6 +121,21 @@ export default function SettingsPage() {
     },
   });
 
+  // Telegram buttons state
+  const [telegramButtonsValue, setTelegramButtonsValue] = useState("");
+
+  const telegramButtonsMutation = useMutation({
+    mutationFn: (maxTelegramButtons: string | null) =>
+      apiClient.patch("/protocols/me/telegram-buttons", { maxTelegramButtons }),
+    onSuccess: () => {
+      toast.success("Telegram button limit updated");
+      queryClient.invalidateQueries({ queryKey: ["protocol"] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update Telegram button limit");
+    },
+  });
+
   const handleAddAsset = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAssetUrl) return;
@@ -173,6 +189,7 @@ export default function SettingsPage() {
           { id: "general", label: "General" },
           { id: "sandbox", label: "Sandbox Test Contacts" },
           { id: "assets", label: "Brand Assets" },
+          { id: "telegram", label: "Telegram" },
           { id: "danger", label: "Danger Zone" }
         ].map((tab) => (
           <button
@@ -456,6 +473,67 @@ export default function SettingsPage() {
           {(!assets || assets.length === 0) && (
             <p className="text-sm text-text-muted italic">No assets added yet</p>
           )}
+        </div>
+      </div>
+      )}
+
+      {activeTab === "telegram" && (
+      <div className="bg-card border border-border rounded-xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Telegram Inline Buttons</h2>
+            <p className="text-sm text-text-muted mt-0.5">
+              Limit the number of inline action buttons that appear on Telegram notifications from your protocol.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className="space-y-1.5 max-w-sm">
+            <label className="text-sm font-medium text-text-secondary">
+              Max Inline Buttons
+            </label>
+            <Input
+              type="number"
+              min={0}
+              max={20}
+              id="telegram-max-buttons"
+              value={telegramButtonsValue}
+              onChange={(e) => setTelegramButtonsValue(e.target.value)}
+              placeholder="e.g., 3 (leave blank to use global default)"
+              className="w-full"
+            />
+            <p className="text-xs text-text-muted">
+              Leave blank to reset to the global platform default. Useful if recipients report cluttered messages.
+            </p>
+          </div>
+
+          <div className="pt-4 flex items-center gap-4 border-t border-border">
+            <Button
+              variant="default"
+              isLoading={telegramButtonsMutation.isPending}
+              onClick={() =>
+                telegramButtonsMutation.mutate(
+                  telegramButtonsValue.trim() ? telegramButtonsValue.trim() : null
+                )
+              }
+            >
+              Save Limit
+            </Button>
+            {telegramButtonsMutation.isSuccess && (
+              <span className="text-sm text-green flex items-center gap-1.5 animate-in fade-in duration-300">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Saved
+              </span>
+            )}
+          </div>
         </div>
       </div>
       )}
