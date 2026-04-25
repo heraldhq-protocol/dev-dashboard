@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 type CardVariant = "default" | "glass" | "glow" | "flat";
 
 const cardVariantStyles: Record<CardVariant, string> = {
-  default: "rounded-xl border border-border bg-card text-text-primary shadow-sm",
+  default: "rounded-lg border border-border bg-card text-text-primary shadow-sm",
   glass:
-    "rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm text-text-primary shadow-sm dark:bg-white/5 dark:border-white/10",
+    "rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm text-text-primary shadow-sm dark:bg-white/5 dark:border-white/10",
   glow:
-    "rounded-xl border border-border bg-card text-text-primary shadow-sm transition-all duration-300 hover:border-teal/20 hover:shadow-[var(--card-glow-hover)]",
-  flat: "rounded-xl border-0 bg-card-2 text-text-primary",
+    "rounded-lg border border-border bg-card text-text-primary shadow-sm transition-all duration-300 hover:border-teal/20 hover:shadow-[var(--card-glow-hover)]",
+  flat: "rounded-lg border-0 bg-card-2 text-text-primary",
 };
 
 function Card({

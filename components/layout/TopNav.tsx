@@ -13,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
 
 // ─── Breadcrumb helper ──────────────────────────────────────
 
@@ -184,46 +183,6 @@ function EnvSwitcher({
   );
 }
 
-// ─── Search badge ───────────────────────────────────────────
-
-function SearchBadge() {
-  return (
-    <button
-      className="hidden lg:flex items-center gap-2 rounded-lg border border-border bg-card-2 px-3 py-1.5 text-xs text-text-muted hover:text-foreground hover:border-border-2 transition-all duration-200 cursor-pointer group"
-      aria-label="Search (⌘K)"
-    >
-      <svg className="h-3.5 w-3.5 group-hover:text-teal transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-      <span className="font-medium">Search…</span>
-    </button>
-  );
-}
-
-// ─── Notification bell ──────────────────────────────────────
-
-function NotificationBell() {
-  const [hasNotif] = useState(true); // cosmetic — shows badge dot
-
-  return (
-    <button
-      className="relative flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:text-foreground hover:bg-card-2 transition-colors cursor-pointer"
-      aria-label="Notifications"
-    >
-      <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.75}
-          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-        />
-      </svg>
-      {hasNotif && (
-        <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-teal border-2 border-navy" />
-      )}
-    </button>
-  );
-}
 
 // ─── TopNav ─────────────────────────────────────────────────
 
@@ -280,12 +239,8 @@ export function TopNav() {
         <Breadcrumb pathname={pathname} />
       </div>
 
-      {/* ── Right: search, env switcher, bell, theme, user ── */}
+      {/* ── Right: env switcher, theme, user ── */}
       <div className="flex items-center gap-2 shrink-0">
-        <SearchBadge />
-
-        <div className="h-4 w-px bg-border hidden sm:block" />
-
         <EnvSwitcher
           activeEnvironment={activeEnvironment}
           setEnvironment={setEnvironment}
@@ -293,7 +248,6 @@ export function TopNav() {
 
         <div className="h-4 w-px bg-border" />
 
-        <NotificationBell />
         <ThemeToggle />
 
         <div className="h-4 w-px bg-border hidden sm:block" />
