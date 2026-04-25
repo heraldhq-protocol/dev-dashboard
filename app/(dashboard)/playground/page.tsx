@@ -86,21 +86,21 @@ export default function PlaygroundPage() {
         description="Draft and preview notifications across channels."
         actions={
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-card-2 border border-border rounded-full shadow-inner">
-              <span className="text-xs font-medium text-text-muted">API Key:</span>
+            <div className="flex items-center gap-3 px-4 py-2 bg-navy-2/60 backdrop-blur-md border border-white/5 rounded-full shadow-2xl">
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Live API</span>
               {loadingKey ? (
                 <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
               ) : apiKey ? (
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2 w-2 rounded-full bg-green shadow-[0_0_8px_#27AE60]" />
-                  <span className="text-xs text-foreground font-mono font-bold tracking-wider">
-                    {apiKey.keyPrefix}••••
+                <div className="flex items-center gap-2.5">
+                  <div className="h-2 w-2 rounded-full bg-green shadow-[0_0_10px_#27AE60]" />
+                  <span className="text-xs text-foreground font-mono font-bold tracking-widest bg-white/5 px-2 py-0.5 rounded">
+                    {apiKey.keyPrefix}<span className="opacity-30">••••</span>
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2 w-2 rounded-full bg-red shadow-[0_0_8px_#E74C3C]" />
-                  <span className="text-xs text-red font-semibold">Missing</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-red shadow-[0_0_10px_#E74C3C]" />
+                  <span className="text-[10px] text-red/80 font-bold uppercase">Missing</span>
                 </div>
               )}
             </div>
@@ -111,25 +111,25 @@ export default function PlaygroundPage() {
                 setHtmlSnippet(null);
                 toast.success("Playground reset");
               }}
-              className="gap-2 shrink-0 group hidden sm:flex"
+              className="gap-2 shrink-0 group hidden sm:flex bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-4"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-text-muted group-hover:text-foreground transition-transform group-hover:-rotate-180 duration-500" />
-              Reset
+              <RotateCcw className="w-3.5 h-3.5 text-text-muted group-hover:text-primary transition-transform group-hover:-rotate-180 duration-700" />
+              <span className="text-xs font-bold uppercase tracking-tighter">Reset</span>
             </Button>
           </div>
         }
       />
 
       {/* Channel Tabs */}
-      <div className="flex border-b border-border overflow-x-auto">
+      <div className="flex border-b border-white/5 overflow-x-auto mb-2">
         {(["email", "telegram", "sms"] as ChannelTab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-3 lg:px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px whitespace-nowrap ${
+            className={`px-6 py-3 text-sm font-bold capitalize transition-all border-b-2 -mb-px whitespace-nowrap ${
               activeTab === tab
-                ? "text-foreground border-primary"
-                : "text-text-muted border-transparent hover:text-foreground"
+                ? "text-primary border-primary"
+                : "text-text-muted border-transparent hover:text-foreground hover:bg-white/5"
             }`}
           >
             {tab}
@@ -164,20 +164,7 @@ export default function PlaygroundPage() {
         </div>
 
         {/* Preview Panel */}
-        <div className="bg-card border border-border rounded-xl p-4 shadow-sm overflow-hidden min-h-[400px] lg:min-h-0">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm lg:text-base font-bold text-foreground">Preview</h3>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setPreviewMode("html")}
-                className={`px-2 py-1 text-xs rounded ${
-                  previewMode === "html" ? "bg-primary text-foreground" : "text-text-muted"
-                }`}
-              >
-                {activeTab === "email" ? "HTML" : "Text"}
-              </button>
-            </div>
-          </div>
+        <div className="flex flex-col min-h-[400px] lg:min-h-0">
           <EmailPreview
             htmlSnippet={htmlSnippet}
             isLoading={previewMutation.isPending}

@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { OverageManagement } from "@/components/billing/OverageManagement";
 import { Separator } from "@/components/ui/separator";
+import { PricingCard } from "@/components/billing/PricingCard";
 
 // Static features per tier for the comparison cards
 const TIER_FEATURES: Record<number, string[]> = {
@@ -89,6 +90,12 @@ export default function BillingPage() {
   });
 
   const currentTier = status?.tier ?? 0;
+  const displayTiers = tiers.length > 0 ? tiers : [
+    { tier: 0, name: "Developer", priceUsdc: 0, limit: 1000 },
+    { tier: 1, name: "Growth", priceUsdc: 99, limit: 50000 },
+    { tier: 2, name: "Scale", priceUsdc: 299, limit: 500000 },
+    { tier: 3, name: "Enterprise", priceUsdc: 999, limit: 10000000 },
+  ];
 
   return (
     <div className="space-y-10 max-w-6xl">
@@ -113,111 +120,25 @@ export default function BillingPage() {
 
       {/* Compare Plans */}
       <div>
-        <h2 className="text-xl font-bold text-foreground mb-6">
-          Compare Plans
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-3">
-          {(tiers.length > 0
-            ? tiers
-            : [
-                { tier: 0, name: "Developer", priceUsdc: 0, limit: 1000 },
-                { tier: 1, name: "Growth", priceUsdc: 99, limit: 50000 },
-                { tier: 2, name: "Scale", priceUsdc: 299, limit: 500000 },
-                {
-                  tier: 3,
-                  name: "Enterprise",
-                  priceUsdc: 999,
-                  limit: 10000000,
-                },
-              ]
-          ).map((tier) => {
-            const isCurrent = tier.tier === currentTier;
-            
-            return (
-              <div
-                key={tier.tier}
-                className={`relative rounded-2xl p-6 flex flex-col border transition-all duration-300 group ${
-                  isCurrent
-                    ? "bg-linear-to-b from-teal/10 to-card border-teal shadow-[0_0_30px_rgba(0,200,150,0.15)] scale-105 z-10"
-                    : "bg-card border-border hover:border-border-2 hover:bg-card-2/50"
-                }`}
-              >
-                {isCurrent && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-linear-to-r from-teal to-teal-2 text-navy px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-lg">
-                    Current Plan
-                  </div>
-                )}
-
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {tier.name}
-                  </h3>
-                  <div className="mt-2 flex items-baseline text-3xl font-bold text-foreground">
-                    ${tier.priceUsdc}
-                    <span className="ml-1 text-sm font-medium text-text-muted">
-                      /mo
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-6 pb-6 border-b border-border">
-                  <span className="text-sm text-text-primary">
-                    <span className="font-bold text-foreground">
-                      {tier.limit.toLocaleString()}
-                    </span>{" "}
-                    Notifications
-                  </span>
-                </div>
-
-                <ul className="flex-1 space-y-4 mb-8">
-                  {(TIER_FEATURES[tier.tier] ?? []).map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <svg
-                        className="h-5 w-5 text-teal shrink-0"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span className="text-sm text-text-secondary">
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  variant={isCurrent ? "outline" : "default"}
-                  disabled={
-                    isCurrent ||
-                    tier.tier < currentTier ||
-                    checkoutMutation.isPending
-                  }
-                  onClick={() => checkoutMutation.mutate(tier.tier)}
-                  isLoading={checkoutMutation.isPending}
-                  className="w-full"
-                >
-                  {isCurrent
-                    ? "Active"
-                    : tier.tier < currentTier
-                      ? "Downgrade"
-                      : "Upgrade"}
-                </Button>
-              </div>
-            );
-          })}
+        <h2 className="text-xl font-bold text-foreground mb-6">Compare Plans</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {displayTiers.map((tier) => (
+            <PricingCard
+              key={tier.tier}
+              tier={tier}
+              features={TIER_FEATURES[tier.tier] ?? []}
+              isCurrent={tier.tier === currentTier}
+              isLowerTier={tier.tier < currentTier}
+              isPending={checkoutMutation.isPending}
+              onAction={(t) => checkoutMutation.mutate(t)}
+            />
+          ))}
         </div>
       </div>
 
       {/* Payment History component */}
       <Separator className="bg-border" />
-      
+
       <OverageManagement />
 
       <Separator className="bg-border" />
@@ -230,13 +151,25 @@ export default function BillingPage() {
         <div className="relative p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <h3 className="text-xl font-bold text-foreground flex items-center justify-center md:justify-start gap-2">
-              <svg className="w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              <svg
+                className="w-5 h-5 text-teal"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
               </svg>
               Need more volume?
             </h3>
             <p className="text-sm text-text-muted max-w-xl text-balance">
-              Contact us for custom enterprise plans with massive notification volumes, dedicated IP addresses, custom SLAs, and white-glove onboarding.
+              Contact us for custom enterprise plans with massive notification
+              volumes, dedicated IP addresses, custom SLAs, and white-glove
+              onboarding.
             </p>
           </div>
           <Button variant="secondary" className="shrink-0 group">
