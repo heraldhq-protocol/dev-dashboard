@@ -50,7 +50,7 @@ export async function getPaymentHistory(
 }
 
 export async function getOverageStatus(): Promise<OverageStatusResponse> {
-  const { data } = await apiClient.get<OverageStatusResponse>(`${BASE}/overage/status`);
+  const { data } = await apiClient.get<OverageStatusResponse>(`${BASE}/overage/settings`);
   return data;
 }
 
