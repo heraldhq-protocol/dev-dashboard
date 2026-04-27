@@ -59,7 +59,7 @@ export function MetricCard({
       {isLoading ? (
         <div className="h-10 bg-card-2 animate-pulse rounded w-24" />
       ) : (
-        <div className="text-3xl font-bold text-foreground tracking-tight" style={{ fontFamily: '"Syne", system-ui, sans-serif' }}>
+        <div className="-mt-2 text-xl font-bold text-foreground tracking-tight" style={{ fontFamily: '"Syne", system-ui, sans-serif' }}>
           {value}
         </div>
       )}
@@ -69,7 +69,7 @@ export function MetricCard({
       )}
 
       {sparklineData && sparklineData.length > 0 && (
-        <div className="mt-4 h-10">
+        <div className="mt-6 h-10">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData}>
               <defs>
