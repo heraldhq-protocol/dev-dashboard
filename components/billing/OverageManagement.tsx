@@ -11,6 +11,7 @@ import {
   updateOverageSettings, 
   getOverageInvoices 
 } from "@/lib/api/billing";
+import { cn } from "@/lib/utils";
 
 import { UsageProgressBar } from "./UsageProgressBar";
 
@@ -77,7 +78,7 @@ export function OverageManagement() {
                   ${currentSpend.toFixed(2)} <span className="text-sm font-normal text-text-muted">USDC</span>
                 </h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-text-muted">Pay-as-you-go</span>
                 <Switch 
                   checked={settings.optInOverage}
@@ -182,6 +183,7 @@ export function OverageManagement() {
                   <p className="text-xs text-text-muted">Pause API sends immediately if cap is reached</p>
                 </div>
                 <Switch 
+                  variant="destructive"
                   checked={settings.overageHardCapEnabled}
                   onCheckedChange={(checked) => updateMutation.mutate({ overageHardCapEnabled: checked })}
                   disabled={updateMutation.isPending}

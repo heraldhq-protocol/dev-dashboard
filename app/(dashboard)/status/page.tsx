@@ -100,7 +100,7 @@ export default function StatusPage() {
               <p className="text-xs">Subscription Tier</p>
             </div>
             <Badge
-              variant="outline"
+              variant="default"
               className="text-xs uppercase tracking-wider"
             >
               {status.tierName.toLowerCase().includes("developer")
