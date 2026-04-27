@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
-import { Syne, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Syne, JetBrains_Mono } from "next/font/google";
 import { ClientProviders } from "@/components/providers/ClientProviders";
 import { cn } from "@/lib/utils";
 import "./globals.css";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 const syne = Syne({
   variable: "--font-syne",
@@ -32,9 +38,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("h-full", "antialiased", syne.variable, jetbrainsMono.variable, "font-sans")}
+      className={cn("h-full", "antialiased", plusJakartaSans.variable, syne.variable, jetbrainsMono.variable, "font-sans")}
     >
-      <body className="min-h-screen flex flex-col" suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col font-sans" suppressHydrationWarning>
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

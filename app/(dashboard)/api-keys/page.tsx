@@ -8,7 +8,8 @@ import { CreateKeyModal } from "@/components/api-keys/CreateKeyModal";
 import { KeyRevealModal } from "@/components/api-keys/KeyRevealModal";
 import { RevokeKeyModal } from "@/components/api-keys/RevokeKeyModal";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { AlertCircle, Plus } from "lucide-react";
+import { DashboardCard } from "@/components/ui/DashboardCard";
+import { Plus } from "lucide-react";
 
 export default function ApiKeysPage() {
   const { query, createKey, revokeKey } = useApiKeys();
@@ -73,8 +74,8 @@ export default function ApiKeysPage() {
       />
 
       {/* Info Banner */}
-      <div className="flex items-start gap-3 p-3.5 mb-8 rounded-lg border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400 shadow-sm transition-transform hover:-translate-y-0.5">
-        <div className="p-1.5 bg-amber-500/10 rounded-md shrink-0">
+      <div className="flex items-start gap-3 p-3.5 rounded-lg border border-[rgba(245,158,11,0.2)] bg-status-warning-bg text-[#f59e0b]">
+        <div className="p-1.5 bg-status-warning-bg rounded-md shrink-0">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
@@ -84,19 +85,19 @@ export default function ApiKeysPage() {
             Keep your keys secure
           </p>
           <p className="opacity-85">
-            Live keys bypass the sandbox environment and perform real actions on the network. 
+            Live keys bypass the sandbox environment and perform real actions on the network.
             Do not commit them to version control or expose them in client-side code.
           </p>
         </div>
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border shadow-sm">
-          <span className="h-2 w-2 rounded-full bg-green shadow-[0_0_10px_#27AE60]" />
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
+          <span className="h-2 w-2 rounded-full bg-status-success" />
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">
             Live Environment
           </h2>
-          <span className="ml-auto bg-card-2 border border-border text-text-muted text-xs px-2.5 py-0.5 rounded-full font-medium">
+          <span className="ml-auto bg-secondary border border-border text-text-muted text-xs px-2.5 py-0.5 rounded-full font-medium">
             {liveKeys.length} keys
           </span>
         </div>
@@ -106,22 +107,22 @@ export default function ApiKeysPage() {
       {/* Styled Divider */}
       <div className="relative py-4">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t-2 border-border/60 border-dashed" />
+          <div className="w-full border-t border-border border-dashed" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-bg-primary px-3 text-xs uppercase tracking-widest text-text-muted font-medium">
+          <span className="bg-background px-3 text-xs uppercase tracking-widest text-text-muted font-medium">
             Development
           </span>
         </div>
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border shadow-sm">
-          <span className="h-2 w-2 rounded-full bg-gold shadow-[0_0_10px_#E8920A]" />
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
+          <span className="h-2 w-2 rounded-full bg-status-warning" />
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">
             Test Environment
           </h2>
-          <span className="ml-auto bg-card-2 border border-border text-text-muted text-xs px-2.5 py-0.5 rounded-full font-medium">
+          <span className="ml-auto bg-secondary border border-border text-text-muted text-xs px-2.5 py-0.5 rounded-full font-medium">
             {testKeys.length} keys
           </span>
         </div>

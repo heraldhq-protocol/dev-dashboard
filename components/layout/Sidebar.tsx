@@ -99,13 +99,13 @@ function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean 
   if (collapsed) {
     return (
       <div className="my-2 flex justify-center">
-        <div className="h-px w-4 bg-border" />
+        <div className="h-px w-4 bg-border-2" />
       </div>
     );
   }
   return (
-    <div className="mb-1 mt-4 first:mt-0 px-3">
-      <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-text-muted/60 select-none">
+    <div className="mb-2 mt-6 first:mt-0 px-3">
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
         {label}
       </span>
     </div>
@@ -134,21 +134,17 @@ function NavItem({
       href={href}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold whitespace-nowrap overflow-hidden cursor-pointer",
-        "transition-all duration-200 group/item relative",
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap overflow-hidden cursor-pointer",
+        "transition-all duration-150",
         isActive
-          ? [
-              "bg-teal/10 text-primary",
-              // Left accent bar
-              "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:bg-teal before:shadow-[0_0_8px_rgba(0,200,150,0.6)]",
-            ]
-          : "text-text-secondary hover:bg-white/5 hover:text-primary hover:translate-x-1",
+          ? "bg-card-2/50 text-teal border-l-2 border-l-teal"
+          : "text-text-secondary hover:text-foreground hover:bg-card-2/50"
       )}
     >
       <svg
         className={cn(
-          "h-[18px] w-[18px] shrink-0 transition-colors duration-200",
-          isActive ? "text-teal" : "text-text-muted group-hover/item:text-teal",
+          "h-4 w-4 shrink-0 transition-colors duration-150",
+          isActive ? "text-teal" : "text-text-muted"
         )}
         fill="none"
         viewBox="0 0 24 24"
@@ -164,10 +160,10 @@ function NavItem({
       <span
         className={cn(
           "overflow-hidden whitespace-nowrap",
-          "transition-[opacity,max-width,transform] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+          "transition-[opacity,max-width] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
           collapsed
             ? "lg:max-w-0 lg:opacity-0 lg:translate-x-2"
-            : "max-w-[160px] opacity-100 translate-x-0",
+            : "max-w-[160px] opacity-100 translate-x-0"
         )}
       >
         {name}
@@ -218,7 +214,7 @@ export function Sidebar() {
         <aside
           style={{ willChange: "width, transform" }}
           className={cn(
-            "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-navy-2/95 backdrop-blur-md shrink-0",
+            "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border-2 bg-navy-2/95 backdrop-blur-md shrink-0",
             "transition-[width,transform] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
             "lg:static lg:z-auto",
             // Mobile: slide in/out
@@ -227,11 +223,11 @@ export function Sidebar() {
               : "-translate-x-full w-[240px]",
             // Desktop: collapse
             "lg:translate-x-0",
-            collapsed ? "lg:w-[68px]" : "lg:w-[240px]",
+            collapsed ? "lg:w-[68px]" : "lg:w-[256px]",
           )}
         >
-          {/* ── Logo Header ── */}
-          <div className="flex h-14 items-center border-b border-border px-4 justify-between shrink-0">
+{/* ── Logo Header ── */}
+          <div className="flex h-16 items-center border-b border-border-2 px-4 justify-between shrink-0">
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className={cn(
@@ -247,10 +243,9 @@ export function Sidebar() {
                     height={32}
                     className="h-8 w-8 object-contain"
                   />
-                  {/* Subtle glow behind logo */}
-                  <div className="absolute inset-0 -z-10 rounded-full bg-teal/20 blur-md" />
                 </div>
               </div>
+
 
               {/* Gradient wordmark */}
               <span
@@ -262,6 +257,7 @@ export function Sidebar() {
                     ? "lg:max-w-0 lg:opacity-0"
                     : "max-w-[160px] opacity-100",
                 )}
+                style={{ fontFamily: '"Syne", system-ui, sans-serif' }}
               >
                 Herald
               </span>

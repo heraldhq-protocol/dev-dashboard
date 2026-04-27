@@ -116,6 +116,7 @@ export default function BillingPage() {
         onUpgradeClick={() => checkoutMutation.mutate(currentTier + 1)}
         onCancelClick={() => cancelMutation.mutate()}
         isCanceling={cancelMutation.isPending}
+        isUpgrading={checkoutMutation.isPending && checkoutMutation.variables === currentTier + 1}
       />
 
       {/* Compare Plans */}
@@ -129,7 +130,7 @@ export default function BillingPage() {
               features={TIER_FEATURES[tier.tier] ?? []}
               isCurrent={tier.tier === currentTier}
               isLowerTier={tier.tier < currentTier}
-              isPending={checkoutMutation.isPending}
+              isPending={checkoutMutation.isPending && checkoutMutation.variables === tier.tier}
               onAction={(t) => checkoutMutation.mutate(t)}
             />
           ))}

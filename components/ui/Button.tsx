@@ -5,23 +5,16 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent font-semibold whitespace-nowrap transition-all duration-200 outline-none select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center rounded-lg font-medium transition-all duration-150 outline-none select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-teal/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground font-bold hover:brightness-110 hover:shadow-[0_0_20px_rgba(0,200,150,0.35)] hover:-translate-y-[1px]",
-        outline:
-          "border-border bg-background text-foreground hover:bg-muted hover:border-primary/40 aria-expanded:bg-muted dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80 hover:border-primary/30 aria-expanded:bg-secondary",
-        ghost:
-          "text-muted-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
-        destructive:
-          "bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20 hover:border-destructive/50 hover:shadow-[0_0_15px_rgba(214,48,49,0.2)]",
-        danger:
-          "border border-red/40 text-red bg-transparent hover:bg-red/10 hover:border-red/60 hover:shadow-[0_0_12px_rgba(214,48,49,0.15)]",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-teal text-navy font-semibold hover:bg-teal-2",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "text-text-muted hover:text-foreground hover:bg-secondary",
+        destructive: "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20",
+        link: "text-teal underline-offset-4 hover:underline",
+        outline: "border border-border bg-transparent text-text-muted hover:bg-secondary/50 hover:text-foreground",
       },
       size: {
         default: "h-9 gap-1.5 px-4 text-sm",

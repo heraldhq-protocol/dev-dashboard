@@ -6,13 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 // ─── Breadcrumb helper ──────────────────────────────────────
 
@@ -42,12 +36,10 @@ function Breadcrumb({ pathname }: { pathname: string }) {
 
   return (
     <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5">
-      {/* Dashboard root */}
-      <span className="text-xs font-medium text-text-muted">Dashboard</span>
+      <span className="text-xs font-medium text-muted">Dashboard</span>
 
       {crumbs.map((crumb, i) => (
         <span key={crumb.href} className="flex items-center gap-1.5">
-          {/* Separator */}
           <svg
             className="h-3 w-3 text-text-muted/50"
             fill="none"
@@ -61,7 +53,6 @@ function Breadcrumb({ pathname }: { pathname: string }) {
               d="M9 5l7 7-7 7"
             />
           </svg>
-          {/* Last crumb = current page */}
           {i === crumbs.length - 1 ? (
             <span className="text-xs font-semibold text-foreground">
               {crumb.label}
@@ -92,7 +83,6 @@ function UserAvatar({ userId }: { userId?: string }) {
       }}
     >
       {initials}
-      {/* Online status dot */}
       <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green border-2 border-navy" />
     </div>
   );
@@ -110,76 +100,34 @@ function EnvSwitcher({
   const isLive = activeEnvironment === "live";
 
   return (
-    <>
-      {/* Desktop: segmented pill */}
-      <div className="hidden sm:flex items-center gap-0.5 rounded-lg bg-card-2 border border-border p-0.5">
-        <button
-          onClick={() => setEnvironment("sandbox")}
-          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
-            !isLive
-              ? "bg-gold/15 border border-gold/30 text-gold shadow-sm"
-              : "text-text-muted hover:text-text-primary"
-          }`}
-        >
-          {!isLive && (
-            <span className="h-1.5 w-1.5 rounded-full bg-gold shrink-0" />
-          )}
-          SANDBOX
-        </button>
-        <button
-          onClick={() => setEnvironment("live")}
-          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
-            isLive
-              ? "bg-teal/15 border border-teal/30 text-teal shadow-sm"
-              : "text-text-muted hover:text-text-primary"
-          }`}
-        >
-          {isLive && (
-            <span className="h-1.5 w-1.5 rounded-full bg-teal animate-pulse shrink-0" />
-          )}
-          LIVE
-        </button>
-      </div>
-
-      {/* Mobile: dropdown */}
-      <div className="sm:hidden">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer border ${
-                isLive
-                  ? "bg-teal/15 border-teal/30 text-teal"
-                  : "bg-gold/15 border-gold/30 text-gold"
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full shrink-0 ${isLive ? "bg-teal animate-pulse" : "bg-gold"}`}
-              />
-              {isLive ? "LIVE" : "SANDBOX"}
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="opacity-70 ml-0.5">
-                <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[130px]">
-            <DropdownMenuItem
-              onClick={() => setEnvironment("sandbox")}
-              className={`text-xs font-bold cursor-pointer ${!isLive ? "bg-accent" : ""}`}
-            >
-              <span className="mr-2 inline-block h-2 w-2 rounded-full bg-gold" />
-              SANDBOX
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setEnvironment("live")}
-              className={`text-xs font-bold cursor-pointer ${isLive ? "bg-accent" : ""}`}
-            >
-              <span className="mr-2 inline-block h-2 w-2 rounded-full bg-teal" />
-              LIVE
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </>
+    <div className="flex items-center gap-0.5 rounded-lg bg-secondary p-0.5">
+      <button
+        onClick={() => setEnvironment("sandbox")}
+        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+          !isLive
+            ? "bg-status-warning/10 text-status-warning border border-status-warning/20"
+            : "text-text-muted hover:text-foreground"
+        }`}
+      >
+        {!isLive && (
+          <span className="h-1.5 w-1.5 rounded-full bg-status-warning shrink-0" />
+        )}
+        Sandbox
+      </button>
+      <button
+        onClick={() => setEnvironment("live")}
+        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+          isLive
+            ? "bg-status-success/10 text-status-success border border-status-success/20"
+            : "text-text-muted hover:text-foreground"
+        }`}
+      >
+        {isLive && (
+          <span className="h-1.5 w-1.5 rounded-full bg-status-success animate-pulse shrink-0" />
+        )}
+        Live
+      </button>
+    </div>
   );
 }
 
@@ -198,13 +146,13 @@ export function TopNav() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b border-border bg-navy/90 px-4 backdrop-blur-md sm:px-5 gap-4">
+    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-navy/80 backdrop-blur-xl px-8 gap-4">
       {/* ── Left: Hamburger + Logo (mobile) + Breadcrumb ── */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Mobile hamburger */}
         <button
           onClick={toggleMobileSidebar}
-          className="lg:hidden text-text-secondary hover:text-text-primary transition-colors cursor-pointer p-1 rounded-md hover:bg-card-2"
+          className="lg:hidden text-text-muted hover:text-foreground transition-colors cursor-pointer p-1 rounded-md hover:bg-secondary"
           aria-label="Toggle sidebar"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -215,7 +163,7 @@ export function TopNav() {
         {/* Desktop sidebar toggle */}
         <button
           onClick={toggleDesktopSidebar}
-          className="hidden lg:flex items-center justify-center h-8 w-8 rounded-md text-text-secondary hover:text-text-primary hover:bg-card-2 transition-colors cursor-pointer"
+          className="hidden lg:flex items-center justify-center h-8 w-8 rounded-md text-text-muted hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
           title={desktopSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           aria-label={desktopSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
@@ -232,7 +180,7 @@ export function TopNav() {
         {/* Mobile logo */}
         <div className="flex items-center gap-2 lg:hidden">
           <Image src="/logo.svg" alt="Herald Logo" width={22} height={22} className="h-[22px] w-[22px] object-contain" />
-          <span className="text-base font-extrabold tracking-tight text-text-primary">Herald</span>
+          <span className="text-base font-extrabold tracking-tight text-foreground" style={{ fontFamily: '"Syne", system-ui, sans-serif' }}>Herald</span>
         </div>
 
         {/* Breadcrumb — desktop */}
@@ -240,67 +188,28 @@ export function TopNav() {
       </div>
 
       {/* ── Right: env switcher, theme, user ── */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-4 shrink-0">
         <EnvSwitcher
           activeEnvironment={activeEnvironment}
           setEnvironment={setEnvironment}
         />
 
-        <div className="h-4 w-px bg-border" />
-
         <ThemeToggle />
 
-        <div className="h-4 w-px bg-border hidden sm:block" />
+        <div className="h-4 w-px bg-border" />
 
         {/* User dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-lg p-1 pr-2 hover:bg-card-2 transition-colors cursor-pointer group" aria-label="User menu">
-              <UserAvatar userId={session?.user?.id} />
-              <span className="hidden sm:block text-xs font-semibold text-text-secondary group-hover:text-foreground transition-colors">
-                {session?.user?.id
-                  ? `${session.user.id.slice(0, 4)}…${session.user.id.slice(-4)}`
-                  : "Developer"}
-              </span>
-              <svg className="hidden sm:block h-3 w-3 text-text-muted" fill="none" viewBox="0 0 12 12">
-                <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[180px]">
-            <div className="px-3 py-2 border-b border-border">
-              <p className="text-xs font-semibold text-foreground">Developer Account</p>
-              {session?.user?.id && (
-                <p className="text-[10px] text-text-muted font-mono mt-0.5 truncate">
-                  {session.user.id}
-                </p>
-              )}
-            </div>
-            <DropdownMenuItem
-              className="text-xs cursor-pointer gap-2"
-              onClick={() => {
-                if (session?.user?.id) {
-                  navigator.clipboard.writeText(session.user.id);
-                }
-              }}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-              </svg>
-              Copy User ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-xs cursor-pointer gap-2 text-red focus:text-red focus:bg-red/10"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <UserAvatar userId={session?.user?.id} />
+          <span className="text-sm text-text-muted">
+            {session?.user?.id
+              ? `${session.user.id.slice(0, 4)}…${session.user.id.slice(-4)}`
+              : "user..."}
+          </span>
+          <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
       </div>
     </header>
   );

@@ -5,8 +5,8 @@ import { TopNav } from "./TopNav";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-navy text-text-primary">
-      {/* Ambient dot-grid overlay — purely cosmetic */}
+    <div className="relative flex h-screen w-full overflow-hidden bg-navy text-foreground">
+      {/* Subtle dot-grid overlay */}
       <div className="pointer-events-none absolute inset-0 z-0 bg-dot-grid opacity-50" aria-hidden="true" />
 
       <Sidebar />
@@ -14,7 +14,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
         <TopNav />
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl p-8">
             {children}
           </div>
         </main>

@@ -155,7 +155,7 @@ export default function TeamPage() {
                       {m.email ? m.email.charAt(0).toUpperCase() : "?"}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-white font-medium">{m.email || "No email"}</span>
+                      <span className="text-foreground font-medium">{m.email || "No email"}</span>
                       {m.walletPubkey && <span className="text-xs text-text-dim font-mono">{m.walletPubkey.slice(0, 8)}...</span>}
                     </div>
                   </div>
@@ -182,7 +182,7 @@ export default function TeamPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Badge
-                    variant={m.status === "active" ? "secondary" : "outline"}
+                    variant={m.status === "active" ? "secondary" : "default"}
                   >
                     {m.status}
                   </Badge>

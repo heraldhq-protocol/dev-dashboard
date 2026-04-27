@@ -14,6 +14,7 @@ interface PageHeaderProps {
  *
  * Standardised heading block used at the top of every dashboard page.
  * Supports an optional right-aligned `actions` slot for CTAs / filters.
+ * Title uses Syne font, description uses Inter.
  */
 export function PageHeader({
   title,
@@ -31,7 +32,10 @@ export function PageHeader({
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1
+            className="text-2xl font-bold tracking-tight text-foreground"
+            style={{ fontFamily: '"Syne", system-ui, sans-serif' }}
+          >
             {title}
           </h1>
           {badge}
