@@ -1,9 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { getBillingStatus } from "@/lib/api/billing";
-import Link from "next/link";
 
 /**
  * SidebarUsageMeter
@@ -35,7 +33,7 @@ export function SidebarUsageMeter({ collapsed }: { collapsed: boolean }) {
 
   if (!status) return null;
 
-  const { sendsThisPeriod, sendsLimit, usagePercent, tierName } = status;
+  const { sendsLimit, usagePercent, tierName } = status;
   const pct = Math.min(usagePercent, 100);
 
   // ── Simple bar (no percentage number)

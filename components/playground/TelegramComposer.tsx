@@ -20,8 +20,7 @@ import {
   Send,
   MessageSquare,
   Info,
-  HelpCircle,
-  Hash
+  HelpCircle
 } from "lucide-react";
 
 interface TelegramComposerProps {

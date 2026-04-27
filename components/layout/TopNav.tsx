@@ -1,12 +1,12 @@
 "use client";
 
 import { useUiStore } from "@/lib/stores/ui.store";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+
 
 // ─── Breadcrumb helper ──────────────────────────────────────
 

@@ -8,7 +8,7 @@ import { CreateKeyModal } from "@/components/api-keys/CreateKeyModal";
 import { KeyRevealModal } from "@/components/api-keys/KeyRevealModal";
 import { RevokeKeyModal } from "@/components/api-keys/RevokeKeyModal";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { DashboardCard } from "@/components/ui/DashboardCard";
+
 import { Plus } from "lucide-react";
 
 export default function ApiKeysPage() {

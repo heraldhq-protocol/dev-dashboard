@@ -56,7 +56,7 @@ export default function OverviewPage() {
   return (
     <div className="space-y-6">
       {/* System Status Strip */}
-      <div className="flex items-center gap-2 rounded-lg border border-[rgba(16,185,129,0.2)] bg-[rgba(16,185,129,0.1)] px-4 py-2.5">
+      <div className="flex items-center gap-2 rounded-lg border border-[rgba(16,185,129,0.2)] bg-status-success-bg px-4 py-2.5">
         <span className="relative flex h-2 w-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10b981]"></span>
@@ -73,7 +73,7 @@ export default function OverviewPage() {
 
       {/* Quick Start (Shows only if 0 sends) */}
       {!isLoading && totalSends === 0 && (
-        <DashboardCard className="bg-gradient-to-r from-card to-navy-2 border-l-2 border-l-teal">
+        <DashboardCard className="bg-linear-to-r from-card to-navy-2 border-l-2 border-l-teal">
           <div className="flex items-start gap-3 mb-4">
             <FiZap className="w-5 h-5 text-teal" />
             <div>

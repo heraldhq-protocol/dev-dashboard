@@ -174,7 +174,7 @@ export default function TemplateEditorPage() {
     try {
       const { data } = await axios.get(`/templates/${id}/versions`);
       setVersions(data?.versions ?? data ?? []);
-    } catch (err: any) {
+    } catch {
       toast.error("Failed to load version history");
     } finally {
       setIsLoadingVersions(false);
@@ -191,7 +191,7 @@ export default function TemplateEditorPage() {
         subjectTemplate: form.subjectTemplate,
       });
       setValidateResult(data);
-    } catch (err: any) {
+    } catch {
       toast.error("Validation request failed");
     } finally {
       setIsValidating(false);
