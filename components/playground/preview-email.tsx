@@ -55,8 +55,8 @@ export function PreviewEmail() {
       {/* Frame Container */}
       <div className="flex-1 bg-gray-100 overflow-y-auto flex justify-center py-6">
         <div 
-          className={`bg-white shadow-xl overflow-hidden transition-all duration-300 ${
-            device === "mobile" ? "w-[375px] rounded-3xl min-h-[667px]" : "w-full max-w-[600px] rounded-lg min-h-full"
+          className={`bg-white shadow-xl overflow-hidden transition-all duration-300 max-w-full ${
+            device === "mobile" ? "w-full sm:w-[375px] rounded-3xl min-h-[667px]" : "w-full max-w-[600px] rounded-lg min-h-full"
           }`}
         >
           {html ? (

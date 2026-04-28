@@ -22,7 +22,7 @@ export function PreviewSms() {
   return (
     <div className="flex flex-col h-full items-center py-6 bg-[#f0f0f0] overflow-y-auto">
       {/* iOS Phone Mockup */}
-      <div className="relative w-[320px] h-[650px] bg-white rounded-[40px] border-8 border-gray-900 shadow-2xl overflow-hidden flex flex-col font-sans shrink-0">
+      <div className="relative w-full max-w-[320px] h-[650px] bg-white rounded-[40px] border-8 border-gray-900 shadow-2xl overflow-hidden flex flex-col font-sans shrink-0 mx-auto">
         
         {/* iOS Status Bar */}
         <div className="h-7 w-full flex justify-between items-center px-6 pt-1 text-[11px] font-medium z-10 text-black shrink-0">

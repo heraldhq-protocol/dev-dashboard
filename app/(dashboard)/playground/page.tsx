@@ -74,18 +74,20 @@ export default function ComposersPlaygroundPage() {
     toast.success(`${store.activeChannel} draft reset`);
   };
 
+  const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
+
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
+    <div className="flex flex-col h-full min-h-[600px] lg:h-[calc(100vh-8rem)]">
       <PageHeader
         title="Composers Playground"
         description="Draft and preview multi-channel notifications in real-time."
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button
               variant="secondary"
               size="sm"
               onClick={handleReset}
-              className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-4"
+              className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-3 sm:px-4"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Reset</span>
@@ -94,7 +96,7 @@ export default function ComposersPlaygroundPage() {
               variant="secondary"
               size="sm"
               onClick={handleSaveDraft}
-              className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-4"
+              className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-3 sm:px-4"
             >
               <Save className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Save Draft</span>
@@ -103,7 +105,7 @@ export default function ComposersPlaygroundPage() {
               variant="default"
               size="sm"
               onClick={() => setTestSendOpen(true)}
-              className="gap-2 rounded-full px-5"
+              className="gap-2 rounded-full px-4 sm:px-5"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Send Test</span>
@@ -113,20 +115,62 @@ export default function ComposersPlaygroundPage() {
       />
 
       <div className="flex-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col min-h-0 mt-4">
-        <ChannelToggle />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border bg-card">
+          <ChannelToggle />
+          
+          {/* Mobile view switcher */}
+          <div className="flex sm:hidden w-full border-t border-border p-1.5 bg-card-2/30">
+            <button 
+              onClick={() => setMobileView("edit")}
+              className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                mobileView === 'edit' 
+                  ? 'bg-primary text-navy shadow-[0_2px_10px_rgba(0,200,150,0.3)]' 
+                  : 'text-text-muted'
+              }`}
+            >
+              Write
+            </button>
+            <button 
+              onClick={() => setMobileView("preview")}
+              className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                mobileView === 'preview' 
+                  ? 'bg-primary text-navy shadow-[0_2px_10px_rgba(0,200,150,0.3)]' 
+                  : 'text-text-muted'
+              }`}
+            >
+              Preview
+            </button>
+          </div>
+        </div>
         
         <div className="flex-1 min-h-0">
-          <ResizablePanelGroup orientation="horizontal" className="h-full">
-            <ResizablePanel defaultSize={45} minSize={30} className="flex flex-col">
-              <ComposerEditor />
-            </ResizablePanel>
-            
-            <ResizableHandle withHandle className="bg-border border-x border-border hover:bg-primary/20 transition-colors" />
-            
-            <ResizablePanel defaultSize={55} minSize={30}>
-              <ComposerPreview />
-            </ResizablePanel>
-          </ResizablePanelGroup>
+          {/* Mobile Stacked Layout */}
+          <div className="sm:hidden h-full overflow-y-auto">
+            {mobileView === "edit" ? (
+              <div className="h-full">
+                <ComposerEditor />
+              </div>
+            ) : (
+              <div className="h-full p-4 bg-navy-2/20">
+                <ComposerPreview />
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Resizable Layout */}
+          <div className="hidden sm:block h-full">
+            <ResizablePanelGroup orientation="horizontal" className="h-full">
+              <ResizablePanel defaultSize={45} minSize={30} className="flex flex-col">
+                <ComposerEditor />
+              </ResizablePanel>
+              
+              <ResizableHandle withHandle className="bg-border border-x border-border hover:bg-primary/20 transition-colors" />
+              
+              <ResizablePanel defaultSize={55} minSize={30}>
+                <ComposerPreview />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
         </div>
       </div>
 

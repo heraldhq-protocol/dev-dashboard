@@ -29,11 +29,11 @@ export function DashboardCard({
       )}
     >
       {header && (
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
             {header.title}
           </h3>
-          {header.action && <div>{header.action}</div>}
+          {header.action && <div className="flex items-center">{header.action}</div>}
         </div>
       )}
       <div>{children}</div>

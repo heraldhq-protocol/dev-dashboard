@@ -89,42 +89,42 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex flex-col gap-3">
-              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4">
+            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
+              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
                 <FiKey className="w-5 h-5 text-teal" />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-foreground">1. Create API Key</h4>
                 <p className="text-xs text-text-muted mt-1">Generate a live or test key.</p>
               </div>
-              <Button variant="ghost" size="sm" asChild className="w-full">
+              <Button variant="ghost" size="sm" asChild className="w-full mt-auto">
                 <Link href="/api-keys">Go to API Keys</Link>
               </Button>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center">
+            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
+              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
                 <FiCode className="w-5 h-5 text-teal" />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-foreground">2. Read the Docs</h4>
                 <p className="text-xs text-text-muted mt-1">Learn how to format payloads.</p>
               </div>
-              <Button variant="ghost" size="sm" className="w-full">
+              <Button variant="ghost" size="sm" className="w-full mt-auto">
                 View Documentation
               </Button>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center">
+            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
+              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
                 <FiActivity className="w-5 h-5 text-teal" />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-foreground">3. Send First Event</h4>
                 <p className="text-xs text-text-muted mt-1">Use the playground to test.</p>
               </div>
-              <Button size="sm" asChild className="w-full">
+              <Button size="sm" asChild className="w-full mt-auto">
                 <Link href="/playground">Open Playground</Link>
               </Button>
             </div>

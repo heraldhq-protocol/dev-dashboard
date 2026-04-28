@@ -103,7 +103,7 @@ function EnvSwitcher({
     <div className="flex items-center gap-0.5 rounded-lg bg-secondary p-0.5">
       <button
         onClick={() => setEnvironment("sandbox")}
-        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+        className={`flex items-center gap-1.5 rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
           !isLive
             ? "bg-status-warning/10 text-status-warning border border-status-warning/20"
             : "text-text-muted hover:text-foreground"
@@ -116,7 +116,7 @@ function EnvSwitcher({
       </button>
       <button
         onClick={() => setEnvironment("live")}
-        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+        className={`flex items-center gap-1.5 rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
           isLive
             ? "bg-status-success/10 text-status-success border border-status-success/20"
             : "text-text-muted hover:text-foreground"
@@ -146,9 +146,9 @@ export function TopNav() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-navy/80 backdrop-blur-xl px-8 gap-4">
+    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-navy/80 backdrop-blur-xl px-4 lg:px-8 gap-2 sm:gap-4">
       {/* ── Left: Hamburger + Logo (mobile) + Breadcrumb ── */}
-      <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         {/* Mobile hamburger */}
         <button
           onClick={toggleMobileSidebar}
@@ -179,8 +179,8 @@ export function TopNav() {
 
         {/* Mobile logo */}
         <div className="flex items-center gap-2 lg:hidden">
-          <Image src="/logo.svg" alt="Herald Logo" width={22} height={22} className="h-[22px] w-[22px] object-contain" />
-          <span className="text-base font-extrabold tracking-tight text-foreground" style={{ fontFamily: '"Syne", system-ui, sans-serif' }}>Herald</span>
+          <Image src="/logo.svg" alt="Herald Logo" width={22} height={22} className="h-[22px] w-[22px] object-contain shrink-0" />
+          <span className="hidden sm:inline-block text-base font-extrabold tracking-tight text-foreground" style={{ fontFamily: '"Syne", system-ui, sans-serif' }}>Herald</span>
         </div>
 
         {/* Breadcrumb — desktop */}
@@ -188,7 +188,7 @@ export function TopNav() {
       </div>
 
       {/* ── Right: env switcher, theme, user ── */}
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         <EnvSwitcher
           activeEnvironment={activeEnvironment}
           setEnvironment={setEnvironment}
@@ -201,12 +201,12 @@ export function TopNav() {
         {/* User dropdown */}
         <div className="flex items-center gap-2">
           <UserAvatar userId={session?.user?.id} />
-          <span className="text-sm text-text-muted">
+          <span className="hidden sm:inline text-sm text-text-muted">
             {session?.user?.id
               ? `${session.user.id.slice(0, 4)}…${session.user.id.slice(-4)}`
               : "user..."}
           </span>
-          <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24">
+          <svg className="hidden sm:block h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
