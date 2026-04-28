@@ -76,14 +76,14 @@ export default function LoginForm() {
         <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-card border border-border shadow-[0_0_20px_rgba(91,53,213,0.15)] group hover:shadow-[0_0_30px_rgba(0,200,150,0.2)] transition-all duration-300">
           <Image width={36} height={36} src={"/logo.svg"} alt="logo" priority />
         </div>
-        <span className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-[0_2px_10px_rgba(0,200,150,0.2)]">Herald</span>
+        <span className="text-4xl font-heading font-extrabold tracking-tight text-primary drop-shadow-[0_2px_10px_rgba(0,200,150,0.2)]">Herald</span>
       </div>
 
       <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-8 shadow-2xl relative overflow-hidden">
         {/* Subtle inner top highlight */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-linear-to-r from-transparent via-teal/50 to-transparent" />
         
-        <h2 className="mb-2 text-2xl font-bold text-primary-foreground text-center">Protocol Access</h2>
+        <h2 className="mb-2 text-2xl font-bold text-foreground text-center">Protocol Access</h2>
         <p className="mb-8 text-sm text-text-muted text-center">Connect your registered wallet to continue</p>
 
         {error && (

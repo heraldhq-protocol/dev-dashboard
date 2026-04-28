@@ -54,10 +54,10 @@ export function OverageManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground">Overage Management</h2>
-        <div className="flex items-center gap-2 bg-teal/10 px-3 py-1 rounded-full">
-          <span className="text-xs font-semibold text-teal uppercase tracking-wider">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: '"Syne", system-ui, sans-serif' }}>Overage Management</h2>
+        <div className="flex items-center gap-2 bg-teal/10 px-3 py-1 rounded-full w-fit">
+          <span className="text-[10px] sm:text-xs font-semibold text-teal uppercase tracking-wider whitespace-nowrap">
             {pricing}
           </span>
         </div>
@@ -69,16 +69,16 @@ export function OverageManagement() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-teal/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-teal/10 transition-colors" />
           
           <div className="relative">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <p className="text-xs font-medium text-text-muted uppercase tracking-widest mb-1">
+                <p className="text-[10px] sm:text-xs font-medium text-text-muted uppercase tracking-widest mb-1">
                   Current Period Overage
                 </p>
                 <h3 className="text-2xl font-bold text-foreground">
                   ${currentSpend.toFixed(2)} <span className="text-sm font-normal text-text-muted">USDC</span>
                 </h3>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 bg-card-2/50 sm:bg-transparent p-2 sm:p-0 rounded-lg border border-border/50 sm:border-0 w-full sm:w-auto justify-between sm:justify-start">
                 <span className="text-xs font-medium text-text-muted">Pay-as-you-go</span>
                 <Switch 
                   checked={settings.optInOverage}
@@ -177,27 +177,29 @@ export function OverageManagement() {
             </form>
           ) : (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex-1">
                   <p className="text-sm font-medium text-text-primary">Hard Cap Stop</p>
-                  <p className="text-xs text-text-muted">Pause API sends immediately if cap is reached</p>
+                  <p className="text-xs text-text-muted max-w-[200px] sm:max-w-none">Pause API sends immediately if cap is reached</p>
                 </div>
-                <Switch 
-                  variant="destructive"
-                  checked={settings.overageHardCapEnabled}
-                  onCheckedChange={(checked) => updateMutation.mutate({ overageHardCapEnabled: checked })}
-                  disabled={updateMutation.isPending}
-                />
+                <div className="w-full sm:w-auto flex justify-end">
+                  <Switch 
+                    variant="destructive"
+                    checked={settings.overageHardCapEnabled}
+                    onCheckedChange={(checked) => updateMutation.mutate({ overageHardCapEnabled: checked })}
+                    disabled={updateMutation.isPending}
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-border pt-4">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border pt-4">
+                <div className="flex-1">
                   <p className="text-sm font-medium text-text-primary">Monthly Alert</p>
                   <p className="text-xs text-text-muted text-balance">
                     Notify admins when overage reaches ${(Number(settings.overageAlertAtUsdc) / 1_000_000).toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-navy px-3 py-1 rounded border border-border text-xs font-mono">
+                <div className="bg-navy px-3 py-1 rounded border border-border text-xs font-mono w-fit">
                   ${(Number(settings.overageAlertAtUsdc) / 1_000_000).toFixed(2)}
                 </div>
               </div>
@@ -210,7 +212,7 @@ export function OverageManagement() {
       {invoices.length > 0 && (
         <div className="mt-10">
           <h3 className="text-lg font-bold text-foreground mb-4">Overage Invoices</h3>
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-navy/50 border-b border-border">

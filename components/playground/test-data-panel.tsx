@@ -39,7 +39,7 @@ export function TestDataPanel() {
                 value={value}
                 onChange={(e) => setTestData(key, e.target.value)}
                 placeholder="Value"
-                className="flex-1 h-7 sm:h-8 text-xs bg-card-2/50"
+                className="flex-1 h-7 sm:h-8 text-xs bg-background border-input"
               />
               <Button
                 variant="ghost"
@@ -59,14 +59,14 @@ export function TestDataPanel() {
               value={newKey}
               onChange={(e) => setNewKey(e.target.value)}
               placeholder="Key"
-              className="w-1/3 sm:w-[100px] h-7 sm:h-8 font-mono text-[10px] sm:text-xs bg-card-3/50"
+              className="w-1/3 sm:w-[100px] h-7 sm:h-8 font-mono text-[10px] sm:text-xs bg-background border-input"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             />
             <Input
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
               placeholder="Value"
-              className="flex-1 h-7 sm:h-8 text-xs bg-card-2/50"
+              className="flex-1 h-7 sm:h-8 text-xs bg-background border-input"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             />
             <Button

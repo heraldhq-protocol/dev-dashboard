@@ -250,14 +250,13 @@ export function Sidebar() {
               {/* Gradient wordmark */}
               <span
                 className={cn(
-                  "text-xl font-extrabold tracking-tight whitespace-nowrap overflow-hidden",
+                  "text-xl font-heading font-extrabold tracking-tight whitespace-nowrap overflow-hidden",
                   "bg-linear-to-r from-foreground via-teal-2 to-foreground bg-clip-text text-transparent",
                   "transition-[opacity,max-width] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
                   collapsed
                     ? "lg:max-w-0 lg:opacity-0"
                     : "max-w-[160px] opacity-100",
                 )}
-                style={{ fontFamily: '"Syne", system-ui, sans-serif' }}
               >
                 Herald
               </span>

@@ -122,6 +122,7 @@
 
   --color-text-primary: var(--text-main);
   --color-text-secondary: var(--text-dim);
+  --color-text-dim: var(--text-dim);
   --color-text-muted: var(--text-muted);
 
   --color-red: #ef4444;

@@ -1,7 +1,16 @@
 "use client";
 
 import { useUiStore } from "@/lib/stores/ui.store";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { FiLogOut, FiUser, FiSettings } from "react-icons/fi";
 
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import Image from "next/image";
@@ -180,7 +189,7 @@ export function TopNav() {
         {/* Mobile logo */}
         <div className="flex items-center gap-2 lg:hidden">
           <Image src="/logo.svg" alt="Herald Logo" width={22} height={22} className="h-[22px] w-[22px] object-contain shrink-0" />
-          <span className="hidden sm:inline-block text-base font-extrabold tracking-tight text-foreground" style={{ fontFamily: '"Syne", system-ui, sans-serif' }}>Herald</span>
+          <span className="hidden sm:inline-block text-base font-heading font-extrabold tracking-tight text-foreground">Herald</span>
         </div>
 
         {/* Breadcrumb — desktop */}
@@ -199,17 +208,75 @@ export function TopNav() {
         <div className="h-4 w-px bg-border" />
 
         {/* User dropdown */}
-        <div className="flex items-center gap-2">
-          <UserAvatar userId={session?.user?.id} />
-          <span className="hidden sm:inline text-sm text-text-muted">
-            {session?.user?.id
-              ? `${session.user.id.slice(0, 4)}…${session.user.id.slice(-4)}`
-              : "user..."}
-          </span>
-          <svg className="hidden sm:block h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24">
-            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-secondary p-1 rounded-lg transition-colors cursor-pointer outline-hidden">
+            <UserAvatar userId={session?.user?.id} />
+            <span className="hidden sm:inline text-sm text-text-muted">
+              {session?.user?.id
+                ? `${session.user.id.slice(0, 4)}…${session.user.id.slice(-4)}`
+                : "user..."}
+            </span>
+            <svg className="hidden sm:block h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60 bg-navy border-border/60 shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl p-1.5 rounded-2xl">
+            <DropdownMenuLabel className="px-1.5 py-1.5 mb-1">
+              <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-card-2/30 border border-border/20 relative overflow-hidden group/header">
+                <div className="absolute top-0 right-0 w-12 h-12 bg-teal/5 rounded-full -mr-6 -mt-6 blur-xl group-hover/header:bg-teal/10 transition-colors" />
+                <span className="text-[9px] text-teal font-bold uppercase tracking-[0.2em]">Authorized</span>
+                <span className="text-xs font-mono text-foreground truncate">
+                  {session?.user?.id 
+                    ? `${session.user.id.slice(0, 8)}...${session.user.id.slice(-6)}` 
+                    : "Unknown"}
+                </span>
+              </div>
+            </DropdownMenuLabel>
+            
+            <div className="space-y-0.5">
+              <DropdownMenuItem 
+                className="flex items-center gap-3 px-2 py-1.5 cursor-pointer rounded-xl focus:bg-secondary focus:text-foreground transition-all duration-200"
+                onClick={() => window.location.href = '/settings'}
+              >
+                <div className="w-7 h-7 rounded-lg bg-secondary/50 flex items-center justify-center text-text-muted">
+                  <FiSettings className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold">Settings</span>
+                  <span className="text-[9px] text-text-muted">Preferences & keys</span>
+                </div>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                className="flex items-center gap-3 px-2 py-1.5 cursor-pointer rounded-xl focus:bg-secondary focus:text-foreground transition-all duration-200"
+                onClick={() => window.location.href = '/team'}
+              >
+                <div className="w-7 h-7 rounded-lg bg-secondary/50 flex items-center justify-center text-text-muted">
+                  <FiUser className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold">Team</span>
+                  <span className="text-[9px] text-text-muted">Members & roles</span>
+                </div>
+              </DropdownMenuItem>
+            </div>
+
+            <DropdownMenuSeparator className="bg-border/40 my-1.5" />
+            
+            <DropdownMenuItem 
+              className="flex items-center gap-3 px-2 py-1.5 text-red focus:bg-red/10 focus:text-red cursor-pointer rounded-xl transition-all duration-200"
+              onClick={() => signOut()}
+            >
+              <div className="w-7 h-7 rounded-lg bg-red/10 flex items-center justify-center">
+                <FiLogOut className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold">Log out</span>
+                <span className="text-[9px] opacity-70">End session</span>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

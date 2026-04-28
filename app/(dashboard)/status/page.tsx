@@ -54,7 +54,7 @@ export default function StatusPage() {
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card
           variant="glow"
-          className="flex flex-col gap-2 p-5 bg-card border-border"
+          className="flex flex-col gap-2 p-5 bg-card border-border shadow-sm"
         >
           <div className="flex items-center gap-2 text-text-muted text-sm font-medium mb-1">
             <FiActivity size={16} />
@@ -64,17 +64,17 @@ export default function StatusPage() {
             {isHealthy ? (
               <>
                 <div className="h-3 w-3 bg-teal rounded-full shadow-[0_0_10px_rgba(46,213,115,0.5)]" />
-                <span className="text-xl font-bold text-white">Active</span>
+                <span className="text-xl font-bold text-foreground">Active</span>
               </>
             ) : status.isSuspended ? (
               <>
                 <div className="h-3 w-3 bg-red rounded-full shadow-[0_0_10px_rgba(255,71,87,0.5)]" />
-                <span className="text-xl font-bold text-white">Suspended</span>
+                <span className="text-xl font-bold text-foreground">Suspended</span>
               </>
             ) : (
               <>
                 <div className="h-3 w-3 bg-gold rounded-full shadow-[0_0_10px_rgba(255,165,2,0.5)]" />
-                <span className="text-xl font-bold text-white">Inactive</span>
+                <span className="text-xl font-bold text-foreground">Inactive</span>
               </>
             )}
           </div>
@@ -82,18 +82,18 @@ export default function StatusPage() {
 
         <Card
           variant="glow"
-          className="flex flex-col gap-2 p-5 bg-card border-border"
+          className="flex flex-col gap-2 p-5 bg-card border-border shadow-sm"
         >
           <div className="flex items-center gap-2 text-text-muted text-sm font-medium mb-1">
             <FiShield size={16} />
             On-Chain Program
           </div>
-          <div className="font-bold text-white tracking-tight break-all font-mono text-sm leading-tight">
+          <div className="font-bold text-foreground tracking-tight break-all font-mono text-sm leading-tight">
             {status.programId?.slice(0, 16)}…
           </div>
         </Card>
 
-        <Card className="flex flex-col gap-2 p-5 bg-navy-2 border-border">
+        <Card className="flex flex-col gap-2 p-5 bg-card border-border shadow-sm">
           <div className="flex items-center justify-between text-text-muted text-sm font-medium mb-1">
             <div className="flex items-center gap-2">
               <FiZap size={16} />
@@ -112,24 +112,24 @@ export default function StatusPage() {
                     : "ENT"}
             </Badge>
           </div>
-          <div className="text-xl font-bold text-white capitalize">
+          <div className="text-xl font-bold text-foreground capitalize">
             {status.subscriptionStatus}
           </div>
           {status.subscriptionExpiry && (
-            <div className="text-xs text-text-dim">
+            <div className="text-xs text-text-secondary">
               Renews {new Date(status.subscriptionExpiry).toLocaleDateString()}
             </div>
           )}
         </Card>
 
-        <Card className="flex flex-col gap-2 p-5 bg-navy-2 border-border">
+        <Card className="flex flex-col gap-2 p-5 bg-card border-border shadow-sm">
           <div className="flex items-center justify-between text-text-muted text-sm font-medium mb-1">
             <span>Send Quota Usage</span>
             <span className="text-teal font-mono">
               {usagePercent.toFixed(1)}%
             </span>
           </div>
-          <div className="mt-2 h-2 w-full bg-navy rounded-full overflow-hidden">
+          <div className="mt-2 h-2 w-full bg-secondary dark:bg-navy rounded-full overflow-hidden">
             <div
               className={`h-full ${
                 usagePercent > 90
@@ -141,7 +141,7 @@ export default function StatusPage() {
               style={{ width: `${usagePercent}%` }}
             />
           </div>
-          <div className="text-xs text-text-dim mt-1 font-mono">
+          <div className="text-xs text-text-secondary mt-1 font-mono">
             {status.sendsUsed.toLocaleString()} /{" "}
             {status.sendsLimit.toLocaleString()}
           </div>
