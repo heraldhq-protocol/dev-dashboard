@@ -21,7 +21,7 @@ export function UsageProgressBar({
   label = "Current Usage",
   showDetails = true 
 }: UsageProgressBarProps) {
-  const percentage = Math.min(Math.round((used / quota) * 100), 100);
+  const percentage = quota > 0 ? Math.min(Math.round((used / quota) * 100), 100) : 0;
 
   // Status thresholds
   const isWarning = percentage >= 80 && percentage < 100;

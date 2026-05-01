@@ -19,14 +19,18 @@ export function OverageManagement() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
 
-  const { data: overageData, isLoading: overageLoading } = useQuery({
+  const { data: overageData, isLoading: overageLoading, isError: overageError } = useQuery({
     queryKey: ["overageStatus"],
     queryFn: getOverageStatus,
+    staleTime: 60_000,
+    retry: 1,
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ["overageInvoices"],
     queryFn: getOverageInvoices,
+    staleTime: 60_000,
+    retry: 1,
   });
 
   const updateMutation = useMutation({
@@ -41,9 +45,33 @@ export function OverageManagement() {
     },
   });
 
+  // Error state — still render the section header, show a friendly message
+  if (overageError) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground">Overage Management</h2>
+        <div className="bg-card border border-border/50 rounded-2xl p-8 text-center">
+          <p className="text-sm text-text-muted">
+            Overage data could not be loaded. This feature is available on Growth and above plans.
+          </p>
+          <button
+            className="mt-3 text-xs text-teal hover:underline"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ["overageStatus"] })}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading skeleton
   if (overageLoading || !overageData) {
     return (
-      <div className="animate-pulse bg-card/50 rounded-2xl h-64 border border-border" />
+      <div className="space-y-4">
+        <div className="h-7 w-48 bg-card-2 animate-pulse rounded-lg" />
+        <div className="animate-pulse bg-card/50 rounded-2xl h-56 border border-border" />
+      </div>
     );
   }
 
