@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { TeamMemberDto } from "@/types/api";
 import { formatDistanceToNow } from "date-fns";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useRouter } from "next/navigation";
 import { FiUsers, FiMail, FiTrash2, FiUserPlus, FiClock, FiShield } from "react-icons/fi";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
@@ -28,6 +29,7 @@ export default function TeamPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<TeamMemberDto["role"]>("developer");
 
@@ -43,8 +45,7 @@ export default function TeamPage() {
       setIsInviteOpen(false);
       setInviteEmail("");
       queryClient.invalidateQueries({ queryKey: ["team"] });
-      // Show token directly if no email transport yet
-      toast.success(`Invite created! Token: ${data.inviteToken}`, { duration: 10000 });
+      toast.success("Invite sent successfully");
     },
     onError: (err: any) => {
       const data = err?.data || err?.response?.data;
@@ -78,8 +79,13 @@ export default function TeamPage() {
   };
 
   const handleRemove = (id: string) => {
-    if (confirm("Are you sure you want to remove this member?")) {
-      removeMutation.mutate(id);
+    setMemberToRemove(id);
+  };
+
+  const confirmRemove = () => {
+    if (memberToRemove) {
+      removeMutation.mutate(memberToRemove);
+      setMemberToRemove(null);
     }
   };
 
@@ -294,6 +300,15 @@ export default function TeamPage() {
           </div>
         </form>
       </Modal>
+      <ConfirmModal
+        isOpen={!!memberToRemove}
+        onClose={() => setMemberToRemove(null)}
+        onConfirm={confirmRemove}
+        title="Remove Team Member"
+        description="Are you sure you want to remove this member from the team? They will lose all access to the dashboard and API keys."
+        confirmText="Remove Member"
+        isLoading={removeMutation.isPending}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { CopyButton } from "@/components/shared/CopyButton";
 import { useSession } from "next-auth/react";
 import { Globe } from "lucide-react";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 function BimiSection({
   bimi,
@@ -109,6 +110,8 @@ export default function DomainsPage() {
   const [newDomain, setNewDomain] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [configModalData, setConfigModalData] = useState<Domain | null>(null);
+  const [domainToDelete, setDomainToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadDomains = async () => {
     if (!session?.accessToken) return;
@@ -179,14 +182,22 @@ export default function DomainsPage() {
     }
   };
 
-  const handleDelete = async (domainId: string) => {
-    if (!confirm("Are you sure you want to remove this domain?")) return;
+  const handleDelete = (domainId: string) => {
+    setDomainToDelete(domainId);
+  };
+
+  const confirmDelete = async () => {
+    if (!domainToDelete) return;
+    setIsDeleting(true);
     try {
-      await axios.delete(`/domains/${domainId}`);
+      await axios.delete(`/domains/${domainToDelete}`);
       toast.success("Domain removed");
       loadDomains();
+      setDomainToDelete(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to remove domain");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -526,6 +537,16 @@ export default function DomainsPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!domainToDelete}
+        onClose={() => setDomainToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Remove Domain"
+        description="Are you sure you want to remove this domain? Emails sent from this domain will no longer be authenticated with DKIM, which may affect deliverability."
+        confirmText="Remove Domain"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

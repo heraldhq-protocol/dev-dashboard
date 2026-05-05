@@ -122,6 +122,7 @@ export function OverageManagement() {
                   used={Number(usage.overageUsdcThisPeriod)} 
                   quota={Number(settings.maxOverageUsdc)}
                   label={`Usage toward cap ($${maxSpend.toFixed(2)})`}
+                  format="currency"
                 />
                 <p className="text-xs text-text-muted italic">
                   * Overages are billed at the end of your 30-day period.

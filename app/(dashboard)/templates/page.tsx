@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface Template {
   id: string;
@@ -56,6 +57,8 @@ export default function TemplatesPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [noAnimations, setNoAnimations] = useState(true);
+  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -120,13 +123,21 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleDelete = async (templateId: string) => {
-    if (!confirm("Are you sure you want to delete this template?")) return;
+  const handleDelete = (templateId: string) => {
+    setTemplateToDelete(templateId);
+  };
+
+  const confirmDelete = async () => {
+    if (!templateToDelete) return;
+    setIsDeleting(true);
     try {
-      await axios.delete(`/templates/${templateId}`);
+      await axios.delete(`/templates/${templateToDelete}`);
       loadTemplates();
+      setTemplateToDelete(null);
     } catch (error) {
       console.error("Failed to delete template:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -491,6 +502,16 @@ export default function TemplatesPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!templateToDelete}
+        onClose={() => setTemplateToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Template"
+        description="Are you sure you want to delete this template? This action cannot be undone."
+        confirmText="Delete Template"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

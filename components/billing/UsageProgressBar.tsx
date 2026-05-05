@@ -7,6 +7,7 @@ interface UsageProgressBarProps {
   quota: number;
   label?: string;
   showDetails?: boolean;
+  format?: 'number' | 'currency';
 }
 
 /**
@@ -19,7 +20,8 @@ export function UsageProgressBar({
   used, 
   quota, 
   label = "Current Usage",
-  showDetails = true 
+  showDetails = true,
+  format = 'number'
 }: UsageProgressBarProps) {
   const percentage = quota > 0 ? Math.min(Math.round((used / quota) * 100), 100) : 0;
 
@@ -33,6 +35,13 @@ export function UsageProgressBar({
     : isWarning
       ? "bg-gold shadow-[0_0_12px_rgba(232,146,10,0.3)]"
       : "bg-teal shadow-[0_0_12px_rgba(0,200,150,0.3)]";
+
+  const formatValue = (val: number) => {
+    if (format === 'currency') {
+      return `$${(val / 1_000_000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    return val.toLocaleString();
+  };
 
   return (
     <div className="w-full space-y-3 group">
@@ -49,7 +58,7 @@ export function UsageProgressBar({
                 isCritical ? "text-red font-bold" : isWarning ? "text-gold font-bold" : "text-foreground"
               )}
             >
-              {used.toLocaleString()} <span className="text-[10px] text-text-muted font-sans uppercase">/</span> {quota.toLocaleString()}
+              {formatValue(used)} <span className="text-[10px] text-text-muted font-sans uppercase">/</span> {formatValue(quota)}
             </span>
             <span className={cn(
               "px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0",

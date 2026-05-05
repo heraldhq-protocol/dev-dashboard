@@ -164,7 +164,7 @@ export default function OnboardingPage() {
         {/* Logo */}
         <div className="mb-8 flex items-center justify-center gap-3 mx-auto">
           <Image width={30} height={30} src="/logo.svg" alt="logo" />
-          <span className="text-2xl font-extrabold tracking-tight text-foreground">
+          <span className="text-2xl font-extrabold tracking-tight font-heading text-foreground">
             Herald
           </span>
         </div>
