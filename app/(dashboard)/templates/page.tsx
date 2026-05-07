@@ -7,6 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useApi } from "@/components/providers/QueryProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const CodeEditor = dynamic(
+  () => import("@/components/ui/CodeEditor").then((m) => ({ default: m.CodeEditor })),
+  { ssr: false }
+);
 
 interface Template {
   id: string;
@@ -48,17 +54,21 @@ export default function TemplatesPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [noAnimations, setNoAnimations] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
     loadTemplates();
   }, []);
 
   const loadTemplates = async () => {
+    setLoadError(null);
     try {
       const { data } = await axios.get("/templates");
       setTemplates(data.data || []);
-    } catch (error) {
-      console.error("Failed to load templates:", error);
+    } catch (error: any) {
+      const msg = error?.message || "Failed to load templates";
+      setLoadError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -66,10 +76,12 @@ export default function TemplatesPage() {
 
   const handleCreate = async () => {
     setIsCreating(true);
+    setCreateError(null);
     try {
       const { data } = await axios.post("/templates", newTemplate);
       if (data.success) {
         setShowCreateModal(false);
+        setCreateError(null);
         setNewTemplate({
           name: "",
           category: "defi",
@@ -79,8 +91,9 @@ export default function TemplatesPage() {
         });
         loadTemplates();
       }
-    } catch (error) {
-      console.error("Failed to create template:", error);
+    } catch (error: any) {
+      const msg = error?.message || "Failed to create template";
+      setCreateError(msg);
     } finally {
       setIsCreating(false);
     }
@@ -93,6 +106,7 @@ export default function TemplatesPage() {
       const { data } = await axios.post("/templates/preview", {
         htmlSource: newTemplate.htmlSource,
         subjectTemplate: newTemplate.subjectTemplate,
+        heraldFooter: "full",
         variables: previewVars,
       });
       if (data.success) {
@@ -129,6 +143,31 @@ export default function TemplatesPage() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Email Templates</h1>
+            <p className="text-sm text-text-muted mt-1">Create and manage custom email templates for your notifications.</p>
+          </div>
+        </div>
+        <Card className="border border-red-500/30 bg-red-500/5">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <svg className="w-10 h-10 text-red-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <p className="text-red-400 font-medium mb-1">Could not load templates</p>
+            <p className="text-sm text-text-muted mb-4">{loadError}</p>
+            <Button variant="secondary" onClick={() => { setIsLoading(true); loadTemplates(); }}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -143,6 +182,7 @@ export default function TemplatesPage() {
           setActiveTab("editor");
           setPreviewHtml(null);
           setNoAnimations(true);
+          setCreateError(null);
         }}>
           Create Template
         </Button>
@@ -160,6 +200,7 @@ export default function TemplatesPage() {
             setActiveTab("editor");
             setPreviewHtml(null);
             setNoAnimations(true);
+            setCreateError(null);
           }}>
               Create Template
             </Button>
@@ -320,17 +361,21 @@ export default function TemplatesPage() {
                     <p className="text-xs text-text-muted">Available variables: {"{{protocolName}}"}, {"{{subject}}"}, {"{{body}}"}, {"{{actionUrl}}"}, {"{{actionLabel}}"}, {"{{unsubscribeUrl}}"}</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
-                      <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                      </svg>
-                      HTML Source
-                    </label>
-                    <textarea
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
+                        <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        HTML Source
+                      </label>
+                      <span className="text-xs text-text-muted font-mono">
+                        {newTemplate.htmlSource.length.toLocaleString()} chars
+                      </span>
+                    </div>
+                    <CodeEditor
                       value={newTemplate.htmlSource}
-                      onChange={(e) => setNewTemplate({ ...newTemplate, htmlSource: e.target.value })}
-                      placeholder="<html><body>...</body></html>"
-                      className="w-full h-48 md:h-64 bg-card-2 border border-border text-foreground text-sm rounded-lg px-3 py-2 font-mono resize-none"
+                      onChange={(v) => setNewTemplate({ ...newTemplate, htmlSource: v })}
+                      height="280px"
                     />
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg">
@@ -446,9 +491,14 @@ export default function TemplatesPage() {
                       </svg>
                       Email Preview
                     </div>
-                    <div className="h-full border border-border rounded-lg overflow-auto bg-white shadow-inner">
+                    <div className="h-full border border-border rounded-lg overflow-hidden bg-white shadow-inner">
                       {previewHtml ? (
-                        <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                        <iframe
+                          srcDoc={previewHtml}
+                          sandbox="allow-same-origin"
+                          className="w-full h-64 md:h-80 border-0"
+                          title="Email preview"
+                        />
                       ) : (
                         <div className="flex flex-col items-center justify-center h-64 md:h-80 text-text-muted p-4 text-center">
                           <svg className="w-12 h-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -462,17 +512,27 @@ export default function TemplatesPage() {
                 </div>
               )}
             </CardContent>
-            <div className="flex justify-end gap-3 p-4 border-t border-border flex-shrink-0">
-              <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                isLoading={isCreating}
-                onClick={handleCreate}
-                disabled={!newTemplate.name || !newTemplate.htmlSource}
-              >
-                Create Template
-              </Button>
+            <div className="flex-shrink-0 border-t border-border">
+              {createError && (
+                <div className="flex items-start gap-3 px-4 pt-3 pb-0">
+                  <svg className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                  <p className="text-sm text-red-400">{createError}</p>
+                </div>
+              )}
+              <div className="flex justify-end gap-3 p-4">
+                <Button variant="secondary" onClick={() => { setShowCreateModal(false); setCreateError(null); }}>
+                  Cancel
+                </Button>
+                <Button
+                  isLoading={isCreating}
+                  onClick={handleCreate}
+                  disabled={!newTemplate.name || !newTemplate.htmlSource}
+                >
+                  Create Template
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
