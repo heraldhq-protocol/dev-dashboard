@@ -30,7 +30,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div id="notifications-filters" className="flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           placeholder="Search by wallet or ID..."
@@ -81,6 +81,7 @@ export default function NotificationsPage() {
         </Select>
       </div>
 
+      <div id="notifications-table">
       <NotificationsTable
         page={page}
         onPageChange={setPage}
@@ -88,6 +89,7 @@ export default function NotificationsPage() {
         categoryFilter={params.category}
         search={params.search}
       />
+      </div>
     </div>
   );
 }

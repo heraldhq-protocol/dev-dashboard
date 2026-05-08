@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import bs58 from "bs58";
@@ -12,14 +13,18 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { registerProtocol } from "@/lib/api/protocol";
 import { createSignInChallenge } from "@/lib/auth-utils";
+import { apiClient } from "@/lib/api-client";
+
+const REDIRECT_DELAY = 60; // seconds before auto-redirect on success step
 
 const STEPS = ["Welcome", "Connect Wallet", "Protocol Details", "Register", "Success"] as const;
 
+// ── Step Indicator ─────────────────────────────────────────────────────────────
 function StepIndicator({ current }: { current: number }) {
   return (
-    <div className="flex items-center gap-2 mb-8 mx-auto">
+    <div className="flex items-center justify-center gap-1.5 mb-8 w-full flex-wrap">
       {STEPS.map((label, i) => (
-        <div key={label} className="flex items-center gap-2">
+        <div key={label} className="flex items-center gap-1.5">
           <div
             className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border transition-all ${
               i < current
@@ -40,7 +45,7 @@ function StepIndicator({ current }: { current: number }) {
           </span>
           {i < STEPS.length - 1 && (
             <div
-              className={`h-px w-8 ${i < current ? "bg-teal" : "bg-border"}`}
+              className={`hidden sm:block h-px w-6 ${i < current ? "bg-teal" : "bg-border"}`}
             />
           )}
         </div>
@@ -49,13 +54,16 @@ function StepIndicator({ current }: { current: number }) {
   );
 }
 
+// ── Main Page ──────────────────────────────────────────────────────────────────
 export default function OnboardingPage() {
   const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
   const { publicKey, signMessage } = useWallet();
   const { setVisible } = useWalletModal();
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(false); // for already-registered guard
 
   // Form fields
   const [protocolName, setProtocolName] = useState("");
@@ -69,34 +77,74 @@ export default function OnboardingPage() {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // ── Step 1: Connect wallet ──────────────────────────────────────────
-  const handleConnectWallet = () => {
-    console.log("handleConnectWallet clicked", { publicKey: publicKey?.toBase58() });
-    if (publicKey) {
-      setStep(2);
-    } else {
-      console.log("Calling setVisible(true) for wallet modal");
-      setVisible(true);
-    }
-  };
+  // Countdown for auto-redirect on success step
+  const [countdown, setCountdown] = useState(REDIRECT_DELAY);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Auto-advance when wallet connects (only if we're at the connect step)
+  // ── Already-registered guard ────────────────────────────────────────────────
+  // If the user is authenticated AND already has a protocol, skip onboarding.
+  useEffect(() => {
+    if (step === 4) return; // don't redirect if user just registered
+    if (sessionStatus !== "authenticated") return;
+
+    setChecking(true);
+    apiClient
+      .get("/protocols/me")
+      .then(() => {
+        // Protocol exists — redirect to dashboard
+        router.replace("/overview");
+      })
+      .catch(() => {
+        // 404/401 = no protocol yet, stay on onboarding
+        setChecking(false);
+      });
+  }, [sessionStatus, step, router]);
+
+  // ── Auto-advance when wallet connects ──────────────────────────────────────
   useEffect(() => {
     if (publicKey && step === 1) {
-      console.log("Wallet connected, auto-advancing to step 2");
       const timer = setTimeout(() => setStep(2), 0);
       return () => clearTimeout(timer);
     }
   }, [publicKey, step]);
 
-  // ── Step 1: Validate form ───────────────────────────────────────────
+  // ── Countdown timer on success step ────────────────────────────────────────
+  useEffect(() => {
+    if (step !== 4) return;
+
+    setCountdown(REDIRECT_DELAY);
+
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current!);
+          router.push("/overview");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [step, router]);
+
+  // ── Step handlers ──────────────────────────────────────────────────────────
+  const handleConnectWallet = () => {
+    if (publicKey) {
+      setStep(2);
+    } else {
+      setVisible(true);
+    }
+  };
+
   const handleDetailsNext = (e: React.FormEvent) => {
     e.preventDefault();
     if (!protocolName.trim() || !adminEmail.trim()) return;
     setStep(3);
   };
 
-  // ── Step 2: Sign + register ─────────────────────────────────────────
   const handleRegister = async () => {
     if (!publicKey || !signMessage) {
       toast.error("Wallet not connected");
@@ -122,7 +170,7 @@ export default function OnboardingPage() {
       setApiKey(result.apiKey);
       setApiKeyPrefix(result.apiKeyPrefix);
 
-      // Sign in to establish the session (redirect: false so user sees their API key first)
+      // Sign in to establish session (redirect: false so user sees their API key first)
       const signInResult = await signIn("wallet", {
         wallet: publicKey.toBase58(),
         signature,
@@ -150,6 +198,23 @@ export default function OnboardingPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleGoToDashboard = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    router.push("/overview");
+  };
+
+  // ── Redirect guard loading state ───────────────────────────────────────────
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-navy">
+        <div className="flex flex-col items-center gap-3 text-text-muted">
+          <div className="h-5 w-5 rounded-full border-2 border-teal border-t-transparent animate-spin" />
+          <span className="text-sm">Checking account…</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-navy px-4 overflow-x-hidden selection:bg-teal/30">
@@ -395,8 +460,11 @@ export default function OnboardingPage() {
           {step === 4 && (
             <div className="flex flex-col gap-5 text-center">
               <div className="flex flex-col items-center gap-3">
-                <div className="h-16 w-16 rounded-full bg-linear-to-br from-teal/20 to-teal/5 border border-teal/30 flex items-center justify-center text-3xl shadow-[0_0_30px_rgba(0,200,150,0.2)]">
-                  ✓
+                {/* Countdown badge */}
+                <div className="flex items-center gap-2">
+                  <div className="h-16 w-16 rounded-full bg-linear-to-br from-teal/20 to-teal/5 border border-teal/30 flex items-center justify-center text-3xl shadow-[0_0_30px_rgba(0,200,150,0.2)]">
+                    ✓
+                  </div>
                 </div>
                 <h1 className="text-2xl font-bold text-foreground tracking-tight mt-2">
                   Protocol Registered!
@@ -435,13 +503,25 @@ export default function OnboardingPage() {
                 ⚠ This key will not be shown again. Store it in a secure environment variable.
               </p>
 
-              <Button
-                variant="default"
-                className="w-full"
-                onClick={() => router.push("/overview")}
-              >
-                Go to Dashboard →
-              </Button>
+              {/* Countdown + Go to Dashboard */}
+              <div className="flex flex-col gap-3 pt-1">
+                <Button
+                  variant="default"
+                  className="w-full"
+                  onClick={handleGoToDashboard}
+                >
+                  Go to Dashboard →
+                </Button>
+                <div className="flex items-center justify-center gap-2 text-xs text-text-dim">
+                  <div className="h-1.5 w-1.5 rounded-full bg-teal animate-pulse" />
+                  <span>
+                    Redirecting automatically in{" "}
+                    <span className="text-teal font-mono font-semibold tabular-nums">
+                      {countdown}s
+                    </span>
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 interface DashboardCardProps {
   children: React.ReactNode;
   className?: string;
+  id?: string;
   header?: {
     title: string;
     action?: React.ReactNode;
@@ -16,11 +17,13 @@ interface DashboardCardProps {
 export function DashboardCard({
   children,
   className,
+  id,
   header,
   footer,
 }: DashboardCardProps) {
   return (
     <div
+      id={id}
       className={cn(
         "rounded-xl border border-border bg-card p-6",
         "transition-all duration-200 ease-out",

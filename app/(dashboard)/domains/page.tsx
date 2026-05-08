@@ -251,20 +251,20 @@ export default function DomainsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div id="domains-header" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Domains</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Manage custom domains for sending emails with DKIM authentication.
           </p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="shrink-0">
+        <Button id="domains-add-btn" onClick={() => setShowAddModal(true)} className="shrink-0">
           Add Domain
         </Button>
       </div>
 
       {domains.length === 0 ? (
-        <Card className="border-border">
+        <Card id="domains-list" className="border-border">
           <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
             <Globe className="w-12 h-12 text-muted-foreground" />
             <p className="text-muted-foreground">No custom domains yet. Add one to get started.</p>

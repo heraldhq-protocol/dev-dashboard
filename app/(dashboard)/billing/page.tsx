@@ -143,6 +143,7 @@ export default function BillingPage() {
       </div>
 
       {/* Current Plan Card */}
+      <div id="billing-current-plan">
       <CurrentPlanCard
         status={status}
         isLoading={statusLoading && !status}
@@ -154,9 +155,10 @@ export default function BillingPage() {
           checkoutMutation.variables === currentTier + 1
         }
       />
+      </div>
 
       {/* Compare Plans */}
-      <div>
+      <div id="billing-plans">
         <h2 className="text-xl font-bold text-foreground mb-6">Compare Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {displayTiers.map((tier) => (
@@ -178,7 +180,7 @@ export default function BillingPage() {
 
       {/* Overage Management */}
       <Separator className="bg-border" />
-      <OverageManagement />
+      <div id="billing-overage"><OverageManagement /></div>
       <Separator className="bg-border" />
 
       {/* Payment History */}

@@ -118,7 +118,7 @@ export default function TeamPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-border/50">
+      <div id="team-header" className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-border/50">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-teal font-bold text-xs uppercase tracking-[0.2em] mb-1">
             <FiUsers className="w-4 h-4" />
@@ -132,6 +132,7 @@ export default function TeamPage() {
           </p>
         </div>
         <Button
+          id="team-invite-btn"
           onClick={() => setIsInviteOpen(true)}
           className="gap-2 h-12 px-6 rounded-xl shadow-lg shadow-teal/20 hover:shadow-teal/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
         >
@@ -140,7 +141,7 @@ export default function TeamPage() {
         </Button>
       </div>
 
-      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+      <div id="team-members-table" className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm min-w-[800px]">
             <thead>

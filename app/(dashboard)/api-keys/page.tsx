@@ -63,6 +63,7 @@ export default function ApiKeysPage() {
         description="Manage network access tokens for emitting notifications."
         actions={
           <Button
+            id="create-api-key-btn"
             size="sm"
             onClick={() => setIsCreateOpen(true)}
             className="gap-2 shrink-0 group"
@@ -74,7 +75,7 @@ export default function ApiKeysPage() {
       />
 
       {/* Info Banner */}
-      <div className="flex items-start gap-3 p-3.5 rounded-lg border border-[rgba(245,158,11,0.2)] bg-status-warning-bg text-[#f59e0b]">
+      <div id="apikeys-security-banner" className="flex items-start gap-3 p-3.5 rounded-lg border border-[rgba(245,158,11,0.2)] bg-status-warning-bg text-[#f59e0b]">
         <div className="p-1.5 bg-status-warning-bg rounded-md shrink-0">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -91,7 +92,7 @@ export default function ApiKeysPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div id="apikeys-live-section" className="space-y-4">
         <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
           <span className="h-2 w-2 rounded-full bg-status-success" />
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">
@@ -116,7 +117,7 @@ export default function ApiKeysPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div id="apikeys-test-section" className="space-y-4">
         <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
           <span className="h-2 w-2 rounded-full bg-status-warning" />
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">

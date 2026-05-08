@@ -9,6 +9,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset } from "@/lib/api/protocol";
 import { apiClient } from "@/lib/api-client";
+import { useOnboardingStore } from "@/lib/stores/onboarding.store";
+import { useTourControls } from "@/components/onboarding/TourInitializer";
 import {
   Select,
   SelectContent,
@@ -17,11 +19,115 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// ── Tour & Onboarding settings panel ─────────────────────────────────────────
+
+function TourSettingsPanel() {
+  const { tourCompleted, tourSkipped, resetTour } = useOnboardingStore();
+  const { restartTour } = useTourControls();
+
+  const statusLabel = tourSkipped
+    ? "Skipped"
+    : tourCompleted
+    ? "Completed"
+    : "Not started";
+
+  const statusColor = tourSkipped
+    ? "text-gold bg-gold/10 border-gold/20"
+    : tourCompleted
+    ? "text-green bg-green/10 border-green/20"
+    : "text-text-muted bg-white/5 border-white/10";
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal/10 text-teal">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-foreground">Tour &amp; Onboarding</h2>
+          <p className="text-sm text-text-muted mt-0.5">
+            Manage the interactive product tour that walks you through every section of the Herald dashboard.
+          </p>
+        </div>
+      </div>
+
+      {/* Status card */}
+      <div className="rounded-xl border border-border bg-navy-2 p-4 flex items-center justify-between gap-4">
+        <div className="space-y-0.5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Tour Status</p>
+          <p className="text-sm text-foreground font-medium">
+            {tourCompleted
+              ? tourSkipped
+                ? "You skipped the tour. Restart anytime below."
+                : "You've completed the full onboarding tour."
+              : "You haven't taken the tour yet."}
+          </p>
+        </div>
+        <span className={`shrink-0 text-xs font-bold px-3 py-1 rounded-full border ${statusColor}`}>
+          {statusLabel}
+        </span>
+      </div>
+
+      {/* What the tour covers */}
+      <div className="rounded-xl border border-border bg-navy-2 p-4 space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Tour covers</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {[
+            { icon: "📊", label: "Overview" },
+            { icon: "📈", label: "Analytics" },
+            { icon: "🧪", label: "Playground" },
+            { icon: "🔑", label: "API Keys" },
+            { icon: "⚡", label: "Webhooks" },
+            { icon: "📝", label: "Templates" },
+            { icon: "🌐", label: "Domains" },
+            { icon: "🔔", label: "Notifications" },
+            { icon: "💳", label: "Billing" },
+            { icon: "👥", label: "Team" },
+            { icon: "⚙️", label: "Settings" },
+          ].map(({ icon, label }) => (
+            <div key={label} className="flex items-center gap-2 text-sm text-text-secondary">
+              <span>{icon}</span>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-3 pt-2 border-t border-border">
+        <Button
+          id="restart-tour-btn"
+          variant="default"
+          onClick={restartTour}
+        >
+          {tourCompleted ? "Restart Tour" : "Start Tour"}
+        </Button>
+        {tourCompleted && (
+          <Button
+            variant="ghost"
+            className="text-text-dim text-xs"
+            onClick={() => {
+              resetTour();
+              toast.success("Tour reset — it will auto-fire on your next visit.");
+            }}
+          >
+            Reset to auto-fire
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setModalOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "telegram" | "danger">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "telegram" | "tour" | "danger">("general");
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["protocol", "me"],
@@ -190,6 +296,7 @@ export default function SettingsPage() {
           { id: "sandbox", label: "Sandbox Test Contacts" },
           { id: "assets", label: "Brand Assets" },
           { id: "telegram", label: "Telegram" },
+          { id: "tour", label: "Tour & Onboarding" },
           { id: "danger", label: "Danger Zone" }
         ].map((tab) => (
           <button
@@ -536,6 +643,10 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      )}
+
+      {activeTab === "tour" && (
+      <TourSettingsPanel />
       )}
 
       {activeTab === "danger" && (

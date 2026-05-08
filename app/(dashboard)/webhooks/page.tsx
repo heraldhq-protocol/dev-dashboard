@@ -128,6 +128,7 @@ export default function WebhooksPage() {
         description="Receive real-time HTTP callbacks when events occur on the Herald network."
         actions={
           <Button
+            id="webhooks-add-btn"
             onClick={() => setIsCreateOpen(true)}
             className="gap-2 shrink-0 group"
           >
@@ -137,12 +138,14 @@ export default function WebhooksPage() {
         }
       />
 
+      <div id="webhooks-list">
       <WebhookList
         webhooks={webhooks}
         onToggle={handleToggle}
         onDelete={handleDelete}
         onViewLogs={setViewLogsId}
       />
+      </div>
 
       {/* Modals for Feature 2 */}
       <WebhookDeliveryLog 

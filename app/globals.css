@@ -257,3 +257,75 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ─── NextStep Tour Card — Viewport Gap ─────────────────── */
+
+[data-name="nextstep-pointer"] {
+  max-height: calc(100dvh - 64px) !important;
+  max-width: calc(100dvw - 64px) !important;
+}
+
+[data-name="nextstep-card"] {
+  max-height: calc(100dvh - 64px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ─── Tour Rendering Guard ──────────────────────────────── */
+/* Hides the tour visually while the DOM is mounting/rendering */
+body.tour-waiting [data-name="nextstep-card"],
+body.tour-waiting [data-name="nextstep-pointer"] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+/* ─── Scroll container — instant scroll for accurate coordinates ─────── */
+/*
+ * NextStep calls element.scrollIntoView() then immediately reads
+ * getBoundingClientRect() to position the card. With smooth scroll the
+ * element is still mid-animation when coordinates are read, causing card
+ * misalignment. Forcing "instant" makes the scroll synchronous so NextStep
+ * always reads the final, correct position.
+ */
+#dashboard-scroll-container {
+  scroll-behavior: auto !important;
+}
+
+/* ─── Tour target scroll offset ─────────────────────────── */
+/*
+ * When NextStep calls element.scrollIntoView(), the element snaps to the very
+ * top of the scrollable container, hidden behind the TopNav (~60px). Adding
+ * scroll-margin-top gives a breathing room buffer so the element is visible
+ * when the card positions itself relative to it.
+ */
+#overview-status-strip,
+#overview-metrics,
+#overview-volume-chart,
+#overview-failures,
+#playground-channel-toggle,
+#playground-composer,
+#playground-send-btn,
+#apikeys-security-banner,
+#apikeys-live-section,
+#apikeys-test-section,
+#create-api-key-btn,
+#webhooks-list,
+#webhooks-add-btn,
+#templates-header,
+#templates-list,
+#templates-create-btn,
+#domains-header,
+#domains-list,
+#domains-add-btn,
+#notifications-filters,
+#notifications-table,
+#billing-current-plan,
+#billing-plans,
+#billing-overage,
+#team-header,
+#team-members-table,
+#team-invite-btn {
+  scroll-margin-top: 80px;
+}
+

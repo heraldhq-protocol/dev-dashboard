@@ -26,6 +26,7 @@ const RPC_ENDPOINT =
 
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { OnboardingTourProvider } from "@/components/providers/OnboardingTourProvider";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -48,7 +49,9 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
             <WalletProvider wallets={wallets} autoConnect>
               <WalletModalProvider>
                 <TooltipProvider>
-                  {children}
+                  <OnboardingTourProvider>
+                    {children}
+                  </OnboardingTourProvider>
                 </TooltipProvider>
                 <Toaster
                   position="bottom-right"

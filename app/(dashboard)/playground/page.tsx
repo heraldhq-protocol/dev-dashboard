@@ -102,6 +102,7 @@ export default function ComposersPlaygroundPage() {
               <span className="hidden sm:inline">Save Draft</span>
             </Button>
             <Button
+              id="playground-send-btn"
               variant="default"
               size="sm"
               onClick={() => setTestSendOpen(true)}
@@ -114,8 +115,8 @@ export default function ComposersPlaygroundPage() {
         }
       />
 
-      <div className="flex-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col min-h-0 mt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border bg-card">
+      <div id="playground-composer" className="flex-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col min-h-0 mt-4">
+        <div id="playground-channel-toggle" className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border bg-card">
           <ChannelToggle />
           
           {/* Mobile view switcher */}

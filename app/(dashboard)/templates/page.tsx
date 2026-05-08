@@ -158,14 +158,14 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div id="templates-header" className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Templates</h1>
           <p className="text-sm text-text-muted mt-1">
             Create and manage custom email templates for your notifications.
           </p>
         </div>
-        <Button onClick={() => {
+        <Button id="templates-create-btn" onClick={() => {
           setShowCreateModal(true);
           setActiveTab("editor");
           setPreviewHtml(null);
@@ -176,7 +176,7 @@ export default function TemplatesPage() {
       </div>
 
       {templates.length === 0 ? (
-        <Card className="border border-border">
+        <Card id="templates-list" className="border border-border">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <svg className="w-12 h-12 text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2z" />
