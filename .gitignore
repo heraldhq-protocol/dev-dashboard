@@ -49,3 +49,4 @@ implementation_plan.md
 
 __tests__
 /lib/generated/prisma
+.agent

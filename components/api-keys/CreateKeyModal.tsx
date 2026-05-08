@@ -33,7 +33,7 @@ export function CreateKeyModal({
   const [environment, setEnvironment] = useState<"live" | "test">("live");
   const [selectedScopes, setSelectedScopes] = useState<string[]>(["notify:write"]);
 
-  const [isScopesExpanded, setIsScopesExpanded] = useState(false);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,59 +96,49 @@ export function CreateKeyModal({
           </div>
         </div>
 
-        <div className="space-y-2.5">
-          <div 
-            className="flex items-center justify-between cursor-pointer group"
-            onClick={() => setIsScopesExpanded(!isScopesExpanded)}
-          >
-            <label className="text-sm font-medium text-text-secondary cursor-pointer">
-              Permission Scopes
-            </label>
-            <div className="flex items-center gap-2">
-              {!isScopesExpanded && (
-                <span className="text-[10px] uppercase tracking-wider text-text-muted bg-card-2 px-2 py-0.5 rounded-full border border-border">
-                  {selectedScopes.length} selected
-                </span>
-              )}
-              <div className={`w-4 h-4 text-text-muted group-hover:text-white transition-transform ${isScopesExpanded ? 'rotate-180' : ''}`}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-            </div>
-          </div>
-
-          {isScopesExpanded ? (
-            <div className="grid grid-cols-1 gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-              {AVAILABLE_SCOPES.map((scope) => (
-                <label
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-text-secondary flex justify-between items-end">
+            <span>Permission Scopes</span>
+            <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold">
+              {selectedScopes.length} Selected
+            </span>
+          </label>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+            {AVAILABLE_SCOPES.map((scope) => {
+              const isSelected = selectedScopes.includes(scope.id);
+              return (
+                <button
                   key={scope.id}
-                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedScopes.includes(scope.id)
-                      ? "bg-teal/5 border-teal/50"
-                      : "bg-card border-border hover:bg-card-2"
+                  type="button"
+                  onClick={() => toggleScope(scope.id)}
+                  className={`relative flex flex-col items-start text-left p-3.5 rounded-xl border transition-all duration-200 group ${
+                    isSelected
+                      ? "bg-teal/10 border-teal shadow-[0_0_15px_rgba(0,210,255,0.1)]"
+                      : "bg-card border-border hover:border-border-2 hover:bg-card-2/50"
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    className="mt-1 accent-teal"
-                    checked={selectedScopes.includes(scope.id)}
-                    onChange={() => toggleScope(scope.id)}
-                  />
-                  <div>
-                    <div className="text-sm font-semibold text-white">
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className={`text-sm font-bold transition-colors ${isSelected ? "text-teal" : "text-foreground group-hover:text-foreground"}`}>
                       {scope.label}
-                    </div>
-                    <div className="text-xs text-text-muted leading-tight mt-0.5">
-                      {scope.description}
+                    </span>
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                      isSelected ? "border-teal bg-teal" : "border-text-muted/50"
+                    }`}>
+                      {isSelected && (
+                        <svg className="w-2.5 h-2.5 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
                     </div>
                   </div>
-                </label>
-              ))}
-            </div>
-          ) : (
-            <div className="p-3 bg-card-2/50 border border-border/50 rounded-lg text-xs text-text-muted italic">
-              {selectedScopes.map(id => AVAILABLE_SCOPES.find(s => s.id === id)?.label).join(", ")}
-            </div>
-          )}
+                  <span className="text-xs text-text-muted leading-relaxed line-clamp-2">
+                    {scope.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-border">

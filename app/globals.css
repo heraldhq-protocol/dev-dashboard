@@ -16,9 +16,6 @@
   --text-main: #0f172a;
   --text-dim: #334155;
   --text-muted: #64748b;
-  --app-glow: radial-gradient(circle at 15% 50%, rgba(0, 200, 150, 0.08), transparent 35%),
-              radial-gradient(circle at 85% 30%, rgba(91, 53, 213, 0.08), transparent 35%);
-
   /* shadcn semantic tokens (light) */
   --background: #ffffff;
   --foreground: #0f172a;
@@ -34,47 +31,59 @@
   --muted-foreground: #475569;
   --accent: #e2e8f0;
   --accent-foreground: #1e293b;
-  --destructive: #d63031;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #cbd5e1;
   --input: #cbd5e1;
   --ring: #00c896;
+
+  /* Semantic status colors */
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-error: #ef4444;
 }
 
+/* Dark mode - neutral slate-based dev dark */
 .dark {
   /* Herald palette (dark) */
-  --bg-primary: #060d18;
-  --bg-secondary: #0a1628;
-  --bg-card: #0d1f35;
-  --bg-card-2: #112240;
-  --border-main: #0e2a3d;
-  --border-alt: #1a3a52;
-  --text-main: #ffffff;
-  --text-dim: #cbd5e1;
+  --bg-primary: #0a0f1a;
+  --bg-secondary: #0d1320;
+  --bg-card: #111827;
+  --bg-card-2: #1a2234;
+  --bg-elevated: #161f2e;
+  --border-main: #1e293b;
+  --border-alt: #334155;
+  --border-subtle: #0f172a;
+  --text-main: #f1f5f9;
+  --text-dim: #94a3b8;
   --text-muted: #64748b;
-  --app-glow: radial-gradient(circle at 15% 50%, rgba(0, 200, 150, 0.04), transparent 35%),
-              radial-gradient(circle at 85% 30%, rgba(91, 53, 213, 0.04), transparent 35%);
+  --text-disabled: #475569;
 
   /* shadcn semantic tokens (dark) */
-  --background: #060d18;
-  --foreground: #ffffff;
-  --card: #0d1f35;
-  --card-foreground: #ffffff;
-  --popover: #0d1f35;
-  --popover-foreground: #ffffff;
+  --background: #0a0f1a;
+  --foreground: #f1f5f9;
+  --card: #111827;
+  --card-foreground: #f1f5f9;
+  --popover: #161f2e;
+  --popover-foreground: #f1f5f9;
   --primary: #00c896;
-  --primary-foreground: #060d18;
-  --secondary: #112240;
-  --secondary-foreground: #cbd5e1;
-  --muted: #112240;
+  --primary-foreground: #0a0f1a;
+  --secondary: #1e293b;
+  --secondary-foreground: #94a3b8;
+  --muted: #1e293b;
   --muted-foreground: #64748b;
-  --accent: #112240;
-  --accent-foreground: #ffffff;
-  --destructive: #d63031;
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #0e2a3d;
-  --input: #0e2a3d;
+  --border: #1e293b;
+  --input: #1e293b;
   --ring: #00c896;
+
+  /* Semantic status colors */
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-error: #ef4444;
 }
 
 /* ─── Herald Design System ─────────────────────────────── */
@@ -113,17 +122,29 @@
 
   --color-text-primary: var(--text-main);
   --color-text-secondary: var(--text-dim);
+  --color-text-dim: var(--text-dim);
   --color-text-muted: var(--text-muted);
 
-  --color-red: #d63031;
-  --color-green: #27ae60;
-  --color-gold: #e8920a;
+  --color-red: #ef4444;
+  --color-green: #10b981;
+  --color-gold: #f59e0b;
   --color-purple: #5b35d5;
 
+  /* Semantic status aliases */
+  --color-status-ok: #00c896;
+  --color-status-warn: #f59e0b;
+  --color-status-error: #ef4444;
+  --color-status-success: #10b981;
+  --color-status-success-bg: rgba(16, 185, 129, 0.1);
+  --color-status-warning: #f59e0b;
+  --color-status-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-status-error: #ef4444;
+  --color-status-error-bg: rgba(239, 68, 68, 0.1);
+
   /* Typography */
-  --font-sans: "Syne", system-ui, sans-serif;
-  --font-heading: "Syne", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-sans: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-syne), "Syne", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", "Fira Code", monospace;
 }
 
 /* ─── Base Layer ───────────────────────────────────────── */
@@ -135,6 +156,10 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
   }
 }
 
@@ -149,8 +174,9 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   min-height: 100vh;
-  background-image: var(--app-glow);
-  background-attachment: fixed;
+  /* Subtle dot-grid, reduced opacity */
+  background-image: radial-gradient(circle, rgba(0,200,150,0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 /* ─── Selection ────────────────────────────────────────── */
@@ -188,4 +214,46 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
+}
+
+/* ─── Dot Grid Background ──────────────────────────────── */
+
+.bg-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(0, 200, 150, 0.06) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+}
+
+/* ─── Shimmer Animation ────────────────────────────────── */
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    var(--bg-card-2) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ─── Accessibility: Reduced Motion ────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

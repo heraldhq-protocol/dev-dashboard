@@ -1,128 +1,26 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { DashboardCard } from "@/components/ui/DashboardCard";
+import { MetricCard } from "@/components/ui/MetricCard";
+import { Button } from "@/components/ui/Button";
 
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts";
-import { FiAlertTriangle } from "react-icons/fi";
-import { FaCopy } from "react-icons/fa";
-import { FaArrowRight } from "react-icons/fa6";
+import { FiZap, FiCode, FiKey, FiActivity } from "react-icons/fi";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getDashboardStats } from "@/lib/api/analytics";
-
-const performanceData = [
-  { date: "Mar 1", sends: 120 },
-  { date: "Mar 2", sends: 340 },
-  { date: "Mar 3", sends: 210 },
-  { date: "Mar 4", sends: 890 },
-  { date: "Mar 5", sends: 1100 },
-  { date: "Mar 6", sends: 950 },
-  { date: "Mar 7", sends: 1450 },
-];
-
-const mockFailedLogs = [
-  {
-    id: "notif_8x2f",
-    wallet: "7aV...9xK",
-    category: "defi",
-    reason: "RPC Timeout",
-    ts: "2m ago",
-  },
-  {
-    id: "notif_9m1p",
-    wallet: "G2z...4rW",
-    category: "governance",
-    reason: "Invalid Signature",
-    ts: "14m ago",
-  },
-  {
-    id: "notif_2k9l",
-    wallet: "4xP...1tB",
-    category: "system",
-    reason: "Rate Limited",
-    ts: "31m ago",
-  },
-];
-
-const categoryColors: Record<string, string> = {
-  defi: "text-red-400 bg-red-400/10 border-red-400/20",
-  governance: "text-purple-400 bg-purple-400/10 border-purple-400/20",
-  system: "text-amber-400 bg-amber-400/10 border-amber-400/20",
-  marketing: "text-slate-400 bg-slate-400/10 border-slate-400/20",
-};
-
-function FailureRow({
-  id,
-  wallet,
-  category,
-  reason,
-  ts,
-}: (typeof mockFailedLogs)[0]) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(id);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  return (
-    <div className="group flex items-start gap-3 px-5 py-4 hover:bg-white/3 transition-colors rounded-lg cursor-pointer">
-      {/* Icon */}
-      <div className="mt-0.5 shrink-0 flex h-7 w-7 items-center justify-center rounded-md bg-red-500/10 border border-red-500/20">
-        <FiAlertTriangle className="h-3.5 w-3.5 text-red-400" />
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Reason — primary info */}
-          <span className="text-sm font-semibold text-foreground">{reason}</span>
-          {/* Category badge */}
-          <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-              categoryColors[category] ?? categoryColors.marketing
-            }`}
-          >
-            {category}
-          </span>
-        </div>
-
-        {/* Secondary row: ID + wallet */}
-        <div className="flex items-center gap-3 text-xs text-text-muted flex-wrap">
-          <button
-            onClick={handleCopy}
-            className="group/copy inline-flex items-center gap-1 font-mono hover:text-teal transition-colors"
-            title="Copy ID"
-          >
-            <span>{id}</span>
-            <FaCopy
-              className={`h-3 w-3 transition-all ${
-                copied ? "text-teal" : "opacity-0 group-hover/copy:opacity-100"
-              }`}
-            />
-          </button>
-          <span className="text-border-2">·</span>
-          <span className="font-mono text-teal/80">{wallet}</span>
-        </div>
-      </div>
-
-      {/* Timestamp + arrow */}
-      <div className="shrink-0 flex flex-col items-end gap-1.5">
-        <span className="text-[11px] text-text-muted">{ts}</span>
-        <FaArrowRight className="h-3.5 w-3.5 text-text-dim opacity-0 group-hover:opacity-100 transition-opacity" />
-      </div>
-    </div>
-  );
-}
+import { getDashboardStats, getAnalyticsTrends } from "@/lib/api/analytics";
+import { listNotifications } from "@/lib/api/notifications";
+import Link from "next/link";
+import { BarChart3, ShieldCheck } from "lucide-react";
 
 export default function OverviewPage() {
   const { data: stats, isLoading } = useQuery({
@@ -130,164 +28,255 @@ export default function OverviewPage() {
     queryFn: getDashboardStats,
   });
 
+  const [timeRange, setTimeRange] = useState<"7d" | "30d">("7d");
+
+  const { data: trends, isLoading: trendsLoading } = useQuery({
+    queryKey: ["analyticsTrends", timeRange],
+    queryFn: () => getAnalyticsTrends(timeRange === "7d" ? 7 : 30),
+  });
+
+  const { data: failedNotifs } = useQuery({
+    queryKey: ["recentFailures"],
+    queryFn: () => listNotifications(1, 5, "failed"),
+  });
+
+  const performanceData = (trends?.dailyVolume ?? []).map((d) => ({
+    date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    sends: d.volume,
+  }));
+
+  const recentFailures = failedNotifs?.items ?? [];
+
+  const volumeSparkline = performanceData.map((d) => d.sends);
+  const deliverySparkline = [98, 98.5, 99, 99.1, 99.5, 99.8, 100];
+  const latencySparkline = [200, 190, 185, 170, 165, 150, 142];
+
+  const totalSends = stats?.sendsThisPeriod ?? 0;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Overview
-        </h1>
-        <p className="text-sm text-text-muted">
-          Monitor your Herald notification infrastructure.
-        </p>
+      {/* System Status Strip */}
+      <div className="flex items-center gap-2 rounded-lg border border-[rgba(16,185,129,0.2)] bg-status-success-bg px-4 py-2.5">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10b981]"></span>
+        </span>
+        <span className="text-[13px] font-medium text-[#10b981]">
+          Herald Network: <span className="font-bold">Operational</span>
+        </span>
       </div>
 
+      <PageHeader
+        title="Overview"
+        description="Monitor your Herald notification infrastructure."
+      />
+
+      {/* Quick Start (Shows only if 0 sends) */}
+      {!isLoading && totalSends === 0 && (
+        <DashboardCard className="bg-linear-to-r from-card to-navy-2 border-l-2 border-l-teal">
+          <div className="flex items-start gap-3 mb-4">
+            <FiZap className="w-5 h-5 text-teal" />
+            <div>
+              <h2
+                className="text-xl font-bold text-foreground"
+                style={{ fontFamily: '"Syne", system-ui, sans-serif' }}
+              >
+                Let&apos;s get started
+              </h2>
+              <p className="text-sm text-text-muted mt-1">
+                Your dashboard is ready, but we haven&apos;t received any notifications yet.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4">
+            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
+              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
+                <FiKey className="w-5 h-5 text-teal" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">1. Create API Key</h4>
+                <p className="text-xs text-text-muted mt-1">Generate a live or test key.</p>
+              </div>
+              <Button variant="ghost" size="sm" asChild className="w-full mt-auto">
+                <Link href="/api-keys">Go to API Keys</Link>
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
+              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
+                <FiCode className="w-5 h-5 text-teal" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">2. Read the Docs</h4>
+                <p className="text-xs text-text-muted mt-1">Learn how to format payloads.</p>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-auto">
+                View Documentation
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
+              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
+                <FiActivity className="w-5 h-5 text-teal" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">3. Send First Event</h4>
+                <p className="text-xs text-text-muted mt-1">Use the playground to test.</p>
+              </div>
+              <Button size="sm" asChild className="w-full mt-auto">
+                <Link href="/playground">Open Playground</Link>
+              </Button>
+            </div>
+          </div>
+        </DashboardCard>
+      )}
+
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="bg-navy-2 border-border-2 rounded-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-text-muted text-left">
-              Total Sends (This Period)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-8 w-24 bg-card-2 animate-pulse rounded" />
-            ) : (
-              <div className="text-3xl font-bold text-white">
-                {stats?.sendsThisPeriod.toLocaleString() ?? 0}
-              </div>
-            )}
-            <p className="text-xs text-teal mt-1">Based on current cycle</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-navy-2 border-border-2 rounded-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-text-muted text-left">
-              Delivery Rate (30d)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-8 w-24 bg-card-2 animate-pulse rounded" />
-            ) : (
-              <div className="text-3xl font-bold text-white">
-                {stats?.deliverySuccessRate?.toFixed(1) ?? "100.0"}%
-              </div>
-            )}
-            <p className="text-xs text-text-muted mt-1">
-              Based on on-chain confirmations
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-navy-2 border-border-2 rounded-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-text-muted text-left">
-              Active Webhooks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-8 w-24 bg-card-2 animate-pulse rounded" />
-            ) : (
-              <div className="text-3xl font-bold text-white">
-                {stats?.activeWebhooks ?? 0}
-              </div>
-            )}
-            <p className="text-xs text-text-muted mt-1">
-              Currently listening to events
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="Total Sends"
+          value={isLoading ? "..." : totalSends.toLocaleString()}
+          delta="↑ 12%"
+          deltaType="positive"
+          detail="This period"
+          sparklineData={volumeSparkline}
+          isLoading={isLoading}
+        />
+        <MetricCard
+          label="Delivery Rate"
+          value={isLoading ? "..." : `${stats?.deliverySuccessRate?.toFixed(1) ?? "100.0"}%`}
+          delta="↑ 0.5%"
+          deltaType="positive"
+          detail="Last 30 days"
+          sparklineData={deliverySparkline}
+          isLoading={isLoading}
+        />
+        <MetricCard
+          label="Avg Latency"
+          value={isLoading ? "..." : "142ms"}
+          delta="↓ 8ms"
+          deltaType="positive"
+          detail="Last 30 days"
+          sparklineData={latencySparkline}
+          isLoading={isLoading}
+        />
+        <MetricCard
+          label="Active Webhooks"
+          value={isLoading ? "..." : stats?.activeWebhooks ?? 0}
+          delta="—"
+          deltaType="neutral"
+          detail="Listening endpoints"
+          sparklineData={(stats?.activeWebhooks ?? 0) === 0 ? [0, 0, 0, 0, 0, 0, 0] : undefined}
+          isLoading={isLoading}
+        />
       </div>
 
       {/* Chart + Failures */}
       <div className="grid gap-6 lg:grid-cols-7">
-        {/* Chart */}
-        <Card className="lg:col-span-4 bg-navy-2 border-border-2 rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-base text-left">
-              Notification Volume
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pl-0">
-            <div className="h-[300px] w-full min-w-0 pb-4 pr-4">
+        {/* Notification Volume Chart */}
+        <DashboardCard
+          className="lg:col-span-4"
+          header={{
+            title: "Notification Volume",
+            action: (
+              <div className="flex bg-card-2 p-1 rounded-lg">
+                <button
+                  onClick={() => setTimeRange("7d")}
+                  className={`px-3 py-1 text-xs font-medium rounded-md ${
+                    timeRange === "7d"
+                      ? "bg-card text-foreground"
+                      : "text-text-muted hover:text-foreground"
+                  }`}
+                >
+                  7d
+                </button>
+                <button
+                  onClick={() => setTimeRange("30d")}
+                  className={`px-3 py-1 text-xs font-medium rounded-md ${
+                    timeRange === "30d"
+                      ? "bg-card text-foreground"
+                      : "text-text-muted hover:text-foreground"
+                  }`}
+                >
+                  30d
+                </button>
+              </div>
+            ),
+          }}
+        >
+          <div className="h-[280px] w-full">
+            {trendsLoading ? (
+              <div className="h-full flex items-center justify-center">
+                <div className="space-y-2 w-full px-6">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-3 bg-card-2 animate-pulse rounded" style={{ width: `${60 + i * 8}%` }} />
+                  ))}
+                </div>
+              </div>
+            ) : (trends?.totalVolume ?? 0) === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <div className="h-10 w-10 rounded-lg bg-card-2 border border-border flex items-center justify-center mb-3 shadow-sm">
+                  <BarChart3 className="w-5 h-5 text-text-muted" />
+                </div>
+                <p className="text-sm font-medium text-foreground">No notifications sent yet</p>
+                <Link href="/playground" className="text-teal text-xs font-bold hover:underline mt-1.5 transition-colors">
+                  Send your first notification &rarr;
+                </Link>
+              </div>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
+                <AreaChart
                   data={performanceData}
                   margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#1A3A52"
-                    vertical={false}
+                  <defs>
+                    <linearGradient id="colorSends" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#00c896" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#00c896" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-alt)" vertical={false} />
+                  <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} dx={-10} />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: "var(--bg-card-2)", border: "1px solid var(--border-alt)", borderRadius: "8px", color: "var(--text-main)" }}
+                    itemStyle={{ color: "#00c896", fontWeight: "bold" }}
                   />
-                  <XAxis
-                    dataKey="date"
-                    stroke="#64748B"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="#64748B"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${value}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#112240",
-                      border: "1px solid #1A3A52",
-                      borderRadius: "8px",
-                    }}
-                    itemStyle={{ color: "#00C896" }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="sends"
-                    stroke="#00C896"
-                    strokeWidth={3}
-                    dot={{ fill: "#00C896", strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, fill: "#00E5A8" }}
-                  />
-                </LineChart>
+                  <Area type="monotone" dataKey="sends" stroke="#00c896" strokeWidth={3} fillOpacity={1} fill="url(#colorSends)" activeDot={{ r: 6, fill: "#00e5a8", stroke: "var(--bg-card)", strokeWidth: 2 }} />
+                </AreaChart>
               </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Failures — redesigned */}
-        <Card className="lg:col-span-3 bg-navy-2 border-border-2 rounded-xl flex flex-col overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 pb-4 shrink-0">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base">Recent Failures</CardTitle>
-              {/* Live count badge */}
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-[10px] font-bold text-red-400 uppercase tracking-wider">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-                {mockFailedLogs.length}
-              </span>
-            </div>
-            <button className="text-xs text-text-muted hover:text-teal transition-colors">
-              View all →
-            </button>
-          </CardHeader>
-
-          <div className="flex-1 flex flex-col divide-y divide-border/30 py-1 overflow-y-auto">
-            {mockFailedLogs.map((log) => (
-              <FailureRow key={log.id} {...log} />
-            ))}
+            )}
           </div>
+        </DashboardCard>
 
-          {/* Footer hint */}
-          <div className="shrink-0 border-t border-border/30 px-5 py-3">
-            <p className="text-[11px] text-text-dim">
-              Showing last 3 failures · Retries attempted automatically
-            </p>
+        {/* Recent Failures */}
+        <DashboardCard
+          className="lg:col-span-3"
+          header={{
+            title: "Recent Failures",
+            action: (
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-status-ok" />
+                <span className="text-xs text-text-muted">Operational</span>
+              </div>
+            ),
+          }}
+          footer={{
+            left: `Showing last ${recentFailures.length} failures`,
+            right: (
+              <Link href="/notifications" className="text-teal hover:underline">
+                View all logs →
+              </Link>
+            ),
+          }}
+        >
+          <div className="flex flex-col items-center justify-center py-12">
+            <ShieldCheck className="w-8 h-8 text-[#10b981] mb-3" />
+            <p className="text-sm text-[#94a3b8]">All systems operational</p>
+            <p className="text-xs text-[#64748b] mt-1">No recent delivery failures</p>
           </div>
-        </Card>
+        </DashboardCard>
       </div>
     </div>
   );

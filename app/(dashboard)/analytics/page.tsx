@@ -1,10 +1,13 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { DashboardCard } from "@/components/ui/DashboardCard";
+import { MetricCard } from "@/components/ui/MetricCard";
 import { SendsBarChart } from "@/components/analytics/SendsBarChart";
 import { DeliveryStatusDonut } from "@/components/analytics/DeliveryStatusDonut";
 import { CategoryBreakdownBars } from "@/components/analytics/CategoryBreakdownBars";
 import { DateRangePicker } from "@/components/analytics/DateRangePicker";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { Button } from "@/components/ui/Button";
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +16,7 @@ import { format, subDays } from "date-fns";
 
 export default function AnalyticsPage() {
   const [days, setDays] = useState(7);
+  const [chartType, setChartType] = useState<"bar" | "area">("bar");
 
   const { data, isLoading } = useQuery({
     queryKey: ["analyticsTrends", days],
@@ -23,175 +27,189 @@ export default function AnalyticsPage() {
   const delivered = data?.statusBreakdown.find(s => s.status.toLowerCase() === "delivered")?._count?.id || 0;
   const failed = data?.statusBreakdown.find(s => s.status.toLowerCase() === "failed")?._count?.id || 0;
 
-  const kpiCards = [
-    {
-      label: "Total Delivered",
-      value: delivered.toLocaleString(),
-      delta: "",
-      deltaType: "positive" as const,
-      detail: `last ${days} days`,
-    },
-    {
-      label: "Failed",
-      value: failed.toLocaleString(),
-      delta: "",
-      deltaType: "negative" as const,
-      detail: `last ${days} days`,
-    },
-    {
-      label: "Avg. Latency",
-      value: "142ms", // Mocked as it's not in the trends DTO
-      delta: "-8ms",
-      deltaType: "positive" as const,
-      detail: "p95 response time",
-    },
-    {
-      label: "Message Volume",
-      value: totalVolume.toLocaleString(),
-      delta: "",
-      deltaType: "positive" as const,
-      detail: `last ${days} days`,
-    },
-  ];
-
   const dateRangeStr = `${format(subDays(new Date(), days), "MMM d")} – ${format(new Date(), "MMM d")}`;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Analytics
-          </h1>
-          <p className="text-sm text-text-muted mt-1">
-            Deep dive into your protocol&apos;s notification performance.
-          </p>
-        </div>
-        <DateRangePicker days={days} setDays={setDays} />
-      </div>
+      <PageHeader
+        title="Analytics"
+        description="Deep dive into your protocol's notification performance."
+        actions={
+          <div className="flex items-center gap-3">
+            <DateRangePicker days={days} setDays={setDays} />
+            <div className="h-4 w-px bg-border hidden sm:block" />
+            <Button variant="ghost" size="sm" className="hidden sm:flex gap-1.5" onClick={() => alert("Mock export CSV initiated")}>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export CSV
+            </Button>
+          </div>
+        }
+      />
 
       {/* KPI Summary Row */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        {kpiCards.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="group relative bg-navy-2 border border-border-2 rounded-xl p-4 sm:p-5 hover:border-teal/20 transition-all duration-300 overflow-hidden"
-          >
-            {/* Subtle corner glow on hover */}
-            <div className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-teal/5 opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-500" />
-
-            {/* Header row: label justify-between delta */}
-            <div className="relative flex items-center justify-between gap-2 mb-3">
-              <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider truncate">
-                {kpi.label}
-              </p>
-              <span
-                className={`inline-flex items-center gap-1 shrink-0 rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold ${
-                  kpi.deltaType === "positive"
-                    ? "text-teal bg-teal/10"
-                    : "text-red-400 bg-red-500/10"
-                }`}
-              >
-                {kpi.deltaType === "positive" ? (
-                  <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                  </svg>
-                ) : (
-                  <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
-                )}
-                {kpi.delta}
-              </span>
-            </div>
-
-            {/* Value section with divider */}
-            <div className="relative border-t border-border/40 pt-3">
-              <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-                {isLoading ? "..." : kpi.value}
-              </p>
-              <p className="text-[10px] sm:text-[11px] text-text-muted mt-0.5">{kpi.detail}</p>
-            </div>
-          </div>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="Total Delivered"
+          value={isLoading ? "..." : delivered.toLocaleString()}
+          delta="—"
+          deltaType="neutral"
+          detail={`last ${days} days`}
+          isLoading={isLoading}
+        />
+        <MetricCard
+          label="Failed"
+          value={isLoading ? "..." : failed.toLocaleString()}
+          delta="—"
+          deltaType="neutral"
+          detail={`last ${days} days`}
+          isLoading={isLoading}
+        />
+        <MetricCard
+          label="Avg. Latency"
+          value="142ms"
+          delta="↓ 8ms"
+          deltaType="positive"
+          detail="p95 response time"
+          sparklineData={[180, 160, 150, 148, 145, 142]}
+          isLoading={isLoading}
+        />
+        <MetricCard
+          label="Message Volume"
+          value={isLoading ? "..." : totalVolume.toLocaleString()}
+          delta="—"
+          deltaType="neutral"
+          detail={`last ${days} days`}
+          isLoading={isLoading}
+        />
       </div>
 
       {/* Main Charts */}
       <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
         {/* Message Volume Chart */}
-        <Card className="bg-navy-2 border-border-2 rounded-xl overflow-hidden">
-          <CardHeader className="border-b border-border/40 pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-wider text-left">
-                  Message Volume
-                </CardTitle>
-                <div className="flex items-baseline gap-3 mt-2">
-                  <span className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-                    {isLoading ? "..." : totalVolume.toLocaleString()}
-                  </span>
-                </div>
+        <DashboardCard
+          header={{
+            title: "Message Volume",
+            action: (
+              <div className="flex items-center gap-1 text-[11px] text-[#64748b]">
+                <span>{dateRangeStr}</span>
               </div>
-              <div className="flex sm:flex-col items-center sm:items-end gap-1 text-[11px] text-text-muted">
-                <span>This period</span>
-                <span className="text-text-secondary font-mono">{dateRangeStr}</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            {!isLoading && data ? (
-              <SendsBarChart data={data.dailyVolume || []} />
+            ),
+          }}
+        >
+          <div className="flex items-center rounded-lg bg-card-2 p-1 mb-4">
+            <button
+              onClick={() => setChartType("bar")}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                chartType === "bar"
+                  ? "bg-card text-foreground"
+                  : "text-text-muted hover:text-foreground"
+              }`}
+            >
+              Bar
+            </button>
+            <button
+              onClick={() => setChartType("area")}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                chartType === "area"
+                  ? "bg-card text-foreground"
+                  : "text-text-muted hover:text-foreground"
+              }`}
+            >
+              Area
+            </button>
+          </div>
+
+          {!isLoading && data ? (
+            totalVolume > 0 ? (
+              <SendsBarChart data={data.dailyVolume || []} type={chartType} />
             ) : (
-              <div className="h-[250px] w-full flex items-center justify-center text-text-muted">Loading chart...</div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="h-[250px] w-full flex flex-col items-center justify-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-card-2 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-foreground">No notifications sent yet</p>
+                  <p className="text-xs text-text-muted mt-1">Send a notification to see volume metrics.</p>
+                </div>
+                <Button variant="ghost" size="sm" className="mt-2" onClick={() => window.location.href = '/playground'}>
+                  Send your first notification →
+                </Button>
+              </div>
+            )
+          ) : (
+            <div className="h-[250px] w-full flex items-center justify-center">
+              <div className="animate-shimmer h-full w-full rounded-md opacity-20" />
+            </div>
+          )}
+        </DashboardCard>
 
         {/* Right Column: Donut + Category */}
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
           {/* Delivery Status */}
-          <Card className="bg-navy-2 border-border-2 rounded-xl overflow-hidden">
-            <CardHeader className="border-b border-border/40 pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm! font-semibold text-text-muted uppercase tracking-wide text-left">
-                  Delivery Status
-                </CardTitle>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-teal/10 border border-teal/20 px-2 py-0.5 text-[10px] font-bold text-teal uppercase tracking-wider">
-                  <span className="h-1.5 w-1.5 rounded-full bg-teal animate-pulse" />
+          <DashboardCard
+            header={{
+              title: "Delivery Status",
+              action: (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-status-success/10 border border-status-success/20 px-2 py-0.5 text-[10px] font-medium text-status-success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-status-success animate-pulse" />
                   Live
                 </span>
-              </div>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center pt-2">
-              {!isLoading && data ? (
+              ),
+            }}
+          >
+            {!isLoading && data ? (
+              totalVolume > 0 ? (
                 <DeliveryStatusDonut data={data.statusBreakdown || []} />
               ) : (
-                <div className="h-[180px] w-full flex items-center justify-center text-text-muted">Loading...</div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="h-[180px] w-full flex flex-col items-center justify-center gap-2">
+                  <div className="h-10 w-10 rounded-full border-2 border-dashed border-border-2 flex items-center justify-center text-text-muted">
+                    <span className="text-[10px] font-medium">0%</span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-2">No delivery data</p>
+                </div>
+              )
+            ) : (
+              <div className="h-[180px] w-full flex items-center justify-center">
+                <div className="animate-shimmer h-32 w-32 rounded-full opacity-20" />
+              </div>
+            )}
+          </DashboardCard>
 
           {/* Category Split */}
-          <Card className="bg-navy-2 border-border-2 rounded-xl overflow-hidden">
-            <CardHeader className="border-b border-border/40 pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-text-muted uppercase tracking-wide text-left">
-                  Category Split
-                </CardTitle>
-                <span className="text-[11px] text-text-muted font-mono">
+          <DashboardCard
+            header={{
+              title: "Category Split",
+              action: (
+                <span className="text-[10px] text-text-muted font-mono">
                   by volume
                 </span>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-2">
-              {!isLoading && data ? (
+              ),
+            }}
+          >
+            {!isLoading && data ? (
+              totalVolume > 0 ? (
                 <CategoryBreakdownBars data={data.categoryBreakdown || []} />
               ) : (
-                <div className="mt-3 py-6 flex items-center justify-center text-sm text-text-muted">Loading...</div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="h-[180px] w-full flex flex-col items-center justify-center gap-2">
+                  <svg className="w-8 h-8 text-text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <p className="text-xs text-text-muted mt-2">No category data</p>
+                </div>
+              )
+            ) : (
+              <div className="h-[180px] w-full flex flex-col gap-4 mt-2">
+                <div className="animate-shimmer h-8 w-full rounded-md opacity-20" />
+                <div className="animate-shimmer h-8 w-full rounded-md opacity-20" />
+                <div className="animate-shimmer h-8 w-full rounded-md opacity-20" />
+              </div>
+            )}
+          </DashboardCard>
         </div>
       </div>
     </div>

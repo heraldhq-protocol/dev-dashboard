@@ -4,14 +4,24 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset, type ProtocolAsset } from "@/lib/api/protocol";
+import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset } from "@/lib/api/protocol";
+import { apiClient } from "@/lib/api-client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setModalOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "telegram" | "danger">("general");
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["protocol", "me"],
@@ -111,6 +121,21 @@ export default function SettingsPage() {
     },
   });
 
+  // Telegram buttons state
+  const [telegramButtonsValue, setTelegramButtonsValue] = useState("");
+
+  const telegramButtonsMutation = useMutation({
+    mutationFn: (maxTelegramButtons: string | null) =>
+      apiClient.patch("/protocols/me/telegram-buttons", { maxTelegramButtons }),
+    onSuccess: () => {
+      toast.success("Telegram button limit updated");
+      queryClient.invalidateQueries({ queryKey: ["protocol"] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update Telegram button limit");
+    },
+  });
+
   const handleAddAsset = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAssetUrl) return;
@@ -154,16 +179,36 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Project Settings
-        </h1>
-        <p className="text-sm text-text-muted mt-1">
-          Configure your protocol identity and sender preferences.
-        </p>
+      <PageHeader 
+        title="Project Settings" 
+        description="Configure your protocol identity and sender preferences." 
+      />
+
+      <div className="flex space-x-1 border-b border-border mb-6 overflow-x-auto">
+        {[
+          { id: "general", label: "General" },
+          { id: "sandbox", label: "Sandbox Test Contacts" },
+          { id: "assets", label: "Brand Assets" },
+          { id: "telegram", label: "Telegram" },
+          { id: "danger", label: "Danger Zone" }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+              activeTab === tab.id
+                ? "border-teal text-teal"
+                : "border-transparent text-text-muted hover:text-foreground hover:border-border-2"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+      <div className="min-h-[400px]">
+      {activeTab === "general" && (
+      <div className="bg-card border border-border rounded-xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
         <h2 className="text-lg font-bold text-foreground mb-6">
           General Information
         </h2>
@@ -272,9 +317,10 @@ export default function SettingsPage() {
           </div>
         </form>
       </div>
+      )}
 
-      {/* ── Sandbox Test Contacts ────────────────────────────────────────── */}
-      <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+      {activeTab === "sandbox" && (
+      <div className="bg-card border border-border rounded-xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="flex items-start gap-3 mb-6">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -359,9 +405,10 @@ export default function SettingsPage() {
           </div>
         </form>
       </div>
+      )}
 
-      {/* Protocol Assets */}
-      <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+      {activeTab === "assets" && (
+      <div className="bg-card border border-border rounded-xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
         <h2 className="text-lg font-bold text-foreground mb-6">
           Brand Assets
         </h2>
@@ -374,17 +421,21 @@ export default function SettingsPage() {
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Asset Type
             </label>
-            <select
+            <Select
               value={newAssetType}
-              onChange={(e) => setNewAssetType(e.target.value as any)}
-              className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground text-sm"
+              onValueChange={(val) => setNewAssetType(val as any)}
             >
-              <option value="banner">Banner</option>
-              <option value="video">Video</option>
-              <option value="logo">Logo</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="banner">Banner</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
+                <SelectItem value="logo">Logo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex-[2]">
+          <div className="flex-2">
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Asset URL
             </label>
@@ -424,16 +475,86 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+      )}
 
-      <div className="bg-red/10 border border-red/30 rounded-xl p-6">
-        <h3 className="text-red font-bold text-sm mb-2">Danger Zone</h3>
-        <p className="text-red/80 text-xs max-w-xl mb-4">
+      {activeTab === "telegram" && (
+      <div className="bg-card border border-border rounded-xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Telegram Inline Buttons</h2>
+            <p className="text-sm text-text-muted mt-0.5">
+              Limit the number of inline action buttons that appear on Telegram notifications from your protocol.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className="space-y-1.5 max-w-sm">
+            <label className="text-sm font-medium text-text-secondary">
+              Max Inline Buttons
+            </label>
+            <Input
+              type="number"
+              min={0}
+              max={20}
+              id="telegram-max-buttons"
+              value={telegramButtonsValue}
+              onChange={(e) => setTelegramButtonsValue(e.target.value)}
+              placeholder="e.g., 3 (leave blank to use global default)"
+              className="w-full"
+            />
+            <p className="text-xs text-text-muted">
+              Leave blank to reset to the global platform default. Useful if recipients report cluttered messages.
+            </p>
+          </div>
+
+          <div className="pt-4 flex items-center gap-4 border-t border-border">
+            <Button
+              variant="default"
+              isLoading={telegramButtonsMutation.isPending}
+              onClick={() =>
+                telegramButtonsMutation.mutate(
+                  telegramButtonsValue.trim() ? telegramButtonsValue.trim() : null
+                )
+              }
+            >
+              Save Limit
+            </Button>
+            {telegramButtonsMutation.isSuccess && (
+              <span className="text-sm text-green flex items-center gap-1.5 animate-in fade-in duration-300">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Saved
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      )}
+
+      {activeTab === "danger" && (
+      <div className="bg-linear-to-br from-red/10 to-transparent border border-red/30 rounded-xl p-8 shadow-[0_0_20px_rgba(255,0,0,0.05)] animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <h3 className="text-red font-bold text-lg mb-2 flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          Danger Zone
+        </h3>
+        <p className="text-red/80 text-sm max-w-xl mb-6">
           Deleting your project will permanently drop all notification queues,
           revoke all active API keys, and terminate your webhook streams.
         </p>
-        <Button onClick={() => setModalOpen(true)} variant="destructive" size="sm">
+        <Button onClick={() => setModalOpen(true)} variant="destructive">
           Delete Project...
         </Button>
+      </div>
+      )}
       </div>
       <Modal
         isOpen={isModalOpen}

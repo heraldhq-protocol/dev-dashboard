@@ -7,6 +7,7 @@ interface UsageProgressBarProps {
   quota: number;
   label?: string;
   showDetails?: boolean;
+  format?: 'number' | 'currency';
 }
 
 /**
@@ -19,9 +20,10 @@ export function UsageProgressBar({
   used, 
   quota, 
   label = "Current Usage",
-  showDetails = true 
+  showDetails = true,
+  format = 'number'
 }: UsageProgressBarProps) {
-  const percentage = Math.min(Math.round((used / quota) * 100), 100);
+  const percentage = quota > 0 ? Math.min(Math.round((used / quota) * 100), 100) : 0;
 
   // Status thresholds
   const isWarning = percentage >= 80 && percentage < 100;
@@ -34,33 +36,42 @@ export function UsageProgressBar({
       ? "bg-gold shadow-[0_0_12px_rgba(232,146,10,0.3)]"
       : "bg-teal shadow-[0_0_12px_rgba(0,200,150,0.3)]";
 
+  const formatValue = (val: number) => {
+    if (format === 'currency') {
+      return `$${(val / 1_000_000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    return val.toLocaleString();
+  };
+
   return (
     <div className="w-full space-y-3 group">
       {/* Labels */}
-      <div className="flex justify-between items-end">
-        <span className="text-xs font-bold uppercase tracking-widest text-text-muted group-hover:text-text-secondary transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1.5 sm:gap-4">
+        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-text-muted group-hover:text-text-secondary transition-colors">
           {label}
         </span>
         {showDetails && (
-          <span
-            className={cn(
-              "text-sm font-mono transition-colors",
-              isCritical ? "text-red font-bold" : isWarning ? "text-gold font-bold" : "text-foreground"
-            )}
-          >
-            {used.toLocaleString()} <span className="text-[10px] text-text-muted font-sans uppercase">/</span> {quota.toLocaleString()}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <span
+              className={cn(
+                "text-xs sm:text-sm font-mono transition-colors",
+                isCritical ? "text-red font-bold" : isWarning ? "text-gold font-bold" : "text-foreground"
+              )}
+            >
+              {formatValue(used)} <span className="text-[10px] text-text-muted font-sans uppercase">/</span> {formatValue(quota)}
+            </span>
             <span className={cn(
-              "ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold",
+              "px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0",
               isCritical ? "bg-red/20 text-red" : isWarning ? "bg-gold/20 text-gold" : "bg-teal/20 text-teal"
             )}>
               {percentage}%
             </span>
-          </span>
+          </div>
         )}
       </div>
 
       {/* Bar Container */}
-      <div className="h-3 w-full bg-navy border border-border-2 rounded-full overflow-hidden p-[2px] shadow-inner">
+      <div className="h-3 w-full bg-secondary dark:bg-navy border border-border-2 rounded-full overflow-hidden p-[2px] shadow-inner">
         <div
           className={cn(
             "h-full transition-all duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)] rounded-full relative",
@@ -70,7 +81,7 @@ export function UsageProgressBar({
           style={{ width: `${percentage}%` }}
         >
           {/* Shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-r from-white/10 to-transparent pointer-events-none" />
         </div>
       </div>
 

@@ -29,9 +29,19 @@ export async function getUsageStats(): Promise<UsageStatsDto> {
 export async function createCheckout(
   tier: number,
   months = 1
-): Promise<{ checkoutUrl: string; expiresAt: string }> {
-  const { data } = await apiClient.post(`${BASE}/checkout`, { tier, months });
-  return data;
+): Promise<{ checkoutUrl: string; transactionId: string }> {
+  try {
+    const { data } = await apiClient.post(`${BASE}/checkout`, { tier, months });
+    return data;
+  } catch (error: any) {
+    if (error.response?.status === 403) {
+      throw new Error('You do not have permission to manage billing');
+    }
+    if (error.response?.status === 400) {
+      throw new Error(error.response.data.message || 'Invalid checkout request');
+    }
+    throw new Error('Failed to create checkout session');
+  }
 }
 
 export async function cancelSubscription(): Promise<{ message: string }> {
@@ -63,5 +73,10 @@ export async function updateOverageSettings(
 
 export async function getOverageInvoices(): Promise<OverageInvoiceDto[]> {
   const { data } = await apiClient.get<OverageInvoiceDto[]>(`${BASE}/overage/invoices`);
+  return data;
+}
+
+export async function syncDevTier(tier: number): Promise<{ ok: boolean }> {
+  const { data } = await apiClient.post(`${BASE}/dev-sync`, { tier });
   return data;
 }

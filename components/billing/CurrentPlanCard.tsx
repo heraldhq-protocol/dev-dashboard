@@ -10,6 +10,7 @@ interface CurrentPlanCardProps {
   onUpgradeClick?: () => void;
   onCancelClick?: () => void;
   isCanceling?: boolean;
+  isUpgrading?: boolean;
 }
 
 // Static features per tier for the comparison cards
@@ -46,6 +47,7 @@ export function CurrentPlanCard({
   onUpgradeClick,
   onCancelClick,
   isCanceling,
+  isUpgrading,
 }: CurrentPlanCardProps) {
   const currentTier = status?.tier ?? 0;
 
@@ -156,6 +158,7 @@ export function CurrentPlanCard({
           {currentTier < 3 && (
             <Button
               onClick={onUpgradeClick}
+              isLoading={isUpgrading}
               className="w-full md:w-auto shadow-[0_0_20px_rgba(0,200,150,0.2)]"
             >
               Upgrade Plan

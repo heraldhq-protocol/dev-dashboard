@@ -3,6 +3,8 @@
 import { Badge } from "@/components/ui/Badge";
 import { WebhookTestButton } from "./WebhookTestButton";
 import { formatDistanceToNow } from "date-fns";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Webhook } from "lucide-react";
 
 import { WebhookDto } from "@/types/api";
 
@@ -16,15 +18,11 @@ interface WebhookListProps {
 export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs }: WebhookListProps) {
   if (webhooks.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl p-16 text-center">
-        <svg className="mx-auto h-12 w-12 text-text-muted/40 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-        </svg>
-        <h3 className="text-lg font-bold text-foreground mb-1">No webhooks configured</h3>
-        <p className="text-sm text-text-muted max-w-sm mx-auto">
-          Create a webhook endpoint to receive real-time notifications when events occur on your protocol.
-        </p>
-      </div>
+      <EmptyState
+        icon={<Webhook className="w-6 h-6 text-teal" />}
+        title="No webhooks configured"
+        description="Create a webhook endpoint to receive real-time notifications when events occur on your protocol."
+      />
     );
   }
 

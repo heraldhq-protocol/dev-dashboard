@@ -5,9 +5,18 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { useApi } from "@/components/providers/QueryProvider";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 const CodeEditor = dynamic(
   () => import("@/components/ui/CodeEditor").then((m) => ({ default: m.CodeEditor })),
@@ -54,21 +63,20 @@ export default function TemplatesPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [noAnimations, setNoAnimations] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [createError, setCreateError] = useState<string | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadTemplates = async () => {
-    setLoadError(null);
     try {
       const { data } = await axios.get("/templates");
       setTemplates(data.data || []);
-    } catch (error: any) {
-      const msg = error?.message || "Failed to load templates";
-      setLoadError(msg);
+    } catch (error) {
+      console.error("Failed to load templates:", error);
     } finally {
       setIsLoading(false);
     }
@@ -76,12 +84,10 @@ export default function TemplatesPage() {
 
   const handleCreate = async () => {
     setIsCreating(true);
-    setCreateError(null);
     try {
       const { data } = await axios.post("/templates", newTemplate);
       if (data.success) {
         setShowCreateModal(false);
-        setCreateError(null);
         setNewTemplate({
           name: "",
           category: "defi",
@@ -91,9 +97,8 @@ export default function TemplatesPage() {
         });
         loadTemplates();
       }
-    } catch (error: any) {
-      const msg = error?.message || "Failed to create template";
-      setCreateError(msg);
+    } catch (error) {
+      console.error("Failed to create template:", error);
     } finally {
       setIsCreating(false);
     }
@@ -125,45 +130,28 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleDelete = async (templateId: string) => {
-    if (!confirm("Are you sure you want to delete this template?")) return;
+  const handleDelete = (templateId: string) => {
+    setTemplateToDelete(templateId);
+  };
+
+  const confirmDelete = async () => {
+    if (!templateToDelete) return;
+    setIsDeleting(true);
     try {
-      await axios.delete(`/templates/${templateId}`);
+      await axios.delete(`/templates/${templateToDelete}`);
       loadTemplates();
+      setTemplateToDelete(null);
     } catch (error) {
       console.error("Failed to delete template:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal" />
-      </div>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Email Templates</h1>
-            <p className="text-sm text-text-muted mt-1">Create and manage custom email templates for your notifications.</p>
-          </div>
-        </div>
-        <Card className="border border-red-500/30 bg-red-500/5">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <svg className="w-10 h-10 text-red-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-            </svg>
-            <p className="text-red-400 font-medium mb-1">Could not load templates</p>
-            <p className="text-sm text-text-muted mb-4">{loadError}</p>
-            <Button variant="secondary" onClick={() => { setIsLoading(true); loadTemplates(); }}>
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
+        <RippleWaveLoader />
       </div>
     );
   }
@@ -182,7 +170,6 @@ export default function TemplatesPage() {
           setActiveTab("editor");
           setPreviewHtml(null);
           setNoAnimations(true);
-          setCreateError(null);
         }}>
           Create Template
         </Button>
@@ -200,7 +187,6 @@ export default function TemplatesPage() {
             setActiveTab("editor");
             setPreviewHtml(null);
             setNoAnimations(true);
-            setCreateError(null);
           }}>
               Create Template
             </Button>
@@ -259,7 +245,7 @@ export default function TemplatesPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/80 backdrop-blur-sm p-4">
           <Card className="w-full max-w-5xl max-h-[90vh] border border-border overflow-hidden flex flex-col">
-            <CardHeader className="flex-shrink-0">
+            <CardHeader className="shrink-0">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Create Template</CardTitle>
@@ -269,7 +255,7 @@ export default function TemplatesPage() {
                 </div>
               </div>
             </CardHeader>
-            <div className="flex border-b border-border px-4 md:px-6 flex-shrink-0 overflow-x-auto">
+            <div className="flex border-b border-border px-4 md:px-6 shrink-0 overflow-x-auto">
               <button
                 onClick={() => setActiveTab("editor")}
                 className={`py-3 px-4 md:px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
@@ -333,16 +319,20 @@ export default function TemplatesPage() {
                         </svg>
                         Category
                       </label>
-                      <select
+                      <Select
                         value={newTemplate.category}
-                        onChange={(e) => setNewTemplate({ ...newTemplate, category: e.target.value })}
-                        className="w-full bg-card-2 border border-border text-foreground text-sm rounded-lg px-3 py-2.5"
+                        onValueChange={(val) => setNewTemplate({ ...newTemplate, category: val })}
                       >
-                        <option value="defi">DeFi Alert</option>
-                        <option value="governance">Governance</option>
-                        <option value="system">System</option>
-                        <option value="marketing">Marketing</option>
-                      </select>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="defi">DeFi Alerts</SelectItem>
+                          <SelectItem value="governance">Governance</SelectItem>
+                          <SelectItem value="marketing">Marketing</SelectItem>
+                          <SelectItem value="system">System Events</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -361,22 +351,19 @@ export default function TemplatesPage() {
                     <p className="text-xs text-text-muted">Available variables: {"{{protocolName}}"}, {"{{subject}}"}, {"{{body}}"}, {"{{actionUrl}}"}, {"{{actionLabel}}"}, {"{{unsubscribeUrl}}"}</p>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
-                        <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                        </svg>
-                        HTML Source
-                      </label>
-                      <span className="text-xs text-text-muted font-mono">
-                        {newTemplate.htmlSource.length.toLocaleString()} chars
-                      </span>
+                    <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
+                      <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                      HTML Source
+                    </label>
+                    <div className="rounded-lg overflow-hidden border border-border">
+                      <CodeEditor
+                        value={newTemplate.htmlSource}
+                        onChange={(v) => setNewTemplate({ ...newTemplate, htmlSource: v })}
+                        height="260px"
+                      />
                     </div>
-                    <CodeEditor
-                      value={newTemplate.htmlSource}
-                      onChange={(v) => setNewTemplate({ ...newTemplate, htmlSource: v })}
-                      height="280px"
-                    />
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg">
                     <input
@@ -395,13 +382,13 @@ export default function TemplatesPage() {
                 <div className="h-full flex flex-col lg:flex-row gap-6">
                   <div className="flex-1 space-y-4">
                     <div className="p-3 bg-card-2 border border-border rounded-lg">
-                      <label className="text-xs font-medium text-text-muted block mb-2 flex items-center gap-2">
+                      <label className="text-xs font-medium text-text-muted mb-2 flex items-center gap-2">
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         Subject Preview
                       </label>
-                      <p className="text-sm text-foreground font-medium break-words">
+                      <p className="text-sm text-foreground font-medium wrap-break-word">
                         {newTemplate.subjectTemplate
                           ? newTemplate.subjectTemplate
                               .replace(/\{\{protocolName\}\}/g, previewVars.protocolName)
@@ -459,6 +446,7 @@ export default function TemplatesPage() {
                         size="sm"
                         onClick={handlePreview}
                         disabled={!newTemplate.htmlSource}
+                        isLoading={isPreviewLoading}
                         className="flex items-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -491,14 +479,9 @@ export default function TemplatesPage() {
                       </svg>
                       Email Preview
                     </div>
-                    <div className="h-full border border-border rounded-lg overflow-hidden bg-white shadow-inner">
+                    <div className="h-full border border-border rounded-lg overflow-auto bg-white shadow-inner">
                       {previewHtml ? (
-                        <iframe
-                          srcDoc={previewHtml}
-                          sandbox="allow-same-origin"
-                          className="w-full h-64 md:h-80 border-0"
-                          title="Email preview"
-                        />
+                        <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
                       ) : (
                         <div className="flex flex-col items-center justify-center h-64 md:h-80 text-text-muted p-4 text-center">
                           <svg className="w-12 h-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -512,31 +495,31 @@ export default function TemplatesPage() {
                 </div>
               )}
             </CardContent>
-            <div className="flex-shrink-0 border-t border-border">
-              {createError && (
-                <div className="flex items-start gap-3 px-4 pt-3 pb-0">
-                  <svg className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                  </svg>
-                  <p className="text-sm text-red-400">{createError}</p>
-                </div>
-              )}
-              <div className="flex justify-end gap-3 p-4">
-                <Button variant="secondary" onClick={() => { setShowCreateModal(false); setCreateError(null); }}>
-                  Cancel
-                </Button>
-                <Button
-                  isLoading={isCreating}
-                  onClick={handleCreate}
-                  disabled={!newTemplate.name || !newTemplate.htmlSource}
-                >
-                  Create Template
-                </Button>
-              </div>
+            <div className="flex justify-end gap-3 p-4 border-t border-border shrink-0">
+              <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                isLoading={isCreating}
+                onClick={handleCreate}
+                disabled={!newTemplate.name || !newTemplate.htmlSource}
+              >
+                Create Template
+              </Button>
             </div>
           </Card>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!templateToDelete}
+        onClose={() => setTemplateToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Template"
+        description="Are you sure you want to delete this template? This action cannot be undone."
+        confirmText="Delete Template"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

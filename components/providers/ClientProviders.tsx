@@ -56,8 +56,12 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
                     style: {
                       background: "#112240",
                       border: "1px solid #1A3A52",
-                      color: "#E2E8F0",
+                      color: "#ffffff",
                     },
+                    classNames: {
+                      description: "text-text-muted text-sm mt-1",
+                      actionButton: "bg-teal text-navy hover:bg-teal/90 font-medium px-4 py-2 rounded-md transition-colors",
+                    }
                   }}
                 />
               </WalletModalProvider>

@@ -1,7 +1,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/invite", "/api/auth"];
+const PUBLIC_PATHS = ["/login", "/invite", "/api/auth", "/onboarding"];
 const ONBOARDING_PATH = "/onboarding";
 
 const isPublicAsset = (pathname: string) => 
@@ -60,6 +60,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|public/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|public/|api/auth).*)",
   ],
 };

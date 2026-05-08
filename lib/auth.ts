@@ -51,8 +51,9 @@ export const authOptions: NextAuthOptions = {
           !credentials?.wallet ||
           !credentials?.signature ||
           !credentials?.message
-        )
+        ) {
           return null;
+        }
 
         try {
           const res = await fetch(`${ADMIN_API_URL}/auth/wallet-login`, {
@@ -66,13 +67,13 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!res.ok) {
-            console.error("Wallet login backend error:", res.status, await res.text());
+            const errorText = await res.text();
+            console.error("[AUTH] Backend error:", res.status, errorText);
             return null;
           }
 
           const data = await res.json();
 
-          // Decode the access token to get protocolId + role without a library
           // Decode the access token to get protocolId + role safely
           const base64Url = data.accessToken.split(".")[1];
           const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
@@ -87,57 +88,13 @@ export const authOptions: NextAuthOptions = {
             refreshToken: data.refreshToken ?? "",
             accessTokenExpires: Date.now() + 14 * 60 * 1000,
           };
-        } catch {
+        } catch (err) {
+          console.error("[AUTH] authorize() error:", err);
           return null;
         }
       },
     }),
 
-    // ── Email + TOTP sign-in ──────────────────────────────────────────
-    CredentialsProvider({
-      id: "email",
-      name: "Email and TOTP",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-        totp: { label: "TOTP", type: "text" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        try {
-          const res = await fetch(`${ADMIN_API_URL}/auth/email-login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-              totpCode: credentials.totp || undefined,
-            }),
-          });
-
-          if (!res.ok) return null;
-
-          const data = await res.json();
-
-          const payload = JSON.parse(
-            Buffer.from(data.accessToken.split(".")[1], "base64url").toString()
-          );
-
-          return {
-            id: payload.sub,
-            protocolId: payload.protocolId ?? null,
-            role: payload.role,
-            tier: 0,
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            accessTokenExpires: Date.now() + 14 * 60 * 1000,
-          };
-        } catch {
-          return null;
-        }
-      },
-    }),
   ],
 
   callbacks: {

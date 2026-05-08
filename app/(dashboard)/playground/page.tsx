@@ -1,181 +1,213 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { EmailComposer } from "@/components/playground/EmailComposer";
-import { TelegramComposer } from "@/components/playground/TelegramComposer";
-import { SmsComposer } from "@/components/playground/SmsComposer";
-import { EmailPreview } from "@/components/playground/EmailPreview";
-import { testSend, previewNotification, getPlaygroundApiKey, type PlaygroundApiKey } from "@/lib/api/notifications";
+import { useComposerStore } from "@/hooks/use-composer-store";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ChannelToggle } from "@/components/playground/channel-toggle";
+import { ComposerEditor } from "@/components/playground/composer-editor";
+import { ComposerPreview } from "@/components/playground/composer-preview";
 import { Button } from "@/components/ui/Button";
-import { TestSendDto } from "@/types/api";
-import { isAxiosError } from "axios";
+import { Save, Send, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
+// We import and mock the send action just for demonstration in the new UI.
+import { testSend, getPlaygroundApiKey } from "@/lib/api/notifications";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/Input";
 
-type ChannelTab = "email" | "telegram" | "sms";
+export default function ComposersPlaygroundPage() {
+  const store = useComposerStore();
+  const [testSendOpen, setTestSendOpen] = useState(false);
+  const [recipient, setRecipient] = useState("");
 
-export default function PlaygroundPage() {
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<ChannelTab>("email");
-  const [htmlSnippet, setHtmlSnippet] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState<"html" | "telegram" | "sms">("html");
-  const [apiKey, setApiKey] = useState<PlaygroundApiKey | null>(null);
-
-  const { data: keyData, isLoading: loadingKey, refetch: refetchKey } = useQuery({
+  const { data: apiKeyData } = useQuery({
     queryKey: ["playground-api-key"],
     queryFn: getPlaygroundApiKey,
   });
 
-  if (keyData && !apiKey) {
-    setApiKey(keyData);
-  }
-
-  const previewMutation = useMutation({
-    mutationFn: (dto: TestSendDto) => {
-      if (!apiKey?.key) {
-        throw new Error("No API key available");
-      }
-      return previewNotification(dto, apiKey.key, activeTab as "email" | "telegram" | "sms");
-    },
-    onSuccess: (data) => {
-      if (activeTab === "email" && data.renderedHtml) {
-        setHtmlSnippet(data.renderedHtml);
-      } else if (activeTab === "telegram" && data.telegramText) {
-        setHtmlSnippet(data.telegramText);
-      } else if (activeTab === "sms" && data.smsText) {
-        setHtmlSnippet(data.smsText);
-      }
-    },
-    onError: (err: unknown) => {
-      if (isAxiosError(err)) {
-        toast.error(err?.response?.data?.message || "Failed to render preview");
-      }
-      if (err instanceof Error) {
-        toast.error(err.message);
-      }
-    },
-  });
-
   const sendMutation = useMutation({
-    mutationFn: (dto: TestSendDto) => {
-      if (!apiKey?.key) {
-        throw new Error("No API key available");
-      }
-      return testSend({ ...dto, previewOnly: false }, apiKey.key, activeTab as "email" | "telegram" | "sms");
+    mutationFn: async () => {
+      if (!apiKeyData?.key) throw new Error("No API key available");
+      if (!recipient) throw new Error("Recipient required");
+      
+      const content = 
+        store.activeChannel === "email" ? store.emailContent :
+        store.activeChannel === "telegram" ? store.telegramContent :
+        store.smsContent;
+
+      return testSend(
+        { 
+          walletAddress: recipient, 
+          subject: store.emailSubject,
+          body: content, 
+          category: "system",
+          previewOnly: false 
+        },
+        apiKeyData.key,
+        store.activeChannel
+      );
     },
-    onSuccess: (data) => {
-      toast.success(`Test notification sent via ${activeTab}!`);
-      if (data.renderedHtml) {
-        setHtmlSnippet(data.renderedHtml);
-      }
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    onSuccess: () => {
+      toast.success(`Test notification sent via ${store.activeChannel}!`);
+      setTestSendOpen(false);
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || "Failed to send notification");
     },
   });
 
-  const isLoading = previewMutation.isPending || sendMutation.isPending;
+  const handleSaveDraft = () => {
+    // We already persist locally via Zustand. We could sync to API here.
+    toast.success("Draft saved locally");
+  };
+
+  const handleReset = () => {
+    store.resetDraft(store.activeChannel);
+    toast.success(`${store.activeChannel} draft reset`);
+  };
+
+  const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
 
   return (
-    <div className="flex flex-col lg:h-[calc(100vh-8rem)] space-y-4">
-      <div className="mb-2 shrink-0">
-        <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-foreground">
-          Notification Playground
-        </h1>
-        <p className="text-xs lg:text-sm text-text-muted mt-1">
-          Draft and preview notifications across channels.
-        </p>
-      </div>
+    <div className="flex flex-col h-full min-h-[600px] lg:h-[calc(100vh-8rem)]">
+      <PageHeader
+        title="Composers Playground"
+        description="Draft and preview multi-channel notifications in real-time."
+        actions={
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleReset}
+              className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-3 sm:px-4"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Reset</span>
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleSaveDraft}
+              className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-3 sm:px-4"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Save Draft</span>
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setTestSendOpen(true)}
+              className="gap-2 rounded-full px-4 sm:px-5"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Send Test</span>
+            </Button>
+          </div>
+        }
+      />
 
-      {/* API Key Status */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 bg-card-2 rounded-lg border border-border">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-text-secondary">API Key:</span>
-          {loadingKey ? (
-            <span className="text-sm text-text-muted">Loading...</span>
-          ) : apiKey ? (
-            <span className="text-sm text-foreground font-mono">
-              {apiKey.keyPrefix}... (auto)
-            </span>
-          ) : (
-            <span className="text-sm text-text-muted">No key</span>
-          )}
+      <div className="flex-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col min-h-0 mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border bg-card">
+          <ChannelToggle />
+          
+          {/* Mobile view switcher */}
+          <div className="flex sm:hidden w-full border-t border-border p-1.5 bg-card-2/30">
+            <button 
+              onClick={() => setMobileView("edit")}
+              className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                mobileView === 'edit' 
+                  ? 'bg-primary text-navy shadow-[0_2px_10px_rgba(0,200,150,0.3)]' 
+                  : 'text-text-muted'
+              }`}
+            >
+              Write
+            </button>
+            <button 
+              onClick={() => setMobileView("preview")}
+              className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                mobileView === 'preview' 
+                  ? 'bg-primary text-navy shadow-[0_2px_10px_rgba(0,200,150,0.3)]' 
+                  : 'text-text-muted'
+              }`}
+            >
+              Preview
+            </button>
+          </div>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => refetchKey()}
-          disabled={loadingKey}
-        >
-          Refresh
-        </Button>
-      </div>
+        
+        <div className="flex-1 min-h-0">
+          {/* Mobile Stacked Layout */}
+          <div className="sm:hidden h-full overflow-y-auto">
+            {mobileView === "edit" ? (
+              <div className="h-full">
+                <ComposerEditor />
+              </div>
+            ) : (
+              <div className="h-full p-4 bg-navy-2/20">
+                <ComposerPreview />
+              </div>
+            )}
+          </div>
 
-      {/* Channel Tabs */}
-      <div className="flex border-b border-border overflow-x-auto">
-        {(["email", "telegram", "sms"] as ChannelTab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 lg:px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px whitespace-nowrap ${
-              activeTab === tab
-                ? "text-foreground border-primary"
-                : "text-text-muted border-transparent hover:text-foreground"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Composer + Preview Grid */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 min-h-0">
-        <div className="min-h-[400px] lg:min-h-0">
-          {activeTab === "email" && (
-            <EmailComposer
-              onPreview={(dto) => previewMutation.mutate(dto)}
-              onSend={(dto) => sendMutation.mutate(dto)}
-              isLoading={isLoading}
-            />
-          )}
-          {activeTab === "telegram" && (
-            <TelegramComposer
-              onPreview={(dto) => previewMutation.mutate(dto)}
-              onSend={(dto) => sendMutation.mutate(dto)}
-              isLoading={isLoading}
-            />
-          )}
-          {activeTab === "sms" && (
-            <SmsComposer
-              onPreview={(dto) => previewMutation.mutate(dto)}
-              onSend={(dto) => sendMutation.mutate(dto)}
-              isLoading={isLoading}
-            />
-          )}
+          {/* Desktop Resizable Layout */}
+          <div className="hidden sm:block h-full">
+            <ResizablePanelGroup orientation="horizontal" className="h-full">
+              <ResizablePanel defaultSize={45} minSize={30} className="flex flex-col">
+                <ComposerEditor />
+              </ResizablePanel>
+              
+              <ResizableHandle withHandle className="bg-border border-x border-border hover:bg-primary/20 transition-colors" />
+              
+              <ResizablePanel defaultSize={55} minSize={30}>
+                <ComposerPreview />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
         </div>
+      </div>
 
-        {/* Preview Panel */}
-        <div className="bg-card border border-border rounded-xl p-4 shadow-sm overflow-hidden min-h-[400px] lg:min-h-0">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm lg:text-base font-bold text-foreground">Preview</h3>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setPreviewMode("html")}
-                className={`px-2 py-1 text-xs rounded ${
-                  previewMode === "html" ? "bg-primary text-foreground" : "text-text-muted"
-                }`}
-              >
-                {activeTab === "email" ? "HTML" : "Text"}
-              </button>
+      <Dialog open={testSendOpen} onOpenChange={setTestSendOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Test Notification</DialogTitle>
+            <DialogDescription>
+              Send a test {store.activeChannel} to verify delivery. Variables will be replaced with your Test Data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Recipient ({store.activeChannel})</label>
+              <Input
+                placeholder={
+                  store.activeChannel === "email" ? "test@example.com" :
+                  store.activeChannel === "telegram" ? "@username or ID" :
+                  "+1234567890"
+                }
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+              />
             </div>
           </div>
-          <EmailPreview
-            htmlSnippet={htmlSnippet}
-            isLoading={previewMutation.isPending}
-          />
-        </div>
-      </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTestSendOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={() => sendMutation.mutate()} 
+              disabled={!recipient || sendMutation.isPending}
+              isLoading={sendMutation.isPending}
+            >
+              Send Test
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
