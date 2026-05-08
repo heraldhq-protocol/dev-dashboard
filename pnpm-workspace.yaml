@@ -11,18 +11,3 @@ allowBuilds:
   unrs-resolver: true
   usb: true
   utf-8-validate: true
-
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
-
-onlyBuiltDependencies:
-  - '@stellar/stellar-sdk'
-  - bcrypt
-  - blake-hash
-  - bufferutil
-  - msw
-  - protobufjs
-  - tiny-secp256k1
-  - usb
-  - utf-8-validate
