@@ -5,22 +5,24 @@ export const runtime = "edge";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   
-  // Dynamic parameters with fallbacks
   const title = searchParams.get("title") || "Developer Dashboard";
   const subtitle = searchParams.get("subtitle") || "Integrate Secure Alerts";
   const description = searchParams.get("description") || "Manage API keys, templates, and analytics for your protocol's notification layer.";
 
-  // Fetch Syne font from jsdelivr (Fontsource)
   let syneFontData: ArrayBuffer | null = null;
   try {
-    syneFontData = await fetch(
-      "https://cdn.jsdelivr.net/fontsource/fonts/syne@latest/latin-600-normal.woff"
-    ).then((res) => res.arrayBuffer());
-  } catch (error) {
-    console.warn("Failed to load Syne font, falling back to system fonts.");
+    const fontRes = await fetch(
+      "https://cdn.jsdelivr.net/fontsource/fonts/syne@latest/latin-600-normal.woff",
+      { signal: AbortSignal.timeout(5000) }
+    );
+    if (fontRes.ok) {
+      syneFontData = await fontRes.arrayBuffer();
+    }
+  } catch {
+    // Font fallback handled by ImageResponse
   }
 
-  return new ImageResponse(
+  const response = new ImageResponse(
     (
       <div
         style={{
@@ -37,7 +39,6 @@ export async function GET(request: Request) {
           overflow: "hidden",
         }}
       >
-        {/* Dynamic Pure-Code Web3 Background */}
         <svg
           style={{
             position: "absolute",
@@ -73,7 +74,6 @@ export async function GET(request: Request) {
             marginBottom: "40px",
           }}
         >
-          {/* Actual Herald Logo */}
           <svg 
             width="80" 
             height="80" 
@@ -168,4 +168,11 @@ export async function GET(request: Request) {
         : undefined,
     }
   );
+
+  response.headers.set(
+    "Cache-Control",
+    "public, max-age=31536000, immutable"
+  );
+
+  return response;
 }

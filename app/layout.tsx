@@ -25,21 +25,20 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://dashboard.useherald.xyz"),
-  title: "Herald Dashboard",
-  description: "Developer control panel for the Herald Gateway",
+  metadataBase: new URL("https://app.useherald.xyz"),
+  title: {
+    default: "Herald Developer Dashboard",
+    template: "%s — Herald Dashboard",
+  },
+  description: "Developer control panel for the Herald notification gateway",
   openGraph: {
-    title: "Herald Dashboard",
-    description: "Developer control panel for the Herald Gateway",
-    url: "https://dashboard.useherald.xyz",
+    url: "https://app.useherald.xyz",
     siteName: "Herald",
-    images: [{ url: "/api/og", width: 1200, height: 630 }],
     type: "website",
+    images: [{ url: "/api/og", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Herald Dashboard",
-    description: "Developer control panel for the Herald Gateway",
     images: ["/api/og"],
   },
 };
