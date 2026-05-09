@@ -25,8 +25,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://dashboard.useherald.xyz"),
   title: "Herald Dashboard",
   description: "Developer control panel for the Herald Gateway",
+  openGraph: {
+    images: ["/api/og"],
+  },
 };
 
 export default function RootLayout({
