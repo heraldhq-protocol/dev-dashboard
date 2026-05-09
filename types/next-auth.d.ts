@@ -18,13 +18,13 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id: string;
-    protocolId: string | null;
-    role: "owner" | "admin" | "developer" | "read_only" | null;
-    tier: number;
-    accessToken: string;
-    refreshToken: string;
-    accessTokenExpires: number;
+    id?: string;
+    protocolId?: string | null;
+    role?: "owner" | "admin" | "developer" | "read_only" | null;
+    tier?: number;
+    accessToken?: string;
+    refreshToken?: string;
+    accessTokenExpires?: number;
     error?: string;
   }
 }
