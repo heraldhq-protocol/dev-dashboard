@@ -122,7 +122,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.protocolId = token.protocolId as string | null;
-        session.user.role = token.role;
+        session.user.role = token.role as "owner" | "admin" | "developer" | "read_only" | null;
         session.user.tier = token.tier as number;
         session.accessToken = token.accessToken as string;
         session.error = token.error as string | undefined;
