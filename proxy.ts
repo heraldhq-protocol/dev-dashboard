@@ -1,14 +1,14 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/invite", "/api/auth", "/onboarding"];
+const PUBLIC_PATHS = ["/login", "/invite", "/api/auth", "/onboarding", "/api/og"];
 const ONBOARDING_PATH = "/onboarding";
 
 const isPublicAsset = (pathname: string) => 
   pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|json|woff2?|css|js)$/);
 
 export default withAuth(
-  function middleware(req) {
+  function proxy(req) {
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
@@ -60,6 +60,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|public/|api/auth).*)",
+    "/((?!_next/static|_next/image|favicon.ico|public/|api/auth|api/og).*)",
   ],
 };

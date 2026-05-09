@@ -29,6 +29,17 @@ export const metadata: Metadata = {
   title: "Herald Dashboard",
   description: "Developer control panel for the Herald Gateway",
   openGraph: {
+    title: "Herald Dashboard",
+    description: "Developer control panel for the Herald Gateway",
+    url: "https://dashboard.useherald.xyz",
+    siteName: "Herald",
+    images: [{ url: "/api/og", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Herald Dashboard",
+    description: "Developer control panel for the Herald Gateway",
     images: ["/api/og"],
   },
 };
