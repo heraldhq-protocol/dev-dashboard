@@ -9,7 +9,7 @@ export function ComposerPreview() {
 
   return (
     <div className="flex flex-col h-full bg-card-2/50 relative">
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-y-auto relative">
         {activeChannel === "email" && <PreviewEmail />}
         {activeChannel === "telegram" && <PreviewTelegram />}
         {activeChannel === "sms" && <PreviewSms />}

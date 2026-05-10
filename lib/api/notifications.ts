@@ -6,6 +6,7 @@ import {
 import {
   TestSendDto,
   TestSendResult,
+  SandboxSendResult,
   PaginatedNotifications,
 } from "@/types/api";
 
@@ -17,6 +18,9 @@ export interface PlaygroundApiKey {
   keyPrefix: string;
   environment: string;
   name: string;
+  /** true = key was just created, plaintext is in `key` and usable directly.
+   *  false = existing key, `key` is only a masked prefix — user must paste the full key. */
+  hasPlaintext: boolean;
 }
 
 export interface PreviewResult {
@@ -89,6 +93,30 @@ export async function testSend(
   const { data } = await notificationClient.post<TestSendResult>(
     `${gatewayUrl}/v1/notify`,
     payload,
+  );
+
+  return data;
+}
+
+export async function sandboxSend(
+  dto: {
+    subject: string;
+    body: string;
+    category: string;
+    preferred_channel?: string;
+  },
+  apiKey: string,
+): Promise<SandboxSendResult> {
+  if (!apiKey) {
+    throw new Error("No API key available. Please refresh the page.");
+  }
+
+  const notificationClient = getNotificationApiClient(apiKey);
+  const gatewayUrl = getNotificationGatewayUrl();
+
+  const { data } = await notificationClient.post<SandboxSendResult>(
+    `${gatewayUrl}/v1/sandbox/send`,
+    dto,
   );
 
   return data;

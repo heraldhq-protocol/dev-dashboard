@@ -260,6 +260,21 @@ export interface TestSendResult {
   error?: string;
 }
 
+export interface SandboxSendResult {
+  notification_id: string;
+  status: "queued" | "failed";
+  test_contact: {
+    email?: string | null;
+    telegram?: string | null;
+    sms?: string | null;
+  };
+  remaining_today: number;
+  daily_limit: number;
+  sandbox_mode: boolean;
+  sandbox_notes: string[];
+  error_code?: string;
+}
+
 export interface PaginatedNotifications {
   items: NotificationDto[];
   total: number;
