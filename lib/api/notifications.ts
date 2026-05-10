@@ -17,6 +17,9 @@ export interface PlaygroundApiKey {
   keyPrefix: string;
   environment: string;
   name: string;
+  /** true = key was just created, plaintext is in `key` and usable directly.
+   *  false = existing key, `key` is only a masked prefix — user must paste the full key. */
+  hasPlaintext: boolean;
 }
 
 export interface PreviewResult {
