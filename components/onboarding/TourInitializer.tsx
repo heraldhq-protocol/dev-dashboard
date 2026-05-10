@@ -93,6 +93,8 @@ export function TourInitializer() {
 
   // ── 1. Auto-start / resume ───────────────────────────────────────────────
   useEffect(() => {
+    // Skip tour on mobile — the provider doesn't render NextStep on small screens
+    if (typeof window !== "undefined" && window.innerWidth < 768) return;
     if (!shouldFire || _tourSessionFired) return;
     _tourSessionFired = true;
 
@@ -129,8 +131,8 @@ export function TourInitializer() {
   // ── 3. Render Guard & Scroll Recovery ────────────────────────────────────
   // When a step changes (especially cross-page), the new component might not
   // be in the DOM yet. We hide the tour card, poll the DOM until the element
-  // is fully rendered, scroll it into view, trigger a recalculation, and
-  // then reveal the card perfectly positioned.
+  // is fully rendered, scroll it into view within the scroll container,
+  // trigger a recalculation, and then reveal the card perfectly positioned.
   useEffect(() => {
     if (!isNextStepVisible) return;
 
@@ -161,12 +163,25 @@ export function TourInitializer() {
       if (el && el.getBoundingClientRect().height > 0) {
         clearTimeout(timeoutId);
 
-        // 1. Instantly scroll the container so coordinates are stable
-        const rect = el.getBoundingClientRect();
-        const viewportH = window.innerHeight;
-        const inView = rect.top >= 80 && rect.bottom <= viewportH - 32;
+        // 1. Scroll within the dashboard scroll container, not the window.
+        //    The scroll container is the actual overflow element so using it
+        //    gives NextStep stable coordinates for card positioning.
+        const scrollContainer = document.getElementById("dashboard-scroll-container");
+        if (scrollContainer) {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
 
-        if (!inView) {
+          const inView =
+            elRect.top >= containerRect.top + 16 &&
+            elRect.bottom <= containerRect.bottom - 16;
+
+          if (!inView) {
+            // scrollIntoView on the element scrolls its nearest scrollable
+            // ancestor (the dashboard container), not the window.
+            el.scrollIntoView({ behavior: "instant", block: "center" });
+          }
+        } else {
+          // Fallback: use window scroll
           el.scrollIntoView({ behavior: "instant", block: "center" });
         }
 

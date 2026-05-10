@@ -1,5 +1,13 @@
-import { apiClient, getNotificationApiClient, getNotificationGatewayUrl } from "../api-client";
-import { TestSendDto, TestSendResult, PaginatedNotifications } from "@/types/api";
+import {
+  apiClient,
+  getNotificationApiClient,
+  getNotificationGatewayUrl,
+} from "../api-client";
+import {
+  TestSendDto,
+  TestSendResult,
+  PaginatedNotifications,
+} from "@/types/api";
 
 const BASE = "/notifications";
 
@@ -19,7 +27,9 @@ export interface PreviewResult {
 
 export async function getPlaygroundApiKey(): Promise<PlaygroundApiKey | null> {
   try {
-    const { data } = await apiClient.get<PlaygroundApiKey>("/api-keys/playground");
+    const { data } = await apiClient.get<PlaygroundApiKey>(
+      "/api-keys/playground",
+    );
     return data;
   } catch (error) {
     console.error("Failed to fetch playground API key:", error);
@@ -30,12 +40,10 @@ export async function getPlaygroundApiKey(): Promise<PlaygroundApiKey | null> {
 export async function previewNotification(
   dto: TestSendDto,
   apiKey: string,
-  channel: "email" | "telegram" | "sms"
+  channel: "email" | "telegram" | "sms",
 ): Promise<PreviewResult> {
   if (!apiKey) {
-    throw new Error(
-      "No API key available. Please refresh the page.",
-    );
+    throw new Error("No API key available. Please refresh the page.");
   }
 
   const notificationClient = getNotificationApiClient(apiKey);
@@ -55,11 +63,13 @@ export async function previewNotification(
   return data;
 }
 
-export async function testSend(dto: TestSendDto, apiKey: string, channel?: "email" | "telegram" | "sms"): Promise<TestSendResult> {
+export async function testSend(
+  dto: TestSendDto,
+  apiKey: string,
+  channel?: "email" | "telegram" | "sms",
+): Promise<TestSendResult> {
   if (!apiKey) {
-    throw new Error(
-      "No API key available. Please refresh the page.",
-    );
+    throw new Error("No API key available. Please refresh the page.");
   }
 
   const notificationClient = getNotificationApiClient(apiKey);
@@ -89,7 +99,7 @@ export async function listNotifications(
   limit = 20,
   status?: string,
   category?: string,
-  search?: string
+  search?: string,
 ): Promise<PaginatedNotifications> {
   const { data } = await apiClient.get<PaginatedNotifications>(BASE, {
     params: { page, limit, status, category, search },

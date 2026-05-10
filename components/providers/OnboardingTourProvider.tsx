@@ -48,7 +48,8 @@ function buildTourSteps(isMobile: boolean): Tour[] {
   // Shared pointer styles
   const ptr = { pointerPadding: 8, pointerRadius: 10 };
   // In-page: same pointer styles, scroll-margin-top handles TopNav offset via CSS
-  const inPage = { ...ptr };
+  // viewportID tells NextStep to position relative to the dashboard scroll container
+  const inPage = { ...ptr, viewportID: "dashboard-viewport" };
 
   const raw: GroupedStep[] = [
     // ── Getting Started ────────────────────────────────────────────────────
@@ -109,7 +110,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "An area chart of your daily notification volume. Toggle between 7-day and 30-day views. Hover any point to see exact send counts for that day.",
       selector: "#overview-volume-chart",
-      side: "top",
+      side: "right",
       showControls: true,
       showSkip: true,
       ...inPage,
@@ -161,7 +162,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Left panel: write your notification with markdown and variable support (e.g. {{wallet_address}}). Right panel: real-time preview of exactly how it will appear to recipients.",
       selector: "#playground-composer",
-      side: "top",
+      side: "left",
       showControls: true,
       showSkip: true,
       ...inPage,
@@ -173,7 +174,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Hit 'Send Test' to fire the notification to a real recipient right now. You'll be prompted for a wallet, email, or Telegram ID. Delivery uses your sandbox API key automatically.",
       selector: "#playground-send-btn",
-      side: "bottom",
+      side: "bottom-right",
       showControls: true,
       showSkip: true,
       ...inPage,
@@ -216,7 +217,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
     },
     {
       group: "API Keys",
@@ -225,10 +226,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Test keys (hrld_test_...) route all notifications to your sandbox contacts instead of real wallets. Perfect for development. Configure them in Settings → Sandbox.",
       selector: "#apikeys-test-section",
-      side: "top",
+      side: "bottom",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
     },
     {
       group: "API Keys",
@@ -237,10 +238,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Click 'Create Key' to open the modal. Choose a name, environment (live vs. test), and permission scopes.",
       selector: "#create-api-key-btn",
-      side: "bottom",
+      side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
       nextRoute: "/webhooks",
     },
 
@@ -265,10 +266,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "All your registered endpoints appear here with URL, active toggle, and a 'View Logs' button. Disable endpoints without deleting them — useful during maintenance windows.",
       selector: "#webhooks-list",
-      side: "top",
+      side: "left",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
     },
     {
       group: "Webhooks",
@@ -277,10 +278,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Click 'Add Endpoint' to register a URL. Subscribe to events: notification.sent, notification.failed, notification.bounced, apikey.created, apikey.revoked. Herald POSTs a signed payload for each.",
       selector: "#webhooks-add-btn",
-      side: "bottom",
+      side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
       nextRoute: "/templates",
     },
 
@@ -305,10 +306,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "All your saved templates appear here as cards showing name, category (DeFi, Governance, Marketing, System), version, and last updated date. Click 'Edit' to open the HTML editor.",
       selector: "#templates-list",
-      side: "bottom",
+      side: "top",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
     },
     {
       group: "Templates",
@@ -317,10 +318,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Click 'Create Template' to open the editor. Write raw HTML with Herald variables like {{protocolName}} and {{body}}, preview it with real data, then save. Requires Growth tier or higher.",
       selector: "#templates-create-btn",
-      side: "bottom",
+      side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
       nextRoute: "/domains",
     },
 
@@ -345,10 +346,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "When you add a domain, Herald generates a DKIM TXT record. Add it to your DNS provider (Cloudflare, Vercel, GoDaddy, etc.) and click Verify. DNS propagation takes 5-30 minutes.",
       selector: "#domains-list",
-      side: "bottom",
+      side: "top-left",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
     },
     {
       group: "Domains",
@@ -357,10 +358,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Click 'Add Domain' and enter your sending subdomain (e.g. alerts.myprotocol.com). After verification, emails you send will show your domain in the From header — boosting trust and deliverability.",
       selector: "#domains-add-btn",
-      side: "bottom",
+      side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
       nextRoute: "/notifications",
     },
 
@@ -397,10 +398,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Each row shows the wallet, channel, status badge, and timestamp. Click any row to open the detail drawer with the full payload, delivery receipt, and error trace if it failed.",
       selector: "#notifications-table",
-      side: "top",
+      side: "left",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
       nextRoute: "/billing",
     },
 
@@ -437,7 +438,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Developer (free), Growth ($99/mo), Scale ($299/mo), and Enterprise. Each tier unlocks more sends per month, reduced latency, additional webhook endpoints, and dedicated support.",
       selector: "#billing-plans",
-      side: "top",
+      side: "right",
       showControls: true,
       showSkip: true,
       ...inPage,
@@ -480,7 +481,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
     },
     {
       group: "Team",
@@ -489,10 +490,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Click 'Invite New Member', enter their email, and select a role. They receive an invitation email with a one-click setup link. Seat limits depend on your billing tier.",
       selector: "#team-invite-btn",
-      side: "bottom",
+      side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...ptr,
     },
 
     // ── Settings ──────────────────────────────────────────────────────────
@@ -560,9 +561,15 @@ function NextStepInner({ children, isMobile }: { children: React.ReactNode; isMo
 export function OnboardingTourProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
 
+  // On mobile screens the sidebar is hidden and tour step targets don't exist,
+  // so we skip the entire tour wrapper to avoid rendering artifacts.
+  if (isMobile) {
+    return <>{children}</>;
+  }
+
   return (
     <NextStepProvider>
-      <NextStepInner isMobile={isMobile}>{children}</NextStepInner>
+      <NextStepInner isMobile={false}>{children}</NextStepInner>
     </NextStepProvider>
   );
 }

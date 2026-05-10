@@ -271,6 +271,13 @@ body {
   overflow-x: hidden;
 }
 
+/* Ensure the tour overlay renders above all dashboard chrome (sidebar, topnav) */
+[data-nextstep-overlay],
+[data-name="nextstep-pointer"],
+[data-name="nextstep-card"] {
+  z-index: 9999 !important;
+}
+
 /* ─── Tour Rendering Guard ──────────────────────────────── */
 /* Hides the tour visually while the DOM is mounting/rendering */
 body.tour-waiting [data-name="nextstep-card"],
