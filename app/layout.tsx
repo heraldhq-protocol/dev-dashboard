@@ -25,8 +25,22 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Herald Dashboard",
-  description: "Developer control panel for the Herald Gateway",
+  metadataBase: new URL("https://app.useherald.xyz"),
+  title: {
+    default: "Herald Developer Dashboard",
+    template: "%s — Herald Dashboard",
+  },
+  description: "Developer control panel for the Herald notification gateway",
+  openGraph: {
+    url: "https://app.useherald.xyz",
+    siteName: "Herald",
+    type: "website",
+    images: [{ url: "/api/og", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/api/og"],
+  },
 };
 
 export default function RootLayout({

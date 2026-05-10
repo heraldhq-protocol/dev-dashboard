@@ -1,5 +1,5 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import type { JWT } from "next-auth/jwt";
 
 const ADMIN_API_URL =
@@ -27,7 +27,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       ...token,
       accessToken: data.accessToken,
       refreshToken: data.refreshToken ?? token.refreshToken,
-      accessTokenExpires: Date.now() + 14 * 60 * 1000, // 14 min (access token = 15 min)
+      accessTokenExpires: Date.now() + 14 * 60 * 1000,
       error: undefined,
     };
   } catch {
@@ -35,10 +35,9 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
-export const authOptions: NextAuthOptions = {
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    // ── Wallet sign-in ────────────────────────────────────────────────
-    CredentialsProvider({
+    Credentials({
       id: "wallet",
       name: "Wallet",
       credentials: {
@@ -74,7 +73,6 @@ export const authOptions: NextAuthOptions = {
 
           const data = await res.json();
 
-          // Decode the access token to get protocolId + role safely
           const base64Url = data.accessToken.split(".")[1];
           const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
           const payload = JSON.parse(Buffer.from(base64, "base64").toString());
@@ -94,12 +92,9 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
-
   ],
-
   callbacks: {
     async jwt({ token, user }) {
-      // Initial sign-in
       if (user) {
         return {
           ...token,
@@ -113,24 +108,21 @@ export const authOptions: NextAuthOptions = {
         };
       }
 
-      // Token still valid
       if (Date.now() < (token.accessTokenExpires as number)) {
         return token;
       }
 
-      // Token expired — refresh (only if we have a refresh token)
       if (token.refreshToken) {
         return refreshAccessToken(token);
       }
 
       return { ...token, error: "NoRefreshTokenError" };
     },
-
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.protocolId = token.protocolId as string | null;
-        session.user.role = token.role;
+        session.user.role = token.role as "owner" | "admin" | "developer" | "read_only" | null;
         session.user.tier = token.tier as number;
         session.accessToken = token.accessToken as string;
         session.error = token.error as string | undefined;
@@ -138,7 +130,6 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-
   pages: {
     signIn: "/login",
   },
@@ -146,4 +137,4 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
-};
+});
