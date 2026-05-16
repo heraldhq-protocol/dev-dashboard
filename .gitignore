@@ -50,3 +50,15 @@ implementation_plan.md
 __tests__
 /lib/generated/prisma
 .agent
+
+# Herald — local dev & planning docs (committed docs live in repo root)
+*.local.md
+.vscode/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Turbo
+.turbo/
