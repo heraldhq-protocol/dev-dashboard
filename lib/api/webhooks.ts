@@ -75,3 +75,10 @@ export async function getWebhookReliability(): Promise<WebhookReliabilityRespons
   );
   return data;
 }
+
+export async function promoteWebhook(
+  id: string
+): Promise<{ id: string; url: string; events: string[]; secret: string; secretPrefix: string }> {
+  const { data } = await apiClient.post(`${BASE}/${id}/promote`);
+  return data;
+}

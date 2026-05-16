@@ -5,7 +5,8 @@ import { WebhookTestButton } from "./WebhookTestButton";
 import { WebhookReliabilityBadge } from "./WebhookReliabilityBadge";
 import { formatDistanceToNow } from "date-fns";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Webhook } from "lucide-react";
+import { Webhook, ArrowUpRight } from "lucide-react";
+import { useUiStore } from "@/lib/stores/ui.store";
 
 import { WebhookDto } from "@/types/api";
 import type { WebhookReliabilityEntry } from "@/lib/api/webhooks";
@@ -15,10 +16,14 @@ interface WebhookListProps {
   onToggle: (id: string, currentStatus: boolean) => void;
   onDelete: (id: string) => void;
   onViewLogs: (id: string) => void;
+  onPromote?: (id: string) => void;
   reliability?: WebhookReliabilityEntry[];
 }
 
-export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs, reliability = [] }: WebhookListProps) {
+export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs, onPromote, reliability = [] }: WebhookListProps) {
+  const { activeEnvironment } = useUiStore();
+  const isSandbox = activeEnvironment === "sandbox";
+
   if (webhooks.length === 0) {
     return (
       <EmptyState
@@ -84,6 +89,17 @@ export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs, reliabil
               </button>
 
               <WebhookTestButton webhookId={wh.id} endpointUrl={wh.url} />
+
+              {isSandbox && onPromote && (
+                <button
+                  onClick={() => onPromote(wh.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-status-success/30 text-status-success bg-status-success/5 hover:bg-status-success/15 transition-all opacity-0 group-hover:opacity-100"
+                  title="Duplicate this webhook to the live environment"
+                >
+                  <ArrowUpRight className="h-3 w-3" />
+                  Promote
+                </button>
+              )}
 
               <button
                 onClick={() => onToggle(wh.id, wh.isActive)}

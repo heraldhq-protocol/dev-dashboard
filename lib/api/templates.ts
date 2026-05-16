@@ -17,3 +17,10 @@ export async function getStarterTemplate(): Promise<StarterTemplateResponse> {
   );
   return data;
 }
+
+export async function promoteTemplate(
+  id: string
+): Promise<{ success: boolean; templateId: string }> {
+  const { data } = await apiClient.post(`${BASE}/${id}/promote`);
+  return data;
+}

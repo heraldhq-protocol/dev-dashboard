@@ -12,7 +12,8 @@ import { Plus, Check } from "lucide-react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { listWebhooks, createWebhook, updateWebhook, deleteWebhook, getWebhookReliability } from "@/lib/api/webhooks";
+import { listWebhooks, createWebhook, updateWebhook, deleteWebhook, getWebhookReliability, promoteWebhook } from "@/lib/api/webhooks";
+import { PromoteDiffModal, type PromoteTarget } from "@/components/shared/PromoteDiffModal";
 
 export default function WebhooksPage() {
   const queryClient = useQueryClient();
@@ -24,6 +25,7 @@ export default function WebhooksPage() {
   const [newSecret, setNewSecret] = useState<string | null>(null);
   const [viewLogsId, setViewLogsId] = useState<string | null>(null);
   const [webhookToDelete, setWebhookToDelete] = useState<string | null>(null);
+  const [promoteTarget, setPromoteTarget] = useState<PromoteTarget | null>(null);
 
   const { data: webhooks = [], isLoading } = useQuery({
     queryKey: ["webhooks"],
@@ -73,6 +75,31 @@ export default function WebhooksPage() {
       setWebhookToDelete(null);
     },
   });
+
+  const promoteMutation = useMutation({
+    mutationFn: (id: string) => promoteWebhook(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      setPromoteTarget(null);
+      toast.success("Webhook promoted to live.");
+      if (data.secret) setNewSecret(data.secret);
+    },
+    onError: () => toast.error("Failed to promote webhook"),
+  });
+
+  const handlePromote = useCallback((id: string) => {
+    const wh = webhooks.find((w) => w.id === id);
+    if (!wh) return;
+    setPromoteTarget({
+      type: "webhook",
+      id,
+      label: wh.url,
+      fields: [
+        { name: "url", value: wh.url },
+        { name: "events", value: wh.events.join(", ") },
+      ],
+    });
+  }, [webhooks]);
 
   const AVAILABLE_EVENTS = [
     "notification.sent",
@@ -151,20 +178,28 @@ export default function WebhooksPage() {
         onToggle={handleToggle}
         onDelete={handleDelete}
         onViewLogs={setViewLogsId}
+        onPromote={handlePromote}
         reliability={reliabilityData?.webhooks}
       />
       </div>
 
       {/* Modals for Feature 2 */}
-      <WebhookDeliveryLog 
-        webhookId={viewLogsId} 
-        onClose={() => setViewLogsId(null)} 
+      <WebhookDeliveryLog
+        webhookId={viewLogsId}
+        onClose={() => setViewLogsId(null)}
       />
 
-      <WebhookSecretReveal 
-        isOpen={!!newSecret} 
-        onClose={() => setNewSecret(null)} 
-        secret={newSecret || ""} 
+      <WebhookSecretReveal
+        isOpen={!!newSecret}
+        onClose={() => setNewSecret(null)}
+        secret={newSecret || ""}
+      />
+
+      <PromoteDiffModal
+        target={promoteTarget}
+        onClose={() => setPromoteTarget(null)}
+        onConfirm={(id) => promoteMutation.mutate(id)}
+        isLoading={promoteMutation.isPending}
       />
 
       {/* Create Webhook Modal */}
