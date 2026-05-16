@@ -14,14 +14,49 @@ interface CreateKeyModalProps {
   isCreating: boolean;
 }
 
-const AVAILABLE_SCOPES = [
-  { id: "notify:write", label: "Send Notifications", description: "Permission to emit notifications via the gateway" },
-  { id: "notify:read", label: "Read Notifications", description: "View status and history of sent notifications" },
-  { id: "analytics:read", label: "View Analytics", description: "Access delivery stats and protocol usage metrics" },
-  { id: "webhook:read", label: "View Webhooks", description: "Read webhook configurations and history" },
-  { id: "webhook:write", label: "Manage Webhooks", description: "Create, update, and remove webhook endpoints" },
-  { id: "protocol:read", label: "View Profile", description: "Access protocol profile and subscription metadata" },
+type ScopeGroup = {
+  label: string;
+  scopes: { id: string; label: string; description: string; ownerOnly?: boolean }[];
+};
+
+const SCOPE_GROUPS: ScopeGroup[] = [
+  {
+    label: "Notifications",
+    scopes: [
+      { id: "notify:write", label: "Send Notifications", description: "Emit notifications to registered wallets via the gateway" },
+      { id: "notify:read", label: "Read Notifications", description: "View status and history of sent notifications" },
+    ],
+  },
+  {
+    label: "Analytics",
+    scopes: [
+      { id: "analytics:read", label: "View Analytics", description: "Access delivery stats and protocol usage metrics" },
+    ],
+  },
+  {
+    label: "Templates",
+    scopes: [
+      { id: "templates:read", label: "View Templates", description: "List and preview notification templates" },
+      { id: "templates:write", label: "Manage Templates", description: "Create, edit, and delete templates" },
+    ],
+  },
+  {
+    label: "Webhooks",
+    scopes: [
+      { id: "webhook:read", label: "View Webhooks", description: "Read webhook configurations and delivery logs" },
+      { id: "webhook:write", label: "Manage Webhooks", description: "Create, update, and remove webhook endpoints" },
+    ],
+  },
+  {
+    label: "Admin",
+    scopes: [
+      { id: "protocol:read", label: "View Profile", description: "Access protocol profile and subscription metadata" },
+      { id: "keys:manage", label: "Manage API Keys", description: "Create and revoke API keys — Owner role only", ownerOnly: true },
+    ],
+  },
 ];
+
+const DEFAULT_SCOPES = ["notify:write", "notify:read", "analytics:read", "templates:read", "webhook:read"];
 
 export function CreateKeyModal({
   isOpen,
@@ -31,9 +66,7 @@ export function CreateKeyModal({
 }: CreateKeyModalProps) {
   const [name, setName] = useState("");
   const [environment, setEnvironment] = useState<"live" | "test">("live");
-  const [selectedScopes, setSelectedScopes] = useState<string[]>(["notify:write"]);
-
-
+  const [selectedScopes, setSelectedScopes] = useState<string[]>(DEFAULT_SCOPES);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,44 +133,60 @@ export function CreateKeyModal({
           <label className="text-sm font-medium text-text-secondary flex justify-between items-end">
             <span>Permission Scopes</span>
             <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold">
-              {selectedScopes.length} Selected
+              {selectedScopes.length} selected
             </span>
           </label>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-            {AVAILABLE_SCOPES.map((scope) => {
-              const isSelected = selectedScopes.includes(scope.id);
-              return (
-                <button
-                  key={scope.id}
-                  type="button"
-                  onClick={() => toggleScope(scope.id)}
-                  className={`relative flex flex-col items-start text-left p-3.5 rounded-xl border transition-all duration-200 group ${
-                    isSelected
-                      ? "bg-teal/10 border-teal shadow-[0_0_15px_rgba(0,210,255,0.1)]"
-                      : "bg-card border-border hover:border-border-2 hover:bg-card-2/50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className={`text-sm font-bold transition-colors ${isSelected ? "text-teal" : "text-foreground group-hover:text-foreground"}`}>
-                      {scope.label}
-                    </span>
-                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
-                      isSelected ? "border-teal bg-teal" : "border-text-muted/50"
-                    }`}>
-                      {isSelected && (
-                        <svg className="w-2.5 h-2.5 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-xs text-text-muted leading-relaxed line-clamp-2">
-                    {scope.description}
-                  </span>
-                </button>
-              );
-            })}
+
+          <div className="max-h-[300px] overflow-y-auto pr-1 space-y-4 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+            {SCOPE_GROUPS.map((group) => (
+              <div key={group.label}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-2 px-0.5">
+                  {group.label}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {group.scopes.map((scope) => {
+                    const isSelected = selectedScopes.includes(scope.id);
+                    return (
+                      <button
+                        key={scope.id}
+                        type="button"
+                        onClick={() => toggleScope(scope.id)}
+                        className={`relative flex flex-col items-start text-left p-3 rounded-xl border transition-all duration-200 group ${
+                          isSelected
+                            ? "bg-teal/10 border-teal shadow-[0_0_12px_rgba(0,210,255,0.08)]"
+                            : "bg-card border-border hover:border-border-2 hover:bg-card-2/50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full mb-1">
+                          <span className={`text-xs font-bold transition-colors ${isSelected ? "text-teal" : "text-foreground"}`}>
+                            {scope.label}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {scope.ownerOnly && (
+                              <span className="text-[9px] font-bold uppercase tracking-wide text-gold bg-gold/10 border border-gold/20 px-1.5 py-0.5 rounded">
+                                Owner
+                              </span>
+                            )}
+                            <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors ${
+                              isSelected ? "border-teal bg-teal" : "border-text-muted/50"
+                            }`}>
+                              {isSelected && (
+                                <svg className="w-2 h-2 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-text-muted leading-relaxed line-clamp-2">
+                          {scope.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -163,4 +212,3 @@ export function CreateKeyModal({
     </Modal>
   );
 }
-
