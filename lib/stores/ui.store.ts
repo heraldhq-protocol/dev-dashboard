@@ -9,6 +9,8 @@ interface UiState {
   // Changelog
   isChangelogOpen: boolean;
   lastReadChangelog: string | null; // ISO date string of newest entry the user has seen
+  // Docs drawer
+  isDocsOpen: boolean;
   toggleMobileSidebar: () => void;
   closeMobileSidebar: () => void;
   toggleDesktopSidebar: () => void;
@@ -16,6 +18,9 @@ interface UiState {
   openChangelog: () => void;
   closeChangelog: () => void;
   markChangelogRead: (latestDate: string) => void;
+  openDocs: () => void;
+  closeDocs: () => void;
+  toggleDocs: () => void;
 }
 
 export const useUiStore = create<UiState>()(
@@ -27,6 +32,7 @@ export const useUiStore = create<UiState>()(
       theme: "dark",
       isChangelogOpen: false,
       lastReadChangelog: null,
+      isDocsOpen: false,
       toggleMobileSidebar: () =>
         set((state) => ({ mobileSidebarOpen: !state.mobileSidebarOpen })),
       closeMobileSidebar: () => set({ mobileSidebarOpen: false }),
@@ -39,10 +45,12 @@ export const useUiStore = create<UiState>()(
       closeChangelog: () => set({ isChangelogOpen: false }),
       markChangelogRead: (latestDate) =>
         set({ lastReadChangelog: latestDate, isChangelogOpen: false }),
+      openDocs: () => set({ isDocsOpen: true }),
+      closeDocs: () => set({ isDocsOpen: false }),
+      toggleDocs: () => set((state) => ({ isDocsOpen: !state.isDocsOpen })),
     }),
     {
       name: "herald-ui-storage",
-      // Only persist fields that should survive page refresh
       partialize: (state) => ({
         desktopSidebarCollapsed: state.desktopSidebarCollapsed,
         activeEnvironment: state.activeEnvironment,

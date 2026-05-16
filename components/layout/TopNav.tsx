@@ -14,9 +14,11 @@ import { FiLogOut, FiUser, FiSettings } from "react-icons/fi";
 import { Bell } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { ChangelogDrawer } from "@/components/changelog/ChangelogDrawer";
-import { getUnreadCount, getLatestDate } from "@/lib/changelog";
+import { DocsDrawer } from "@/components/docs/DocsDrawer";
+import { getUnreadCount } from "@/lib/changelog";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 // ─── Breadcrumb helper ──────────────────────────────────────
 
@@ -155,10 +157,23 @@ export function TopNav() {
     setEnvironment,
     openChangelog,
     lastReadChangelog,
+    toggleDocs,
   } = useUiStore();
   const { data: session } = useSession();
   const pathname = usePathname();
   const unreadCount = getUnreadCount(lastReadChangelog);
+
+  // Ctrl+/ opens docs drawer
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+        e.preventDefault();
+        toggleDocs();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [toggleDocs]);
 
   return (
     <>
@@ -240,6 +255,16 @@ export function TopNav() {
           activeEnvironment={activeEnvironment}
           setEnvironment={setEnvironment}
         />
+
+        {/* Docs quick reference */}
+        <button
+          onClick={toggleDocs}
+          className="hidden sm:flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:text-foreground hover:bg-secondary transition-colors font-bold text-sm"
+          aria-label="Quick Reference (Ctrl+/)"
+          title="Quick Reference (Ctrl+/)"
+        >
+          ?
+        </button>
 
         {/* Changelog bell */}
         <button
@@ -355,6 +380,7 @@ export function TopNav() {
     </header>
 
     <ChangelogDrawer />
+    <DocsDrawer />
     </>
   );
 }
