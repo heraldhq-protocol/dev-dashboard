@@ -52,3 +52,26 @@ export async function getDeliveryLogs(
   );
   return data;
 }
+
+export interface WebhookReliabilityEntry {
+  id: string;
+  url: string;
+  isActive: boolean;
+  successRateLast7Days: number;
+  p99LatencyMs: number | null;
+  totalDeliveries: number;
+  failedDeliveries: number;
+  healthStatus: "healthy" | "degraded" | "failing";
+}
+
+export interface WebhookReliabilityResponse {
+  webhooks: WebhookReliabilityEntry[];
+  overallSuccessRate: number;
+}
+
+export async function getWebhookReliability(): Promise<WebhookReliabilityResponse> {
+  const { data } = await apiClient.get<WebhookReliabilityResponse>(
+    `${BASE}/reliability`
+  );
+  return data;
+}

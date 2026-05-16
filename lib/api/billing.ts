@@ -80,3 +80,22 @@ export async function syncDevTier(tier: number): Promise<{ ok: boolean }> {
   const { data } = await apiClient.post(`${BASE}/dev-sync`, { tier });
   return data;
 }
+
+export interface BillingProjection {
+  currentSends: number;
+  tierLimit: number;
+  usagePercent: number;
+  daysElapsed: number;
+  daysRemaining: number;
+  projectedEndOfMonth: number;
+  projectedOverage: number;
+  projectedOverageCost: number;
+  tier: number;
+  tierName: string;
+  periodResetAt: string | null;
+}
+
+export async function getBillingProjection(): Promise<BillingProjection> {
+  const { data } = await apiClient.get<BillingProjection>(`${BASE}/projection`);
+  return data;
+}

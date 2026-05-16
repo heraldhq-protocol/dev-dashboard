@@ -19,8 +19,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats, getAnalyticsTrends } from "@/lib/api/analytics";
 import { listNotifications } from "@/lib/api/notifications";
+import { getWebhookReliability } from "@/lib/api/webhooks";
 import Link from "next/link";
-import { BarChart3, ShieldCheck } from "lucide-react";
+import { BarChart3, ShieldCheck, Webhook } from "lucide-react";
+import { ProjectedUsageCard } from "@/components/billing/ProjectedUsageCard";
+import { WebhookReliabilityBadge } from "@/components/webhooks/WebhookReliabilityBadge";
 
 export default function OverviewPage() {
   const { data: stats, isLoading } = useQuery({
@@ -38,6 +41,12 @@ export default function OverviewPage() {
   const { data: failedNotifs } = useQuery({
     queryKey: ["recentFailures"],
     queryFn: () => listNotifications(1, 5, "failed"),
+  });
+
+  const { data: webhookReliability } = useQuery({
+    queryKey: ["webhooks", "reliability"],
+    queryFn: getWebhookReliability,
+    staleTime: 5 * 60 * 1000,
   });
 
   const performanceData = (trends?.dailyVolume ?? []).map((d) => ({
@@ -170,6 +179,75 @@ export default function OverviewPage() {
           sparklineData={(stats?.activeWebhooks ?? 0) === 0 ? [0, 0, 0, 0, 0, 0, 0] : undefined}
           isLoading={isLoading}
         />
+      </div>
+
+      {/* Projected Usage + Webhook Health */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <ProjectedUsageCard />
+
+        {/* Webhook Health Card */}
+        <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-secondary flex items-center justify-center">
+                <Webhook className="h-3.5 w-3.5 text-text-muted" />
+              </div>
+              <span className="text-sm font-semibold text-foreground">
+                Webhook Health
+              </span>
+            </div>
+            {webhookReliability && (
+              <WebhookReliabilityBadge
+                healthStatus={
+                  webhookReliability.overallSuccessRate >= 99
+                    ? "healthy"
+                    : webhookReliability.overallSuccessRate >= 90
+                      ? "degraded"
+                      : "failing"
+                }
+                successRate={webhookReliability.overallSuccessRate}
+                p99LatencyMs={null}
+                compact
+              />
+            )}
+          </div>
+
+          {!webhookReliability ? (
+            <div className="space-y-2">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="h-3 bg-card-2 animate-pulse rounded" />
+              ))}
+            </div>
+          ) : webhookReliability.webhooks.length === 0 ? (
+            <p className="text-xs text-text-muted">No webhooks configured.</p>
+          ) : (
+            <div className="space-y-2">
+              {webhookReliability.webhooks.slice(0, 3).map((wh) => (
+                <div
+                  key={wh.id}
+                  className="flex items-center justify-between text-xs"
+                >
+                  <code className="text-text-muted truncate max-w-[55%]">
+                    {wh.url.replace(/^https?:\/\//, "")}
+                  </code>
+                  <WebhookReliabilityBadge
+                    healthStatus={wh.healthStatus}
+                    successRate={wh.successRateLast7Days}
+                    p99LatencyMs={wh.p99LatencyMs}
+                    compact
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Link
+            href="/webhooks"
+            className="block text-xs text-teal hover:underline font-semibold"
+          >
+            View all webhooks →
+          </Link>
+        </div>
       </div>
 
       {/* Chart + Failures */}

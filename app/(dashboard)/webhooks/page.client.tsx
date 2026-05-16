@@ -12,7 +12,7 @@ import { Plus, Check } from "lucide-react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { listWebhooks, createWebhook, updateWebhook, deleteWebhook } from "@/lib/api/webhooks";
+import { listWebhooks, createWebhook, updateWebhook, deleteWebhook, getWebhookReliability } from "@/lib/api/webhooks";
 
 export default function WebhooksPage() {
   const queryClient = useQueryClient();
@@ -28,6 +28,13 @@ export default function WebhooksPage() {
   const { data: webhooks = [], isLoading } = useQuery({
     queryKey: ["webhooks"],
     queryFn: listWebhooks,
+  });
+
+  const { data: reliabilityData } = useQuery({
+    queryKey: ["webhooks", "reliability"],
+    queryFn: getWebhookReliability,
+    staleTime: 2 * 60 * 1000,
+    enabled: webhooks.length > 0,
   });
 
   const createMutation = useMutation({
@@ -144,6 +151,7 @@ export default function WebhooksPage() {
         onToggle={handleToggle}
         onDelete={handleDelete}
         onViewLogs={setViewLogsId}
+        reliability={reliabilityData?.webhooks}
       />
       </div>
 

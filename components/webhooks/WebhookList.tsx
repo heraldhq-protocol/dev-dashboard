@@ -2,20 +2,23 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { WebhookTestButton } from "./WebhookTestButton";
+import { WebhookReliabilityBadge } from "./WebhookReliabilityBadge";
 import { formatDistanceToNow } from "date-fns";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Webhook } from "lucide-react";
 
 import { WebhookDto } from "@/types/api";
+import type { WebhookReliabilityEntry } from "@/lib/api/webhooks";
 
 interface WebhookListProps {
   webhooks: WebhookDto[];
   onToggle: (id: string, currentStatus: boolean) => void;
   onDelete: (id: string) => void;
   onViewLogs: (id: string) => void;
+  reliability?: WebhookReliabilityEntry[];
 }
 
-export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs }: WebhookListProps) {
+export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs, reliability = [] }: WebhookListProps) {
   if (webhooks.length === 0) {
     return (
       <EmptyState
@@ -28,7 +31,9 @@ export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs }: Webhoo
 
   return (
     <div className="grid gap-4">
-      {webhooks.map((wh) => (
+      {webhooks.map((wh) => {
+        const rel = reliability.find((r) => r.id === wh.id);
+        return (
         <div
           key={wh.id}
           className="bg-card border border-border rounded-xl p-5 hover:border-border-2 transition-colors group"
@@ -49,7 +54,7 @@ export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs }: Webhoo
                 ))}
               </div>
 
-              <div className="flex items-center gap-4 mt-3 ml-5 text-xs text-text-muted">
+              <div className="flex items-center gap-4 mt-3 ml-5 text-xs text-text-muted flex-wrap">
                 <span>
                   Last triggered:{" "}
                   {wh.lastSuccessAt
@@ -58,6 +63,13 @@ export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs }: Webhoo
                 </span>
                 {wh.failureCount > 0 && (
                   <span className="text-red font-semibold">{wh.failureCount} recent failures</span>
+                )}
+                {rel && (
+                  <WebhookReliabilityBadge
+                    healthStatus={rel.healthStatus}
+                    successRate={rel.successRateLast7Days}
+                    p99LatencyMs={rel.p99LatencyMs}
+                  />
                 )}
               </div>
             </div>
@@ -93,7 +105,8 @@ export function WebhookList({ webhooks, onToggle, onDelete, onViewLogs }: Webhoo
             </div>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

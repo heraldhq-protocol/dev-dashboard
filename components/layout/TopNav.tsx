@@ -11,8 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FiLogOut, FiUser, FiSettings } from "react-icons/fi";
-
+import { Bell } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { ChangelogDrawer } from "@/components/changelog/ChangelogDrawer";
+import { getUnreadCount, getLatestDate } from "@/lib/changelog";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
@@ -151,11 +153,15 @@ export function TopNav() {
     desktopSidebarCollapsed,
     activeEnvironment,
     setEnvironment,
+    openChangelog,
+    lastReadChangelog,
   } = useUiStore();
   const { data: session } = useSession();
   const pathname = usePathname();
+  const unreadCount = getUnreadCount(lastReadChangelog);
 
   return (
+    <>
     <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-navy/80 backdrop-blur-xl px-4 lg:px-8 gap-2 sm:gap-4">
       {/* ── Left: Hamburger + Logo (mobile) + Breadcrumb ── */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -234,6 +240,19 @@ export function TopNav() {
           activeEnvironment={activeEnvironment}
           setEnvironment={setEnvironment}
         />
+
+        {/* Changelog bell */}
+        <button
+          onClick={openChangelog}
+          className="relative flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:text-foreground hover:bg-secondary transition-colors"
+          aria-label="What's new"
+          title="What's new"
+        >
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-teal" />
+          )}
+        </button>
 
         <ThemeToggle />
 
@@ -334,5 +353,8 @@ export function TopNav() {
         )}
       </div>
     </header>
+
+    <ChangelogDrawer />
+    </>
   );
 }
