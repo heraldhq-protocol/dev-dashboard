@@ -13,7 +13,7 @@ type DocSection = {
   content: React.ReactNode;
 };
 
-function CodeBlock({ code, lang = "typescript" }: { code: string; lang?: string }) {
+function CodeBlock({ code }: { code: string }) {
   return <SyntaxBlock code={code.trim()} className="my-3 text-xs" />;
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/Input";
 import { Search, X } from "lucide-react";
 import type { RequestLogFilters } from "@/lib/api/requests";
 
