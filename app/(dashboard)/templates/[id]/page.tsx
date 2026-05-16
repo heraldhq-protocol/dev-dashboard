@@ -16,16 +16,8 @@ import { useApi } from "@/components/providers/QueryProvider";
 import { toast } from "sonner";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 import {
-  ArrowLeft,
-  Save,
-  Eye,
-  Code,
-  History,
-  CheckCircle,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Clock,
+  ArrowLeft, Save, Eye, Code, History, CheckCircle, AlertCircle,
+  ChevronDown, ChevronUp, Clock, Copy, Check, BookOpen, RotateCcw, Zap,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -58,11 +50,12 @@ interface TemplateVersion {
 
 interface ValidateResult {
   valid: boolean;
+  format?: string;
   errors?: string[];
   warnings?: string[];
 }
 
-type Tab = "editor" | "preview" | "versions" | "validate";
+type Tab = "editor" | "preview" | "validate" | "versions" | "usage";
 
 const PREVIEW_VARS_DEFAULT = {
   protocolName: "Example Protocol",
@@ -71,6 +64,34 @@ const PREVIEW_VARS_DEFAULT = {
   actionUrl: "https://example.com/action",
   actionLabel: "View Details",
   unsubscribeUrl: "https://notify.useherald.xyz/unsubscribe/test123",
+};
+
+const HERALD_FOOTER_OPTIONS = [
+  { value: "full", label: "Full — privacy note + logo + Unsubscribe + site" },
+  { value: "small", label: "Small — logo + Unsubscribe + site" },
+  { value: "minimal", label: "Minimal — logo + Unsubscribe" },
+  { value: "enterprise", label: "Enterprise — logo + Unsubscribe (no site)" },
+  { value: "none", label: "None — Unsubscribe link only" },
+];
+
+// Complete variable + helper reference shown in Usage tab
+const TEMPLATE_VARIABLES = [
+  { name: "protocolName", source: "auto", desc: "Your protocol's display name" },
+  { name: "subject", source: "notify", desc: "Notification headline / subject" },
+  { name: "body", source: "notify", desc: "Main notification body (Markdown supported)" },
+  { name: "category", source: "auto", desc: "Notification category slug (defi, governance…)" },
+  { name: "actionUrl", source: "variables", desc: "CTA button URL" },
+  { name: "actionLabel", source: "variables", desc: "CTA button text" },
+  { name: "walletAddress", source: "auto", desc: "Recipient wallet address (privacy-safe)" },
+  { name: "txHash", source: "variables", desc: "Related transaction hash" },
+  { name: "unsubscribeUrl", source: "auto", desc: "Signed unsubscribe URL — do not hardcode" },
+  { name: "previewText", source: "variables", desc: "Email preview text shown in inbox" },
+];
+
+const SOURCE_BADGE: Record<string, string> = {
+  auto: "bg-teal/10 text-teal border-teal/20",
+  notify: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  variables: "bg-gold/10 text-gold border-gold/20",
 };
 
 export default function TemplateEditorPage() {
@@ -82,45 +103,49 @@ export default function TemplateEditorPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("editor");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Form state (mirrors the template for editing)
   const [form, setForm] = useState({
     name: "",
     category: "defi",
     subjectTemplate: "",
     htmlSource: "",
+    heraldFooter: "full",
     isDefault: false,
   });
 
-  // Preview state
   const [previewVars, setPreviewVars] = useState(PREVIEW_VARS_DEFAULT);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [noAnimations, setNoAnimations] = useState(true);
 
-  // Versions state
   const [versions, setVersions] = useState<TemplateVersion[]>([]);
   const [isLoadingVersions, setIsLoadingVersions] = useState(false);
   const [expandedVersion, setExpandedVersion] = useState<number | null>(null);
+  const [isRestoring, setIsRestoring] = useState<number | null>(null);
 
-  // Validate state
   const [validateResult, setValidateResult] = useState<ValidateResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-
-  // Dirty tracking
   const [isDirty, setIsDirty] = useState(false);
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
 
   const loadTemplate = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data } = await axios.get(`/templates/${id}`);
-      const tpl = data.data ?? data;
+      const tpl: Template = data.data ?? data;
       setTemplate(tpl);
       setForm({
         name: tpl.name ?? "",
         category: tpl.category ?? "defi",
         subjectTemplate: tpl.subjectTemplate ?? "",
         htmlSource: tpl.htmlSource ?? "",
+        heraldFooter: tpl.heraldFooter ?? "full",
         isDefault: tpl.isDefault ?? false,
       });
     } catch (err: any) {
@@ -131,14 +156,11 @@ export default function TemplateEditorPage() {
     }
   }, [axios, id, router]);
 
-  useEffect(() => {
-    loadTemplate();
-  }, [loadTemplate]);
+  useEffect(() => { loadTemplate(); }, [loadTemplate]);
 
   const handleFormChange = (field: string, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setIsDirty(true);
-    // Reset validate result when source changes
     if (field === "htmlSource") setValidateResult(null);
   };
 
@@ -160,14 +182,13 @@ export default function TemplateEditorPage() {
     if (!form.htmlSource) return;
     setIsPreviewing(true);
     try {
-      const { data } = await axios.post(`/templates/${id}/preview`, {
-        variables: previewVars,
-      });
+      const { data } = await axios.post(`/templates/${id}/preview`, { variables: previewVars });
       const html = data?.preview?.html ?? data?.html ?? "";
-      const rendered = noAnimations
-        ? `<style>*, *::before, *::after { animation: none !important; transition: none !important; }</style>` + html
-        : html;
-      setPreviewHtml(rendered);
+      setPreviewHtml(
+        noAnimations
+          ? `<style>*, *::before, *::after { animation: none !important; transition: none !important; }</style>` + html
+          : html
+      );
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Preview failed");
     } finally {
@@ -184,6 +205,25 @@ export default function TemplateEditorPage() {
       toast.error("Failed to load version history");
     } finally {
       setIsLoadingVersions(false);
+    }
+  };
+
+  const handleRestoreVersion = async (v: TemplateVersion) => {
+    setIsRestoring(v.version);
+    try {
+      // Restoring = overwrite form with old version's HTML (creates new version on save)
+      setForm((prev) => ({
+        ...prev,
+        htmlSource: v.htmlSource ?? prev.htmlSource,
+        subjectTemplate: v.subjectTemplate ?? prev.subjectTemplate,
+      }));
+      setIsDirty(true);
+      setValidateResult(null);
+      setPreviewHtml(null);
+      setActiveTab("editor");
+      toast.success(`v${v.version} loaded into editor — save to apply`);
+    } finally {
+      setIsRestoring(null);
     }
   };
 
@@ -205,12 +245,8 @@ export default function TemplateEditorPage() {
   };
 
   useEffect(() => {
-    if (activeTab === "versions" && versions.length === 0) {
-      handleLoadVersions();
-    }
-    if (activeTab === "preview" && form.htmlSource && !previewHtml) {
-      handlePreview();
-    }
+    if (activeTab === "versions" && versions.length === 0) handleLoadVersions();
+    if (activeTab === "preview" && form.htmlSource && !previewHtml) handlePreview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -225,43 +261,37 @@ export default function TemplateEditorPage() {
   if (!template) return null;
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "editor", label: "Editor", icon: <Code className="w-4 h-4" /> },
-    { id: "preview", label: "Preview", icon: <Eye className="w-4 h-4" /> },
+    { id: "editor",   label: "Editor",   icon: <Code className="w-4 h-4" /> },
+    { id: "preview",  label: "Preview",  icon: <Eye className="w-4 h-4" /> },
     { id: "validate", label: "Validate", icon: <CheckCircle className="w-4 h-4" /> },
     { id: "versions", label: "Versions", icon: <History className="w-4 h-4" /> },
+    { id: "usage",    label: "Usage",    icon: <Zap className="w-4 h-4" /> },
   ];
 
   return (
     <div className="space-y-5 max-w-7xl">
       {/* Top bar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => router.push("/templates")}
-            className="flex items-center gap-1.5 text-text-muted hover:text-foreground transition-colors text-sm"
+            className="flex items-center gap-1.5 text-text-muted hover:text-foreground transition-colors text-sm shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
             Templates
           </button>
-          <span className="text-border-2">/</span>
-          <h1 className="text-lg font-bold text-foreground truncate max-w-xs">
-            {template.name}
-          </h1>
-          <span className="text-xs px-2 py-0.5 rounded bg-teal/10 text-teal border border-teal/20 font-mono">
+          <span className="text-border-2 shrink-0">/</span>
+          <h1 className="text-lg font-bold text-foreground truncate max-w-xs">{template.name}</h1>
+          <span className="text-xs px-2 py-0.5 rounded bg-teal/10 text-teal border border-teal/20 font-mono shrink-0">
             v{template.version}
           </span>
           {isDirty && (
-            <span className="text-xs px-2 py-0.5 rounded bg-gold/10 text-gold border border-gold/20">
+            <span className="text-xs px-2 py-0.5 rounded bg-gold/10 text-gold border border-gold/20 shrink-0">
               Unsaved
             </span>
           )}
         </div>
-        <Button
-          onClick={handleSave}
-          isLoading={isSaving}
-          disabled={!isDirty}
-          className="gap-2"
-        >
+        <Button onClick={handleSave} isLoading={isSaving} disabled={!isDirty} className="gap-2 shrink-0">
           <Save className="w-4 h-4" />
           Save Changes
         </Button>
@@ -288,12 +318,10 @@ export default function TemplateEditorPage() {
       {/* ── EDITOR TAB ── */}
       {activeTab === "editor" && (
         <div className="grid lg:grid-cols-3 gap-5">
-          {/* Metadata */}
+          {/* Metadata panel */}
           <Card className="border-border bg-card lg:col-span-1">
             <CardContent className="p-5 space-y-4">
-              <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
-                Metadata
-              </h2>
+              <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Metadata</h2>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-text-muted">Template Name</label>
@@ -306,13 +334,8 @@ export default function TemplateEditorPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-text-muted">Category</label>
-                <Select
-                  value={form.category}
-                  onValueChange={(val) => handleFormChange("category", val)}
-                >
-                  <SelectTrigger className="w-full bg-card-2">
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={form.category} onValueChange={(val) => handleFormChange("category", val)}>
+                  <SelectTrigger className="w-full bg-card-2"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="defi">DeFi Alerts</SelectItem>
                     <SelectItem value="governance">Governance</SelectItem>
@@ -330,11 +353,30 @@ export default function TemplateEditorPage() {
                   placeholder="{{protocolName}} — {{subject}}"
                   className="bg-card-2 font-mono text-xs"
                 />
-                <p className="text-[10px] text-text-dim leading-relaxed">
-                  Variables: <code className="bg-card-2 px-1 rounded">{"{{protocolName}}"}</code>{" "}
-                  <code className="bg-card-2 px-1 rounded">{"{{subject}}"}</code>{" "}
-                  <code className="bg-card-2 px-1 rounded">{"{{body}}"}</code>
-                </p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {["{{protocolName}}", "{{subject}}", "{{category}}"].map((v) => (
+                    <code
+                      key={v}
+                      className="text-[10px] bg-teal/10 text-teal border border-teal/20 px-1.5 py-0.5 rounded cursor-pointer hover:bg-teal/20 transition-colors"
+                      onClick={() => handleFormChange("subjectTemplate", ((form.subjectTemplate || "") + " " + v).trim())}
+                      title="Click to insert"
+                    >
+                      {v}
+                    </code>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-text-muted">Herald Footer</label>
+                <Select value={form.heraldFooter} onValueChange={(val) => handleFormChange("heraldFooter", val)}>
+                  <SelectTrigger className="w-full bg-card-2"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {HERALD_FOOTER_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg">
@@ -350,32 +392,52 @@ export default function TemplateEditorPage() {
                 </label>
               </div>
 
-              <div className="pt-2 border-t border-border text-xs text-text-dim space-y-1">
-                <div>Created: {new Date(template.createdAt).toLocaleString()}</div>
-                <div>Updated: {new Date(template.updatedAt).toLocaleString()}</div>
-                <div>ID: <code className="font-mono">{template.id.slice(0, 12)}…</code></div>
+              {/* Template ID + timestamps */}
+              <div className="pt-2 border-t border-border space-y-2.5">
+                <div>
+                  <p className="text-[10px] text-text-dim uppercase tracking-wider font-semibold mb-1.5">Template ID</p>
+                  <div className="flex items-center gap-2 p-2 bg-card-2 border border-border rounded-lg">
+                    <code className="text-[11px] font-mono text-text-muted flex-1 break-all leading-relaxed">
+                      {template.id}
+                    </code>
+                    <button
+                      onClick={() => copy(template.id, "template-id")}
+                      className="shrink-0 text-text-dim hover:text-teal transition-colors p-0.5"
+                      title="Copy template ID"
+                    >
+                      {copiedKey === "template-id"
+                        ? <Check className="w-3.5 h-3.5 text-teal" />
+                        : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-text-dim mt-1">Use this ID in the Notify API or SDK — see the Usage tab.</p>
+                </div>
+                <div className="text-[10px] text-text-dim space-y-0.5">
+                  <div>Created: <span className="text-text-muted">{new Date(template.createdAt).toLocaleString()}</span></div>
+                  <div>Updated: <span className="text-text-muted">{new Date(template.updatedAt).toLocaleString()}</span></div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* HTML Source */}
+          {/* HTML Source editor */}
           <Card className="border-border bg-card lg:col-span-2">
             <CardContent className="p-5 space-y-3 flex flex-col h-full">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
-                  HTML Source
-                </h2>
-                <span className="text-xs text-text-dim font-mono">
-                  {form.htmlSource.length.toLocaleString()} chars
-                </span>
+                <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">HTML Source</h2>
+                <span className="text-xs text-text-dim font-mono">{form.htmlSource.length.toLocaleString()} chars</span>
               </div>
-              <div className="flex-1 min-h-[480px] rounded-lg overflow-hidden border border-border">
+              <div className="flex-1 min-h-[500px] rounded-lg overflow-hidden border border-border">
                 <CodeEditor
                   value={form.htmlSource}
                   onChange={(v) => handleFormChange("htmlSource", v)}
-                  height="480px"
+                  height="500px"
                 />
               </div>
+              <p className="text-[10px] text-text-dim">
+                Supports HTML, inline CSS, and Handlebars syntax. MJML is auto-detected.
+                Style blocks (<code>&lt;style&gt;</code>), Google Fonts, and all email-safe tags are preserved.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -384,12 +446,9 @@ export default function TemplateEditorPage() {
       {/* ── PREVIEW TAB ── */}
       {activeTab === "preview" && (
         <div className="grid lg:grid-cols-2 gap-5">
-          {/* Variable controls */}
           <Card className="border-border bg-card">
             <CardContent className="p-5 space-y-4">
-              <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
-                Preview Variables
-              </h2>
+              <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Preview Variables</h2>
               {Object.entries(previewVars).map(([key, value]) => (
                 <div key={key} className="space-y-1">
                   <label className="text-xs font-medium text-text-muted capitalize">
@@ -397,14 +456,11 @@ export default function TemplateEditorPage() {
                   </label>
                   <Input
                     value={value}
-                    onChange={(e) =>
-                      setPreviewVars((prev) => ({ ...prev, [key]: e.target.value }))
-                    }
+                    onChange={(e) => setPreviewVars((prev) => ({ ...prev, [key]: e.target.value }))}
                     className="bg-card-2 text-xs font-mono"
                   />
                 </div>
               ))}
-
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -417,37 +473,28 @@ export default function TemplateEditorPage() {
                   Disable animations in preview
                 </label>
               </div>
-
-              <Button
-                onClick={handlePreview}
-                isLoading={isPreviewing}
-                disabled={!form.htmlSource}
-                className="w-full gap-2"
-              >
+              <Button onClick={handlePreview} isLoading={isPreviewing} disabled={!form.htmlSource} className="w-full gap-2">
                 <Eye className="w-4 h-4" />
                 Render Preview
               </Button>
             </CardContent>
           </Card>
 
-          {/* Preview frame */}
           <Card className="border-border bg-card">
             <CardContent className="p-0 overflow-hidden rounded-xl">
               <div className="flex items-center gap-2 px-4 py-2.5 bg-card-2 border-b border-border">
                 <Eye className="w-3.5 h-3.5 text-text-muted" />
                 <span className="text-xs font-medium text-text-muted">Email Preview</span>
               </div>
-              <div className="min-h-[480px] bg-white overflow-auto">
+              <div className="min-h-[500px] bg-white overflow-auto">
                 {isPreviewing ? (
-                  <div className="flex items-center justify-center h-64">
-                    <RippleWaveLoader />
-                  </div>
+                  <div className="flex items-center justify-center h-64"><RippleWaveLoader /></div>
                 ) : previewHtml ? (
                   <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
                     <Eye className="w-10 h-10 opacity-30" />
-                    <p className="text-sm">Click "Render Preview" to see your email</p>
+                    <p className="text-sm">Click &quot;Render Preview&quot; to see your email</p>
                   </div>
                 )}
               </div>
@@ -460,67 +507,51 @@ export default function TemplateEditorPage() {
       {activeTab === "validate" && (
         <Card className="border-border bg-card max-w-2xl">
           <CardContent className="p-6 space-y-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-base font-bold text-foreground">Validate Template</h2>
-                <p className="text-sm text-text-muted mt-1">
-                  Check your HTML source for errors and best-practice warnings without saving.
-                </p>
-              </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">Validate Template</h2>
+              <p className="text-sm text-text-muted mt-1">
+                Check your HTML for errors and best-practice warnings without saving a version.
+              </p>
             </div>
-
-            <Button
-              onClick={handleValidate}
-              isLoading={isValidating}
-              disabled={!form.htmlSource}
-              className="gap-2"
-            >
+            <Button onClick={handleValidate} isLoading={isValidating} disabled={!form.htmlSource} className="gap-2">
               <CheckCircle className="w-4 h-4" />
               Run Validation
             </Button>
-
             {validateResult && (
               <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div
-                  className={`flex items-center gap-3 p-4 rounded-xl border ${
-                    validateResult.valid
-                      ? "bg-teal/5 border-teal/30 text-teal"
-                      : "bg-red/5 border-red/30 text-red"
-                  }`}
-                >
-                  {validateResult.valid ? (
-                    <CheckCircle className="w-5 h-5 shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 shrink-0" />
-                  )}
-                  <span className="font-semibold text-sm">
-                    {validateResult.valid ? "Template is valid!" : "Validation failed"}
-                  </span>
+                <div className={`flex items-center gap-3 p-4 rounded-xl border ${
+                  validateResult.valid
+                    ? "bg-teal/5 border-teal/30 text-teal"
+                    : "bg-red/5 border-red/30 text-red"
+                }`}>
+                  {validateResult.valid
+                    ? <CheckCircle className="w-5 h-5 shrink-0" />
+                    : <AlertCircle className="w-5 h-5 shrink-0" />}
+                  <div>
+                    <span className="font-semibold text-sm">
+                      {validateResult.valid ? "Template is valid!" : "Validation failed"}
+                    </span>
+                    {validateResult.format && (
+                      <span className="ml-2 text-xs opacity-70">Format: {validateResult.format.toUpperCase()}</span>
+                    )}
+                  </div>
                 </div>
-
                 {validateResult.errors && validateResult.errors.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-red uppercase tracking-wider">Errors</p>
                     {validateResult.errors.map((err, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-2 p-3 bg-red/5 border border-red/20 rounded-lg text-sm text-red"
-                      >
+                      <div key={i} className="flex items-start gap-2 p-3 bg-red/5 border border-red/20 rounded-lg text-sm text-red">
                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                         {err}
                       </div>
                     ))}
                   </div>
                 )}
-
                 {validateResult.warnings && validateResult.warnings.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-gold uppercase tracking-wider">Warnings</p>
                     {validateResult.warnings.map((warn, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-2 p-3 bg-gold/5 border border-gold/20 rounded-lg text-sm text-gold"
-                      >
+                      <div key={i} className="flex items-start gap-2 p-3 bg-gold/5 border border-gold/20 rounded-lg text-sm text-gold">
                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                         {warn}
                       </div>
@@ -537,9 +568,10 @@ export default function TemplateEditorPage() {
       {activeTab === "versions" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
-              Version History
-            </h2>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Version History</h2>
+              <p className="text-xs text-text-muted mt-0.5">Herald keeps the last 10 versions. Restore any version to load it into the editor.</p>
+            </div>
             <Button variant="ghost" size="sm" onClick={handleLoadVersions} className="gap-2 text-xs">
               <History className="w-3.5 h-3.5" />
               Refresh
@@ -547,9 +579,7 @@ export default function TemplateEditorPage() {
           </div>
 
           {isLoadingVersions ? (
-            <div className="flex items-center justify-center h-32">
-              <RippleWaveLoader />
-            </div>
+            <div className="flex items-center justify-center h-32"><RippleWaveLoader /></div>
           ) : versions.length === 0 ? (
             <Card className="border-border bg-card">
               <CardContent className="flex flex-col items-center justify-center py-12 gap-3">
@@ -560,57 +590,220 @@ export default function TemplateEditorPage() {
             </Card>
           ) : (
             <div className="space-y-2">
-              {versions.map((v) => (
-                <Card key={v.version} className="border-border bg-card hover:border-teal/30 transition-colors">
-                  <CardContent className="p-0">
-                    <button
-                      className="w-full flex items-center justify-between p-4 text-left"
-                      onClick={() =>
-                        setExpandedVersion(expandedVersion === v.version ? null : v.version)
-                      }
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs px-2 py-0.5 rounded bg-teal/10 text-teal border border-teal/20 font-mono font-bold">
-                          v{v.version}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                          <Clock className="w-3.5 h-3.5" />
-                          {new Date(v.createdAt).toLocaleString()}
+              {versions.map((v) => {
+                const isCurrent = v.version === template.version;
+                return (
+                  <Card key={v.version} className={`border-border bg-card transition-colors ${isCurrent ? "border-teal/30" : "hover:border-teal/20"}`}>
+                    <CardContent className="p-0">
+                      <button
+                        className="w-full flex items-center justify-between p-4 text-left"
+                        onClick={() => setExpandedVersion(expandedVersion === v.version ? null : v.version)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`text-xs px-2 py-0.5 rounded border font-mono font-bold ${isCurrent ? "bg-teal/20 text-teal border-teal/30" : "bg-card-2 text-text-muted border-border"}`}>
+                            v{v.version}
+                          </span>
+                          {isCurrent && (
+                            <span className="text-[10px] bg-teal/10 text-teal px-1.5 py-0.5 rounded border border-teal/20">Current</span>
+                          )}
+                          <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                            <Clock className="w-3.5 h-3.5" />
+                            {new Date(v.createdAt).toLocaleString()}
+                          </div>
                         </div>
-                      </div>
-                      {expandedVersion === v.version ? (
-                        <ChevronUp className="w-4 h-4 text-text-muted" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-text-muted" />
-                      )}
-                    </button>
+                        <div className="flex items-center gap-2">
+                          {!isCurrent && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1.5 text-xs h-7"
+                              isLoading={isRestoring === v.version}
+                              onClick={(e) => { e.stopPropagation(); handleRestoreVersion(v); }}
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Restore
+                            </Button>
+                          )}
+                          {expandedVersion === v.version ? <ChevronUp className="w-4 h-4 text-text-muted" /> : <ChevronDown className="w-4 h-4 text-text-muted" />}
+                        </div>
+                      </button>
 
-                    {expandedVersion === v.version && (
-                      <div className="px-4 pb-4 space-y-3 border-t border-border">
-                        {v.subjectTemplate && (
-                          <div className="pt-3">
-                            <p className="text-xs text-text-muted mb-1">Subject Template</p>
-                            <code className="text-xs bg-card-2 border border-border px-2 py-1 rounded block font-mono">
-                              {v.subjectTemplate}
-                            </code>
-                          </div>
-                        )}
-                        {v.htmlSource && (
-                          <div>
-                            <p className="text-xs text-text-muted mb-1">HTML Source</p>
-                            <pre className="text-xs bg-card-2 border border-border px-3 py-2 rounded font-mono overflow-x-auto max-h-48 leading-relaxed whitespace-pre-wrap">
-                              {v.htmlSource.slice(0, 800)}
-                              {v.htmlSource.length > 800 && "…"}
-                            </pre>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      {expandedVersion === v.version && (
+                        <div className="px-4 pb-4 space-y-3 border-t border-border">
+                          {v.subjectTemplate && (
+                            <div className="pt-3">
+                              <p className="text-xs text-text-muted mb-1">Subject Template</p>
+                              <code className="text-xs bg-card-2 border border-border px-2 py-1.5 rounded block font-mono">
+                                {v.subjectTemplate}
+                              </code>
+                            </div>
+                          )}
+                          {v.htmlSource && (
+                            <div>
+                              <p className="text-xs text-text-muted mb-1">HTML Source</p>
+                              <pre className="text-xs bg-card-2 border border-border px-3 py-2 rounded font-mono overflow-x-auto max-h-48 leading-relaxed whitespace-pre-wrap">
+                                {v.htmlSource.slice(0, 800)}
+                                {v.htmlSource.length > 800 && "…"}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── USAGE TAB ── */}
+      {activeTab === "usage" && (
+        <div className="space-y-5 max-w-3xl">
+          {/* Template ID */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-foreground">Template ID</h2>
+                <span className="text-[10px] font-mono text-text-dim bg-card-2 border border-border px-1.5 py-0.5 rounded">v{template.version}</span>
+              </div>
+              <p className="text-xs text-text-muted">
+                Pass this ID in the <code className="bg-card-2 px-1 rounded text-teal">templateId</code> field of your Notify API call to use this custom template instead of the Herald default.
+              </p>
+              <div className="flex items-center gap-3 p-3 bg-[#0d1f35] border border-[#1e293b] rounded-lg">
+                <code className="text-sm font-mono text-teal flex-1 break-all">{template.id}</code>
+                <button
+                  onClick={() => copy(template.id, "usage-id")}
+                  className="shrink-0 text-[#64748b] hover:text-teal transition-colors"
+                  title="Copy ID"
+                >
+                  {copiedKey === "usage-id"
+                    ? <Check className="w-4 h-4 text-teal" />
+                    : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notify API example */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-5 space-y-3">
+              <h2 className="text-sm font-semibold text-foreground">Notify API</h2>
+              <p className="text-xs text-text-muted">
+                Send a notification using this template via the REST API:
+              </p>
+              <div className="rounded-lg bg-[#0d1f35] border border-[#1e293b] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-[#1e293b]">
+                  <span className="text-[10px] text-[#64748b] uppercase tracking-wider font-medium">POST /v1/notify</span>
+                  <button
+                    onClick={() => copy(`POST https://gateway.useherald.xyz/v1/notify\nAuthorization: Bearer <your-api-key>\n\n{\n  "to": "0xUserWallet",\n  "templateId": "${template.id}",\n  "subject": "Your subject here",\n  "body": "Your notification body here",\n  "variables": {\n    "actionUrl": "https://app.example.com",\n    "actionLabel": "Take Action"\n  }\n}`, "api-snippet")}
+                    className="text-[#64748b] hover:text-teal transition-colors flex items-center gap-1 text-[10px]"
+                  >
+                    {copiedKey === "api-snippet" ? <Check className="w-3 h-3 text-teal" /> : <Copy className="w-3 h-3" />}
+                    {copiedKey === "api-snippet" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <pre className="text-[12px] font-mono text-[#94a3b8] p-4 overflow-x-auto leading-relaxed">{`POST https://gateway.useherald.xyz/v1/notify
+Authorization: Bearer <your-api-key>
+
+{
+  "to": "0xUserWallet",
+  "templateId": "${template.id}",
+  "subject": "Your subject here",
+  "body": "Your notification body here",
+  "variables": {
+    "actionUrl": "https://app.example.com",
+    "actionLabel": "Take Action"
+  }
+}`}</pre>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* TypeScript SDK example */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-5 space-y-3">
+              <h2 className="text-sm font-semibold text-foreground">TypeScript SDK</h2>
+              <div className="rounded-lg bg-[#0d1f35] border border-[#1e293b] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-[#1e293b]">
+                  <span className="text-[10px] text-[#64748b] uppercase tracking-wider font-medium">herald-sdk-ts</span>
+                  <button
+                    onClick={() => copy(`import { HeraldClient } from '@herald/sdk';\n\nconst herald = new HeraldClient({ apiKey: process.env.HERALD_API_KEY });\n\nawait herald.notify({\n  to: userWalletAddress,\n  templateId: '${template.id}',\n  subject: 'Your subject here',\n  body: 'Your notification body here',\n  variables: {\n    actionUrl: 'https://app.example.com',\n    actionLabel: 'Take Action',\n  },\n});`, "sdk-snippet")}
+                    className="text-[#64748b] hover:text-teal transition-colors flex items-center gap-1 text-[10px]"
+                  >
+                    {copiedKey === "sdk-snippet" ? <Check className="w-3 h-3 text-teal" /> : <Copy className="w-3 h-3" />}
+                    {copiedKey === "sdk-snippet" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <pre className="text-[12px] font-mono text-[#94a3b8] p-4 overflow-x-auto leading-relaxed">{`import { HeraldClient } from '@herald/sdk';
+
+const herald = new HeraldClient({ apiKey: process.env.HERALD_API_KEY });
+
+await herald.notify({
+  to: userWalletAddress,
+  templateId: '${template.id}',
+  subject: 'Your subject here',
+  body: 'Your notification body here',
+  variables: {
+    actionUrl: 'https://app.example.com',
+    actionLabel: 'Take Action',
+  },
+});`}</pre>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Available variables reference */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-text-muted" />
+                <h2 className="text-sm font-semibold text-foreground">Available Variables</h2>
+              </div>
+              <div className="flex gap-3 text-[10px] text-text-dim flex-wrap">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal inline-block"></span>auto — set by Herald</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-400 inline-block"></span>notify — top-level notify field</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gold inline-block"></span>variables — inside the variables object</span>
+              </div>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-card-2">
+                      <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Variable</th>
+                      <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider hidden sm:table-cell">Source</th>
+                      <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {TEMPLATE_VARIABLES.map((v) => (
+                      <tr key={v.name} className="hover:bg-card-2 transition-colors group">
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <code className="text-[11px] font-mono text-teal bg-teal/10 px-1.5 py-0.5 rounded">
+                              {`{{${v.name}}}`}
+                            </code>
+                            <button
+                              onClick={() => copy(`{{${v.name}}}`, v.name)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-text-dim hover:text-teal"
+                            >
+                              {copiedKey === v.name ? <Check className="w-3 h-3 text-teal" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 hidden sm:table-cell">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${SOURCE_BADGE[v.source]}`}>
+                            {v.source}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-text-muted">{v.desc}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { useApi } from "@/components/providers/QueryProvider";
-
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
@@ -17,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Copy, Check, ChevronRight, Code2, BookOpen, Wand2 } from "lucide-react";
+import { getStarterTemplate } from "@/lib/api/templates";
 
 const CodeEditor = dynamic(
   () => import("@/components/ui/CodeEditor").then((m) => ({ default: m.CodeEditor })),
@@ -37,6 +38,45 @@ interface Template {
   updatedAt: string;
 }
 
+// All variables available in Herald templates
+const TEMPLATE_VARIABLES = [
+  { name: "protocolName", desc: "Your protocol's display name", example: "Marginfi" },
+  { name: "subject", desc: "Notification subject / headline", example: "Position approaching liquidation" },
+  { name: "body", desc: "Main notification body (supports Markdown)", example: "Your SOL position health is **1.08**" },
+  { name: "category", desc: "Notification category slug", example: "defi" },
+  { name: "actionUrl", desc: "CTA button link", example: "https://app.example.com/positions" },
+  { name: "actionLabel", desc: "CTA button text", example: "Manage Position" },
+  { name: "walletAddress", desc: "Recipient's wallet address (truncated for display)", example: "7xKXt…YqAv" },
+  { name: "txHash", desc: "Related transaction hash", example: "5KJp8nQc…" },
+  { name: "unsubscribeUrl", desc: "Auto-generated unsubscribe URL — do not hardcode", example: "https://notify.useherald.xyz/…" },
+  { name: "previewText", desc: "Email preview text shown in inbox before opening", example: "Your position needs attention" },
+];
+
+// Handlebars helpers available in Herald templates
+const TEMPLATE_HELPERS = [
+  { name: "{{money amount \"USDC\"}}", desc: "Format a number as currency" },
+  { name: "{{truncateAddress address}}", desc: "Shorten a wallet address to 0x1234…abcd" },
+  { name: "{{timeAgo timestamp}}", desc: "Human-readable relative time (e.g. 3h ago)" },
+  { name: "{{categoryLabel category}}", desc: "Category display name (e.g. DeFi Alert)" },
+  { name: "{{markdown body}}", desc: "Render body as Markdown HTML" },
+  { name: "{{#if actionUrl}}…{{/if}}", desc: "Conditionally render a block" },
+];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  defi: "bg-red-500/10 text-red-400 border-red-500/20",
+  governance: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  marketing: "bg-teal/10 text-teal border-teal/20",
+  system: "bg-gold/10 text-gold border-gold/20",
+};
+
+const HERALD_FOOTER_OPTIONS = [
+  { value: "full", label: "Full — privacy note + Herald logo + Unsubscribe + site" },
+  { value: "small", label: "Small — Herald logo + Unsubscribe + site" },
+  { value: "minimal", label: "Minimal — Herald logo + Unsubscribe" },
+  { value: "enterprise", label: "Enterprise — Herald logo + Unsubscribe (no site)" },
+  { value: "none", label: "None — Unsubscribe link only" },
+];
+
 export default function TemplatesPage() {
   const { axios } = useApi();
   const router = useRouter();
@@ -49,11 +89,14 @@ export default function TemplatesPage() {
     category: "defi",
     subjectTemplate: "",
     htmlSource: "",
+    heraldFooter: "full",
     isDefault: false,
   });
-  const [activeTab, setActiveTab] = useState<"editor" | "preview">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "variables">("editor");
   const [previewVars, setPreviewVars] = useState({
     protocolName: "Example Protocol",
+    brandName: "Example Protocol",
+    logoUrl: "",
     subject: "Important Notification",
     body: "This is a sample notification body with important information about your DeFi position.",
     actionUrl: "https://example.com/action",
@@ -65,6 +108,8 @@ export default function TemplatesPage() {
   const [noAnimations, setNoAnimations] = useState(true);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isLoadingStarter, setIsLoadingStarter] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -82,19 +127,38 @@ export default function TemplatesPage() {
     }
   };
 
+  const handleUseStarterTemplate = async () => {
+    setIsLoadingStarter(true);
+    try {
+      const { html, suggestedVariables } = await getStarterTemplate();
+      setNewTemplate((prev) => ({ ...prev, htmlSource: html }));
+      setPreviewVars((prev) => ({
+        ...prev,
+        logoUrl: suggestedVariables.logoUrl ?? prev.logoUrl,
+        brandName: suggestedVariables.brandName ?? prev.brandName,
+        protocolName: suggestedVariables.protocolName ?? prev.protocolName,
+      }));
+    } catch (error) {
+      console.error("Failed to load starter template:", error);
+    } finally {
+      setIsLoadingStarter(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(key);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const handleCreate = async () => {
     setIsCreating(true);
     try {
       const { data } = await axios.post("/templates", newTemplate);
       if (data.success) {
         setShowCreateModal(false);
-        setNewTemplate({
-          name: "",
-          category: "defi",
-          subjectTemplate: "",
-          htmlSource: "",
-          isDefault: false,
-        });
+        setNewTemplate({ name: "", category: "defi", subjectTemplate: "", htmlSource: "", heraldFooter: "full", isDefault: false });
+        setPreviewHtml(null);
         loadTemplates();
       }
     } catch (error) {
@@ -111,16 +175,14 @@ export default function TemplatesPage() {
       const { data } = await axios.post("/templates/preview", {
         htmlSource: newTemplate.htmlSource,
         subjectTemplate: newTemplate.subjectTemplate,
-        heraldFooter: "full",
+        heraldFooter: newTemplate.heraldFooter,
         variables: previewVars,
       });
       if (data.success) {
-        if (noAnimations) {
-          const htmlWithNoAnim = `<style>*, *::before, *::after { animation: none !important; transition: none !important; }</style>` + data.preview.html;
-          setPreviewHtml(htmlWithNoAnim);
-        } else {
-          setPreviewHtml(data.preview.html);
-        }
+        const html = noAnimations
+          ? `<style>*, *::before, *::after { animation: none !important; transition: none !important; }</style>` + data.preview.html
+          : data.preview.html;
+        setPreviewHtml(html);
         setActiveTab("preview");
       }
     } catch (error) {
@@ -130,9 +192,7 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleDelete = (templateId: string) => {
-    setTemplateToDelete(templateId);
-  };
+  const handleDelete = (templateId: string) => setTemplateToDelete(templateId);
 
   const confirmDelete = async () => {
     if (!templateToDelete) return;
@@ -158,19 +218,18 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div id="templates-header" className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Templates</h1>
           <p className="text-sm text-text-muted mt-1">
-            Create and manage custom email templates for your notifications.
+            Custom email templates for your notifications. Requires Growth tier or higher.
           </p>
         </div>
-        <Button id="templates-create-btn" onClick={() => {
-          setShowCreateModal(true);
-          setActiveTab("editor");
-          setPreviewHtml(null);
-          setNoAnimations(true);
-        }}>
+        <Button
+          id="templates-create-btn"
+          onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); setNoAnimations(true); }}
+        >
           Create Template
         </Button>
       </div>
@@ -178,16 +237,12 @@ export default function TemplatesPage() {
       {templates.length === 0 ? (
         <Card id="templates-list" className="border border-border">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <svg className="w-12 h-12 text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2z" />
-            </svg>
-            <p className="text-text-muted mb-4">No templates yet. Create your first template to get started.</p>
-<Button onClick={() => {
-            setShowCreateModal(true);
-            setActiveTab("editor");
-            setPreviewHtml(null);
-            setNoAnimations(true);
-          }}>
+            <div className="w-14 h-14 rounded-2xl bg-teal/10 border border-teal/20 flex items-center justify-center mb-4">
+              <Code2 className="w-7 h-7 text-teal" />
+            </div>
+            <p className="text-foreground font-semibold mb-1">No templates yet</p>
+            <p className="text-text-muted text-sm mb-5">Create your first email template to start customising notifications.</p>
+            <Button onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); }}>
               Create Template
             </Button>
           </CardContent>
@@ -195,35 +250,61 @@ export default function TemplatesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {templates.map((template) => (
-            <Card key={template.id} className="border border-border hover:border-teal/50 transition-colors cursor-pointer">
+            <Card
+              key={template.id}
+              className="border border-border hover:border-teal/40 transition-all duration-200 group"
+            >
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-base">{template.name}</CardTitle>
-                    <CardDescription className="text-xs mt-1">
-                      {template.category.toUpperCase()} • v{template.version}
-                    </CardDescription>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <CardTitle className="text-base truncate">{template.name}</CardTitle>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${CATEGORY_COLORS[template.category] ?? "bg-border text-text-muted border-border"}`}>
+                        {template.category}
+                      </span>
+                      <span className="text-[10px] text-text-dim font-mono">v{template.version}</span>
+                      {template.isDefault && (
+                        <span className="text-[10px] bg-teal/20 text-teal px-2 py-0.5 rounded border border-teal/20">Default</span>
+                      )}
+                    </div>
                   </div>
-                  {template.isDefault && (
-                    <span className="text-xs bg-teal/20 text-teal px-2 py-0.5 rounded">Default</span>
-                  )}
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-text-muted line-clamp-2 mb-4">
-                  {template.subjectTemplate || "No subject template"}
+              <CardContent className="space-y-3">
+                <p className="text-sm text-text-muted line-clamp-2">
+                  {template.subjectTemplate || <span className="italic opacity-60">No subject template</span>}
                 </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-text-muted">
-                    Last updated: {new Date(template.updatedAt).toLocaleDateString()}
+
+                {/* Template ID — the key info developers need for the Notify API */}
+                <div className="flex items-center gap-1.5 p-2 bg-card-2 border border-border rounded-lg">
+                  <span className="text-[10px] text-text-dim uppercase tracking-wider font-semibold shrink-0">ID</span>
+                  <code className="text-[11px] font-mono text-text-muted flex-1 truncate">
+                    {template.id}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(template.id, template.id)}
+                    className="shrink-0 p-0.5 text-text-dim hover:text-teal transition-colors"
+                    title="Copy template ID"
+                  >
+                    {copiedId === template.id
+                      ? <Check className="w-3.5 h-3.5 text-teal" />
+                      : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs text-text-dim">
+                    Updated {new Date(template.updatedAt).toLocaleDateString()}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="gap-1.5"
                       onClick={() => router.push(`/templates/${template.id}`)}
                     >
                       Edit
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -241,70 +322,100 @@ export default function TemplatesPage() {
         </div>
       )}
 
-{/* Create Modal */}
+      {/* Using templates in the Notify API */}
+      <Card className="border border-border bg-card">
+        <CardContent className="p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-9 h-9 rounded-lg bg-teal/10 border border-teal/20 flex items-center justify-center shrink-0 mt-0.5">
+              <BookOpen className="w-4.5 h-4.5 text-teal" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-foreground mb-1">Using templates in the Notify API</h3>
+              <p className="text-xs text-text-muted mb-3">
+                Pass a <code className="bg-card-2 px-1 rounded text-teal">templateId</code> when sending a notification to use your custom template instead of the Herald system default.
+              </p>
+              <div className="rounded-lg bg-[#0d1f35] border border-[#1e293b] overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-2 border-b border-[#1e293b]">
+                  <span className="text-[10px] text-[#64748b] uppercase tracking-wider font-medium">POST /v1/notify</span>
+                </div>
+                <pre className="text-[12px] font-mono text-[#94a3b8] p-4 overflow-x-auto leading-relaxed">{`{
+  "to": "0xYourUserWalletAddress",
+  "templateId": "<your-template-id>",
+  "subject": "Position approaching liquidation",
+  "body": "Your SOL position health is **1.08**",
+  "variables": {
+    "actionUrl": "https://app.example.com/positions",
+    "actionLabel": "Manage Position",
+    "txHash": "5KJp8nQc..."
+  }
+}`}</pre>
+              </div>
+              <p className="text-[11px] text-text-dim mt-2">
+                Template variables are merged with the notify payload. The Herald footer is appended automatically based on your template&apos;s footer setting and your plan tier.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Create Modal ── */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/80 backdrop-blur-sm p-4">
           <Card className="w-full max-w-5xl max-h-[90vh] border border-border overflow-hidden flex flex-col">
-            <CardHeader className="shrink-0">
+            <CardHeader className="shrink-0 pb-0">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Create Template</CardTitle>
                   <CardDescription className="mt-1">
-                    Templates require Growth tier or higher.
+                    Custom email templates require Growth tier or higher.
                   </CardDescription>
                 </div>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="text-text-muted hover:text-foreground transition-colors p-1"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </CardHeader>
+
+            {/* Tab bar */}
             <div className="flex border-b border-border px-4 md:px-6 shrink-0 overflow-x-auto">
-              <button
-                onClick={() => setActiveTab("editor")}
-                className={`py-3 px-4 md:px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === "editor"
-                    ? "border-teal text-teal"
-                    : "border-transparent text-text-muted hover:text-foreground"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Editor
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  if (!previewHtml && newTemplate.htmlSource) {
-                    handlePreview();
-                  } else {
-                    setActiveTab("preview");
-                  }
-                }}
-                className={`py-3 px-4 md:px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === "preview"
-                    ? "border-teal text-teal"
-                    : "border-transparent text-text-muted hover:text-foreground"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  Preview
-                </span>
-              </button>
+              {[
+                { id: "editor" as const, label: "Editor", icon: <Code2 className="w-3.5 h-3.5" /> },
+                { id: "preview" as const, label: "Preview", icon: <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> },
+                { id: "variables" as const, label: "Variables", icon: <BookOpen className="w-3.5 h-3.5" /> },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (tab.id === "preview" && newTemplate.htmlSource && !previewHtml) {
+                      handlePreview();
+                    } else {
+                      setActiveTab(tab.id);
+                    }
+                  }}
+                  className={`flex items-center gap-2 py-3 px-4 md:px-5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "border-teal text-teal"
+                      : "border-transparent text-text-muted hover:text-foreground"
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
             </div>
+
             <CardContent className="flex-1 overflow-y-auto p-4 md:p-6">
-              {activeTab === "editor" ? (
-                <div className="space-y-6">
+              {/* ── Editor Tab ── */}
+              {activeTab === "editor" && (
+                <div className="space-y-5">
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
-                        <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                        Template Name
-                      </label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-text-secondary">Template Name</label>
                       <Input
                         value={newTemplate.name}
                         onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
@@ -312,20 +423,13 @@ export default function TemplatesPage() {
                         className="bg-card-2"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
-                        <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                        Category
-                      </label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-text-secondary">Category</label>
                       <Select
                         value={newTemplate.category}
                         onValueChange={(val) => setNewTemplate({ ...newTemplate, category: val })}
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
+                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="defi">DeFi Alerts</SelectItem>
                           <SelectItem value="governance">Governance</SelectItem>
@@ -335,170 +439,246 @@ export default function TemplatesPage() {
                       </Select>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
-                      <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      Subject Template
-                    </label>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary">Subject Template</label>
                     <Input
                       value={newTemplate.subjectTemplate}
                       onChange={(e) => setNewTemplate({ ...newTemplate, subjectTemplate: e.target.value })}
-                      placeholder="e.g., {{protocolName}} - {{subject}}"
-                      className="bg-card-2"
+                      placeholder="{{protocolName}} — {{subject}}"
+                      className="bg-card-2 font-mono text-sm"
                     />
-                    <p className="text-xs text-text-muted">Available variables: {"{{protocolName}}"}, {"{{subject}}"}, {"{{body}}"}, {"{{actionUrl}}"}, {"{{actionLabel}}"}, {"{{unsubscribeUrl}}"}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {["{{protocolName}}", "{{subject}}", "{{category}}"].map((v) => (
+                        <code
+                          key={v}
+                          className="text-[10px] bg-teal/10 text-teal border border-teal/20 px-1.5 py-0.5 rounded cursor-pointer hover:bg-teal/20 transition-colors"
+                          onClick={() => setNewTemplate((prev) => ({ ...prev, subjectTemplate: (prev.subjectTemplate + " " + v).trim() }))}
+                          title="Click to insert"
+                        >
+                          {v}
+                        </code>
+                      ))}
+                      <button
+                        onClick={() => setActiveTab("variables")}
+                        className="text-[10px] text-text-dim hover:text-teal transition-colors underline underline-offset-2"
+                      >
+                        see all variables →
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
-                      <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                      </svg>
-                      HTML Source
-                    </label>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-text-secondary">HTML Source</label>
+                      <button
+                        onClick={handleUseStarterTemplate}
+                        disabled={isLoadingStarter}
+                        className="flex items-center gap-1.5 text-[11px] text-teal hover:text-teal/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                        title="Load the Herald starter template with your saved brand logo and name pre-filled"
+                      >
+                        <Wand2 className="w-3 h-3" />
+                        {isLoadingStarter ? "Loading…" : "Use starter template"}
+                      </button>
+                    </div>
                     <div className="rounded-lg overflow-hidden border border-border">
                       <CodeEditor
                         value={newTemplate.htmlSource}
                         onChange={(v) => setNewTemplate({ ...newTemplate, htmlSource: v })}
-                        height="260px"
+                        height="280px"
                       />
                     </div>
+                    <p className="text-[10px] text-text-dim">
+                      Supports standard HTML, inline CSS, and Handlebars syntax. MJML is auto-detected.
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg">
-                    <input
-                      type="checkbox"
-                      id="isDefault"
-                      checked={newTemplate.isDefault}
-                      onChange={(e) => setNewTemplate({ ...newTemplate, isDefault: e.target.checked })}
-                      className="rounded w-4 h-4"
-                    />
-                    <label htmlFor="isDefault" className="text-sm text-text-muted">
-                      Set as default for category
-                    </label>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-text-secondary">Herald Footer</label>
+                      <Select
+                        value={newTemplate.heraldFooter}
+                        onValueChange={(val) => setNewTemplate({ ...newTemplate, heraldFooter: val })}
+                      >
+                        <SelectTrigger className="w-full bg-card-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {HERALD_FOOTER_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-text-dim">Herald always appends an unsubscribe link per CAN-SPAM/GDPR.</p>
+                    </div>
+
+                    <div className="flex items-end pb-1">
+                      <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg w-full">
+                        <input
+                          type="checkbox"
+                          id="isDefault"
+                          checked={newTemplate.isDefault}
+                          onChange={(e) => setNewTemplate({ ...newTemplate, isDefault: e.target.checked })}
+                          className="rounded w-4 h-4"
+                        />
+                        <div>
+                          <label htmlFor="isDefault" className="text-xs font-medium text-text-secondary cursor-pointer block">
+                            Set as default for category
+                          </label>
+                          <p className="text-[10px] text-text-dim">Used when no templateId is passed for this category.</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {/* ── Preview Tab ── */}
+              {activeTab === "preview" && (
                 <div className="h-full flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1 space-y-4">
+                  <div className="lg:w-72 space-y-3 shrink-0">
                     <div className="p-3 bg-card-2 border border-border rounded-lg">
-                      <label className="text-xs font-medium text-text-muted mb-2 flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        Subject Preview
-                      </label>
-                      <p className="text-sm text-foreground font-medium wrap-break-word">
+                      <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider mb-1.5">Subject Preview</p>
+                      <p className="text-sm text-foreground font-medium break-words">
                         {newTemplate.subjectTemplate
                           ? newTemplate.subjectTemplate
                               .replace(/\{\{protocolName\}\}/g, previewVars.protocolName)
                               .replace(/\{\{subject\}\}/g, previewVars.subject)
-                          : "(No subject template)"}
+                              .replace(/\{\{category\}\}/g, newTemplate.category)
+                          : <span className="text-text-dim italic">(No subject template)</span>}
                       </p>
                     </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-text-muted block">Protocol Name</label>
-                        <Input
-                          value={previewVars.protocolName}
-                          onChange={(e) => setPreviewVars({ ...previewVars, protocolName: e.target.value })}
-                          className="h-9 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-text-muted block">Subject</label>
-                        <Input
-                          value={previewVars.subject}
-                          onChange={(e) => setPreviewVars({ ...previewVars, subject: e.target.value })}
-                          className="h-9 text-sm"
-                        />
-                      </div>
-                      <div className="col-span-1 sm:col-span-2 space-y-1.5">
-                        <label className="text-xs font-medium text-text-muted block">Body</label>
-                        <Input
-                          value={previewVars.body}
-                          onChange={(e) => setPreviewVars({ ...previewVars, body: e.target.value })}
-                          className="h-9 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-text-muted block">Action URL</label>
-                        <Input
-                          value={previewVars.actionUrl}
-                          onChange={(e) => setPreviewVars({ ...previewVars, actionUrl: e.target.value })}
-                          className="h-9 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-text-muted block">Action Label</label>
-                        <Input
-                          value={previewVars.actionLabel}
-                          onChange={(e) => setPreviewVars({ ...previewVars, actionLabel: e.target.value })}
-                          className="h-9 text-sm"
-                        />
-                      </div>
+
+                    <div className="space-y-2">
+                      {Object.entries(previewVars).map(([key, value]) => (
+                        <div key={key} className="space-y-1">
+                          <label className="text-[10px] font-medium text-text-muted capitalize">
+                            {key.replace(/([A-Z])/g, " $1")}
+                          </label>
+                          <Input
+                            value={value}
+                            onChange={(e) => setPreviewVars((prev) => ({ ...prev, [key]: e.target.value }))}
+                            className="h-8 text-xs bg-card-2"
+                          />
+                        </div>
+                      ))}
                     </div>
-                    
-                    <div className="flex flex-wrap items-center gap-4 pt-2">
+
+                    <div className="flex flex-wrap items-center gap-3 pt-1">
                       <Button
                         variant="secondary"
                         size="sm"
                         onClick={handlePreview}
                         disabled={!newTemplate.htmlSource}
                         isLoading={isPreviewLoading}
-                        className="flex items-center gap-2"
+                        className="gap-2 w-full justify-center"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
                         Update Preview
                       </Button>
-                      <label className="flex items-center gap-2 text-sm text-text-muted cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer">
                         <input
                           type="checkbox"
-                          id="noAnimations"
                           checked={noAnimations}
                           onChange={(e) => setNoAnimations(e.target.checked)}
-                          className="rounded w-4 h-4"
+                          className="rounded w-3.5 h-3.5"
                         />
-                        <span className="flex items-center gap-1.5">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v-4.64a1 1 0 00-1.555-.832L5 12v12a1 1 0 001 1h12a1 1 0 001-1v-5a1 1 0 00-.555-.832l-3.5-2A1 1 0 0014 5a1 1 0 00-.752.168l-3.197 2.132A1 1 0 009 5.23v4.64a1 1 0 001.555.832l3.5-2a1 1 0 001 1v5a1 1 0 001 1h0" />
-                          </svg>
-                          Disable animations
-                        </span>
+                        Disable animations
                       </label>
                     </div>
                   </div>
-                  
-                  <div className="flex-1 min-h-[300px] lg:min-h-[400px]">
-                    <div className="text-xs font-medium text-text-muted mb-2 flex items-center gap-2">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      Email Preview
-                    </div>
-                    <div className="h-full border border-border rounded-lg overflow-auto bg-white shadow-inner">
+
+                  <div className="flex-1 min-h-[320px]">
+                    <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider mb-2">Email Preview</p>
+                    <div className="h-full border border-border rounded-lg overflow-auto bg-white shadow-inner min-h-[320px]">
                       {previewHtml ? (
                         <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-64 md:h-80 text-text-muted p-4 text-center">
-                          <svg className="w-12 h-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2z" />
+                        <div className="flex flex-col items-center justify-center h-64 text-text-muted text-center p-4 gap-3">
+                          <svg className="w-10 h-10 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
-                          <p className="text-sm">Enter HTML source in the Editor tab and click Update Preview</p>
+                          <p className="text-sm">Enter HTML in the Editor tab, then click Update Preview</p>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
               )}
+
+              {/* ── Variables Tab ── */}
+              {activeTab === "variables" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-1">Available Variables</h3>
+                    <p className="text-xs text-text-muted mb-4">
+                      Use <code className="bg-card-2 px-1 rounded text-teal">{"{{"}</code>variableName<code className="bg-card-2 px-1 rounded text-teal">{"}}"}</code> anywhere in your template HTML or subject line. Values are passed via the Notify API.
+                    </p>
+                    <div className="rounded-lg border border-border overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border bg-card-2">
+                            <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider w-40">Variable</th>
+                            <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Description</th>
+                            <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider hidden sm:table-cell">Example</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {TEMPLATE_VARIABLES.map((v) => (
+                            <tr key={v.name} className="hover:bg-card-2 transition-colors group">
+                              <td className="px-4 py-2.5">
+                                <div className="flex items-center gap-1.5">
+                                  <code className="text-[11px] font-mono text-teal bg-teal/10 px-1.5 py-0.5 rounded">
+                                    {`{{${v.name}}}`}
+                                  </code>
+                                  <button
+                                    onClick={() => copyToClipboard(`{{${v.name}}}`, v.name)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-text-dim hover:text-teal"
+                                  >
+                                    {copiedId === v.name
+                                      ? <Check className="w-3 h-3 text-teal" />
+                                      : <Copy className="w-3 h-3" />}
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="px-4 py-2.5 text-xs text-text-muted">{v.desc}</td>
+                              <td className="px-4 py-2.5 hidden sm:table-cell">
+                                <code className="text-[10px] font-mono text-text-dim">{v.example}</code>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-1">Built-in Helpers</h3>
+                    <p className="text-xs text-text-muted mb-4">
+                      Herald registers these Handlebars helpers — use them directly in your template.
+                    </p>
+                    <div className="space-y-2">
+                      {TEMPLATE_HELPERS.map((h) => (
+                        <div key={h.name} className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg group">
+                          <code className="text-[11px] font-mono text-teal flex-1">{h.name}</code>
+                          <span className="text-xs text-text-muted hidden sm:block">{h.desc}</span>
+                          <button
+                            onClick={() => copyToClipboard(h.name, h.name)}
+                            className="shrink-0 text-text-dim hover:text-teal transition-colors"
+                          >
+                            {copiedId === h.name
+                              ? <Check className="w-3.5 h-3.5 text-teal" />
+                              : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
+
             <div className="flex justify-end gap-3 p-4 border-t border-border shrink-0">
-              <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-                Cancel
-              </Button>
+              <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
               <Button
                 isLoading={isCreating}
                 onClick={handleCreate}
