@@ -18,18 +18,18 @@ import { PricingCard } from "@/components/billing/PricingCard";
 import { useState, useCallback } from "react";
 
 const TIER_FEATURES: Record<number, string[]> = {
-  0: ["Community Support", "API Access", "Standard Latency", "1 Webhook Endpoint"],
-  1: ["Email Support", "Advanced Analytics", "Reduced Latency", "5 Webhook Endpoints"],
-  2: ["Priority Support", "SLA Guarantee", "Ultra-low Latency", "Unlimited Webhooks"],
-  3: ["Dedicated Account Manager", "Custom SLA", "White-glove Onboarding", "Unlimited Everything"],
-  4: ["Dedicated Account Manager", "Custom SLA", "White-glove Onboarding", "Unlimited Everything"],
+  0: ["Email only", "Shared gateway", "Sandbox mode", "1 API key", "ZK delivery receipts"],
+  1: ["Email + Telegram + SMS", "Priority queue", "5 API keys", "Webhooks", "3 team members", "99.9% SLA"],
+  2: ["All channels", "Unlimited API keys", "Custom retry policy", "10 team members", "Custom DKIM domain", "99.9% SLA"],
+  3: ["All channels + dedicated infra", "Unlimited team members", "99.99% SLA", "Dedicated CSM + Slack", "White-glove onboarding"],
+  4: ["All channels + dedicated infra", "Unlimited team members", "99.99% SLA", "Dedicated CSM + Slack", "White-glove onboarding"],
 };
 
 const FALLBACK_TIERS = [
   { tier: 0, name: "Developer", priceUsdc: 0, limit: 1000 },
   { tier: 1, name: "Growth", priceUsdc: 99, limit: 50000 },
-  { tier: 2, name: "Scale", priceUsdc: 299, limit: 500000 },
-  { tier: 3, name: "Enterprise", priceUsdc: 999, limit: 10000000 },
+  { tier: 2, name: "Scale", priceUsdc: 299, limit: 250000 },
+  { tier: 3, name: "Enterprise", priceUsdc: 999, limit: 1000000 },
 ];
 
 function formatRelativeTime(date: Date): string {
