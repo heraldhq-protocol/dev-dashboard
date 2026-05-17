@@ -14,8 +14,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listWebhooks, createWebhook, updateWebhook, deleteWebhook, getWebhookReliability, promoteWebhook } from "@/lib/api/webhooks";
 import { PromoteDiffModal, type PromoteTarget } from "@/components/shared/PromoteDiffModal";
+import { UpgradeGate } from "@/components/billing/UpgradeGate";
 
 export default function WebhooksPage() {
+  return (
+    <UpgradeGate minTier={1} feature="Webhooks" description="Receive real-time delivery events at your endpoint via signed HTTP callbacks.">
+      <WebhooksContent />
+    </UpgradeGate>
+  );
+}
+
+function WebhooksContent() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");

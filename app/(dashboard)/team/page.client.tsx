@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listTeam, inviteMember, removeMember, updateMemberRole } from "@/lib/api/team";
 import { getBillingStatus } from "@/lib/api/billing";
+import { UpgradeGate } from "@/components/billing/UpgradeGate";
 import {
   Select,
   SelectContent,
@@ -27,6 +28,14 @@ import {
 
 
 export default function TeamPage() {
+  return (
+    <UpgradeGate minTier={1} feature="Team Management" description="Invite team members and manage roles across your protocol.">
+      <TeamContent />
+    </UpgradeGate>
+  );
+}
+
+function TeamContent() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);

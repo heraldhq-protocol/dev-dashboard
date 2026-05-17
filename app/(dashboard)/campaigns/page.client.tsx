@@ -18,8 +18,17 @@ import {
   cancelCampaign,
   type Campaign,
 } from "@/lib/api/campaigns";
+import { UpgradeGate } from "@/components/billing/UpgradeGate";
 
 export default function CampaignsPage() {
+  return (
+    <UpgradeGate minTier={1} feature="Campaigns" description="Build targeted broadcast campaigns for your subscriber audience.">
+      <CampaignsContent />
+    </UpgradeGate>
+  );
+}
+
+function CampaignsContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [loadingId, setLoadingId] = useState<string | null>(null);

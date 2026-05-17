@@ -8,10 +8,19 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { AuditLogTable } from "@/components/team/AuditLogTable";
 import { AuditLogFilters } from "@/components/team/AuditLogFilters";
 import { getAuditLog, exportAuditLog, type AuditLogFilters as Filters } from "@/lib/api/team";
+import { UpgradeGate } from "@/components/billing/UpgradeGate";
 
 const DEFAULT_FILTERS: Filters = { page: 1, limit: 50 };
 
 export default function AuditLogPage() {
+  return (
+    <UpgradeGate minTier={1} feature="Audit Log" description="Track all team actions, API calls, and configuration changes with a full audit trail.">
+      <AuditLogContent />
+    </UpgradeGate>
+  );
+}
+
+function AuditLogContent() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [isExporting, setIsExporting] = useState(false);
 

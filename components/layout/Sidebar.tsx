@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { usePlanGate } from "@/hooks/usePlanGate";
 
 // ─── Nav items grouped by section ──────────────────────────
 
@@ -58,6 +59,7 @@ const NAV_SECTIONS = [
         name: "Campaigns",
         href: "/campaigns",
         id: "sidebar-campaigns",
+        minTier: 1,
         icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z",
       },
       {
@@ -70,6 +72,7 @@ const NAV_SECTIONS = [
         name: "Webhooks",
         href: "/webhooks",
         id: "sidebar-webhooks",
+        minTier: 1,
         icon: "M13 10V3L4 14h7v7l9-11h-7z",
       },
       {
@@ -82,6 +85,7 @@ const NAV_SECTIONS = [
         name: "Domains",
         href: "/domains",
         id: "sidebar-domains",
+        minTier: 2,
         icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
       },
       {
@@ -94,6 +98,7 @@ const NAV_SECTIONS = [
         name: "Scheduled",
         href: "/notifications/scheduled",
         id: "sidebar-scheduled",
+        minTier: 1,
         icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
       },
       {
@@ -117,12 +122,14 @@ const NAV_SECTIONS = [
         name: "Team",
         href: "/team",
         id: "sidebar-team",
+        minTier: 1,
         icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
       },
       {
         name: "Audit Log",
         href: "/team/audit-log",
         id: "sidebar-audit-log",
+        minTier: 1,
         icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
       },
       {
@@ -169,6 +176,7 @@ function NavItem({
   id,
   isActive,
   collapsed,
+  locked,
   onClick,
 }: {
   name: string;
@@ -177,6 +185,7 @@ function NavItem({
   id?: string;
   isActive: boolean;
   collapsed: boolean;
+  locked: boolean;
   onClick: () => void;
 }) {
   const linkContent = (
@@ -185,17 +194,19 @@ function NavItem({
       id={id}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap overflow-hidden cursor-pointer",
+        "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap overflow-hidden cursor-pointer",
         "transition-all duration-150",
         isActive
           ? "bg-card-2/50 text-teal border-l-2 border-l-teal"
+          : locked
+          ? "text-text-muted/50 hover:text-text-muted hover:bg-card-2/30"
           : "text-text-secondary hover:text-foreground hover:bg-card-2/50"
       )}
     >
       <svg
         className={cn(
           "h-4 w-4 shrink-0 transition-colors duration-150",
-          isActive ? "text-teal" : "text-text-muted"
+          isActive ? "text-teal" : locked ? "text-text-muted/40" : "text-text-muted"
         )}
         fill="none"
         viewBox="0 0 24 24"
@@ -210,7 +221,7 @@ function NavItem({
       </svg>
       <span
         className={cn(
-          "overflow-hidden whitespace-nowrap",
+          "flex-1 overflow-hidden whitespace-nowrap",
           "transition-[opacity,max-width] duration-350 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
           collapsed
             ? "lg:max-w-0 lg:opacity-0 lg:translate-x-2"
@@ -219,6 +230,13 @@ function NavItem({
       >
         {name}
       </span>
+      {locked && !collapsed && (
+        <svg className="w-3 h-3 shrink-0 text-text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+          />
+        </svg>
+      )}
     </Link>
   );
 
@@ -229,7 +247,7 @@ function NavItem({
         <Tooltip>
           <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
           <TooltipContent side="right" className="text-xs font-semibold">
-            {name}
+            {locked ? `${name} — Upgrade to unlock` : name}
           </TooltipContent>
         </Tooltip>
       </li>
@@ -245,6 +263,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { mobileSidebarOpen, desktopSidebarCollapsed, closeMobileSidebar } =
     useUiStore();
+  const { tier } = usePlanGate();
 
   const collapsed = desktopSidebarCollapsed;
 
@@ -342,6 +361,7 @@ export function Sidebar() {
                           pathname.startsWith(other.href) &&
                           other.href.length > item.href.length
                       );
+                    const locked = (item as any).minTier != null && tier < (item as any).minTier;
                     return (
                       <NavItem
                         key={item.name}
@@ -351,6 +371,7 @@ export function Sidebar() {
                         id={item.id}
                         isActive={isActive}
                         collapsed={collapsed}
+                        locked={locked}
                         onClick={closeMobileSidebar}
                       />
                     );

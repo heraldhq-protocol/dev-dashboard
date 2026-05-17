@@ -15,6 +15,7 @@ import {
   cancelScheduledNotification,
   type ScheduledNotification,
 } from "@/lib/api/campaigns";
+import { UpgradeGate } from "@/components/billing/UpgradeGate";
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -49,6 +50,14 @@ const STATUS_STYLES: Record<ScheduledNotification["status"], string> = {
 // ─── Main Page ────────────────────────────────────────────────
 
 export default function ScheduledNotificationsPage() {
+  return (
+    <UpgradeGate minTier={1} feature="Scheduled Notifications" description="Schedule one-time and recurring notifications for your users.">
+      <ScheduledNotificationsContent />
+    </UpgradeGate>
+  );
+}
+
+function ScheduledNotificationsContent() {
   const queryClient = useQueryClient();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
