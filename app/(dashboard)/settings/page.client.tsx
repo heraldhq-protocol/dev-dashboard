@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset } from "@/lib/api/protocol";
+import { RetryPolicyForm } from "@/components/settings/RetryPolicyForm";
 import { apiClient } from "@/lib/api-client";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 import { useTourControls } from "@/components/onboarding/TourInitializer";
@@ -127,9 +128,9 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setModalOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "telegram" | "tour" | "danger">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "telegram" | "retry" | "tour" | "danger">("general");
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, isError } = useQuery({
     queryKey: ["protocol", "me"],
     queryFn: getProtocol,
   });
@@ -175,13 +176,14 @@ export default function SettingsPage() {
   });
 
   // Sync sandbox form when data loads
-  if (sandboxData && !sandboxForm.testEmail && sandboxData.testEmail) {
+  useEffect(() => {
+    if (!sandboxData) return;
     setSandboxForm({
       testEmail: sandboxData.testEmail ?? "",
       testTelegramId: sandboxData.testTelegramId ?? "",
       testPhone: sandboxData.testPhone ?? "",
     });
-  }
+  }, [sandboxData]);
 
   const sandboxMutation = useMutation({
     mutationFn: updateSandboxSettings,
@@ -258,14 +260,15 @@ export default function SettingsPage() {
   };
 
   // Sync form data when profile loads
-  if (profile && !formData.name && profile.name) {
+  useEffect(() => {
+    if (!profile) return;
     setFormData({
-      name: profile.name || "",
-      websiteUrl: profile.website || "",
+      name: profile.protocolName || profile.name || "",
+      websiteUrl: profile.website || profile.websiteUrl || "",
       logoUrl: profile.logoUrl || "",
-      fromName: profile.customFromName || "",
+      fromName: profile.customFromName || profile.fromName || "",
     });
-  }
+  }, [profile]);
 
   const isValid = inputValue.toLowerCase().trim() === profile?.name?.toLowerCase().trim();
 
@@ -279,8 +282,12 @@ export default function SettingsPage() {
     });
   };
 
-  if (isLoading || !profile) {
+  if (isLoading) {
     return <div className="text-text-muted">Loading settings…</div>;
+  }
+
+  if (isError || !profile) {
+    return <div className="text-red-400 text-sm">Failed to load settings. Please refresh.</div>;
   }
 
   return (
@@ -296,6 +303,7 @@ export default function SettingsPage() {
           { id: "sandbox", label: "Sandbox Test Contacts" },
           { id: "assets", label: "Brand Assets" },
           { id: "telegram", label: "Telegram" },
+          { id: "retry", label: "Retry & Engagement" },
           { id: "tour", label: "Tour & Onboarding" },
           { id: "danger", label: "Danger Zone" }
         ].map((tab) => (
@@ -327,7 +335,7 @@ export default function SettingsPage() {
                 Protocol ID
               </label>
               <Input
-                value={profile?.protocolId || ""}
+                value={profile?.protocolId || profile?.id || ""}
                 disabled
                 className="w-full bg-card-2 text-text-muted cursor-not-allowed font-mono text-xs"
               />
@@ -643,6 +651,10 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      )}
+
+      {activeTab === "retry" && (
+      <RetryPolicyForm />
       )}
 
       {activeTab === "tour" && (

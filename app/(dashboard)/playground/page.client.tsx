@@ -12,12 +12,14 @@ import { ChannelToggle } from "@/components/playground/channel-toggle";
 import { ComposerEditor } from "@/components/playground/composer-editor";
 import { ComposerPreview } from "@/components/playground/composer-preview";
 import { Button } from "@/components/ui/Button";
-import { Save, Send, RotateCcw, CheckCircle2, AlertCircle, Zap } from "lucide-react";
+import { Save, Send, RotateCcw, CheckCircle2, AlertCircle, Zap, Loader2, XCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { testSend, sandboxSend } from "@/lib/api/notifications";
+import { testSend, sandboxSend, getNotificationStatus } from "@/lib/api/notifications";
+import { stripMentionSpans } from "@/lib/email-renderer";
+import type { NotificationStatus } from "@/lib/api/notifications";
 import { getSandboxSettings } from "@/lib/api/protocol";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +32,77 @@ import { Input } from "@/components/ui/Input";
 
 
 type SendMode = "test-contacts" | "manual-address";
+
+const STATUS_CONFIG: Record<
+  NotificationStatus["status"],
+  { label: string; icon: React.ReactNode; className: string }
+> = {
+  queued: {
+    label: "Queued — waiting for worker…",
+    icon: <Clock className="w-3.5 h-3.5 shrink-0" />,
+    className: "border-border bg-card text-text-muted",
+  },
+  processing: {
+    label: "Processing — encrypting & dispatching…",
+    icon: <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />,
+    className: "border-border bg-card text-text-muted",
+  },
+  delivered: {
+    label: "Delivered successfully!",
+    icon: <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-teal" />,
+    className: "border-teal/30 bg-teal/5 text-teal",
+  },
+  partial: {
+    label: "Partially delivered (some channels failed)",
+    icon: <AlertCircle className="w-3.5 h-3.5 shrink-0 text-yellow-400" />,
+    className: "border-yellow-500/30 bg-yellow-500/5 text-yellow-400",
+  },
+  failed: {
+    label: "Delivery failed",
+    icon: <XCircle className="w-3.5 h-3.5 shrink-0 text-red-400" />,
+    className: "border-red-500/30 bg-red-500/5 text-red-400",
+  },
+  opted_out: {
+    label: "Recipient has opted out of notifications",
+    icon: <AlertCircle className="w-3.5 h-3.5 shrink-0 text-text-muted" />,
+    className: "border-border bg-card text-text-muted",
+  },
+  digested: {
+    label: "Queued in digest — will send in next batch",
+    icon: <Clock className="w-3.5 h-3.5 shrink-0 text-text-muted" />,
+    className: "border-border bg-card text-text-muted",
+  },
+};
+
+function DeliveryStatusBanner({
+  status,
+  onDismiss,
+}: {
+  status: NotificationStatus;
+  onDismiss: () => void;
+}) {
+  const config = STATUS_CONFIG[status.status];
+  const isTerminal = ["delivered", "failed", "partial", "opted_out", "digested"].includes(
+    status.status,
+  );
+  return (
+    <div
+      className={`mt-3 flex items-center gap-2.5 px-3 py-2 rounded-lg border text-xs ${config.className}`}
+    >
+      {!isTerminal ? <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" /> : config.icon}
+      <span className="flex-1">{config.label}</span>
+      {isTerminal && (
+        <button
+          onClick={onDismiss}
+          className="ml-2 opacity-50 hover:opacity-100 transition-opacity"
+          aria-label="Dismiss"
+        >
+          <XCircle className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split("@");
@@ -48,6 +121,39 @@ export default function ComposersPlaygroundPage() {
   const [sendMode, setSendMode] = useState<SendMode>("test-contacts");
   const [recipient, setRecipient] = useState("");
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
+  const [deliveryStatus, setDeliveryStatus] = useState<NotificationStatus | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  const startPolling = useCallback(
+    (notificationId: string) => {
+      stopPolling();
+      let attempts = 0;
+      const maxAttempts = 15; // 30s total
+      pollRef.current = setInterval(async () => {
+        attempts++;
+        try {
+          const status = await getNotificationStatus(notificationId, activeKey);
+          setDeliveryStatus(status);
+          const terminal = ["delivered", "failed", "partial", "opted_out", "digested"];
+          if (terminal.includes(status.status) || attempts >= maxAttempts) {
+            stopPolling();
+          }
+        } catch {
+          if (attempts >= maxAttempts) stopPolling();
+        }
+      }, 2000);
+    },
+    [activeKey, stopPolling],
+  );
+
+  useEffect(() => () => stopPolling(), [stopPolling]);
 
   const hasValidKey = activeKey.startsWith("hrld_test_");
 
@@ -75,22 +181,28 @@ export default function ComposersPlaygroundPage() {
     }
   }, [isNewKey]);
 
-  const content =
+  const rawContent =
     store.activeChannel === "email"
       ? store.emailContent
       : store.activeChannel === "telegram"
         ? store.telegramContent
         : store.smsContent;
 
+  const interpolate = (text: string) =>
+    stripMentionSpans(text).replace(/{{\s*([^}]+?)\s*}}/g, (match, key) => store.testData[key.trim()] ?? match);
+
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!hasValidKey) throw new Error("No sandbox key available.");
 
+      const body = interpolate(rawContent);
+      const subject = interpolate(store.emailSubject);
+
       if (sendMode === "test-contacts") {
         return sandboxSend(
           {
-            subject: store.emailSubject,
-            body: content,
+            subject,
+            body,
             category: "system",
             preferred_channel: store.activeChannel,
           },
@@ -104,8 +216,8 @@ export default function ComposersPlaygroundPage() {
       return testSend(
         {
           walletAddress: recipient,
-          subject: store.emailSubject,
-          body: content,
+          subject,
+          body,
           category: "system",
           previewOnly: false,
         },
@@ -114,20 +226,27 @@ export default function ComposersPlaygroundPage() {
       );
     },
     onSuccess: (result: any) => {
+      setDeliveryStatus(null);
+      const notificationId = result?.notification_id ?? result?.id;
+      if (notificationId && activeKey) {
+        startPolling(notificationId);
+      }
+
       if (sendMode === "test-contacts") {
-        const sandboxResult = result as any;
-        const contacts = sandboxResult?.test_contact ?? {};
-        const remaining = sandboxResult?.remaining_today ?? "?";
+        const contacts = result?.test_contact ?? {};
+        const remaining = result?.remaining_today ?? "?";
         const parts: string[] = [];
         if (contacts.email) parts.push(`email: ${contacts.email}`);
         if (contacts.telegram) parts.push("Telegram: configured");
         if (contacts.sms) parts.push(`SMS: ${contacts.sms}`);
-        toast.success(`Playground test sent to test contacts!`, {
-          description: `${parts.join(" · ")} · ${remaining} sends remaining today`,
-          duration: 5000,
+        toast.success(`Test sent — checking delivery…`, {
+          description: parts.length
+            ? `${parts.join(" · ")} · ${remaining} sends remaining today`
+            : `${remaining} sends remaining today`,
+          duration: 4000,
         });
       } else {
-        toast.success(`Test notification sent via ${store.activeChannel}!`);
+        toast.success(`Test queued — checking delivery…`);
       }
       setTestSendOpen(false);
     },
@@ -189,6 +308,20 @@ export default function ComposersPlaygroundPage() {
           </div>
         }
       />
+
+      {/* ── Delivery Status Banner ── */}
+      {deliveryStatus && (
+        <DeliveryStatusBanner
+          status={deliveryStatus}
+          onDismiss={() => { stopPolling(); setDeliveryStatus(null); }}
+        />
+      )}
+      {sendMutation.isPending && !deliveryStatus && (
+        <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-xs text-text-muted">
+          <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+          Sending…
+        </div>
+      )}
 
       {/* ── Composer — full height, no key UI above it ── */}
       <div

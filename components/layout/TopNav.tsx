@@ -19,6 +19,8 @@ import { getUnreadCount } from "@/lib/changelog";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 // ─── Breadcrumb helper ──────────────────────────────────────
 
@@ -162,6 +164,19 @@ export function TopNav() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const unreadCount = getUnreadCount(lastReadChangelog);
+  const queryClient = useQueryClient();
+
+  const handleEnvSwitch = (env: "sandbox" | "live") => {
+    if (env === activeEnvironment) return;
+    setEnvironment(env);
+    queryClient.invalidateQueries();
+    toast.info(
+      env === "sandbox"
+        ? "Switched to Sandbox — showing test data"
+        : "Switched to Live — showing production data",
+      { duration: 3000 }
+    );
+  };
 
   // Ctrl+/ opens docs drawer
   useEffect(() => {
@@ -253,7 +268,7 @@ export function TopNav() {
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         <EnvSwitcher
           activeEnvironment={activeEnvironment}
-          setEnvironment={setEnvironment}
+          setEnvironment={handleEnvSwitch}
         />
 
         {/* Docs quick reference */}

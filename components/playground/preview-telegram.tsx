@@ -2,6 +2,7 @@ import { useComposerStore } from "@/hooks/use-composer-store";
 import { renderTelegramMessage } from "@/lib/telegram-renderer";
 import { useEffect, useState } from "react";
 import { MoreVertical, Paperclip, Smile, Mic } from "lucide-react";
+import Image from "next/image";
 
 export function PreviewTelegram() {
   const { telegramContent, telegramParseMode, testData } = useComposerStore();
@@ -30,8 +31,8 @@ export function PreviewTelegram() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-[#17212b] border-b border-[#101921] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
-            B
+          <div className="w-10 h-10 rounded-full bg-[#0e1621] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+            <Image src="/logo.svg" alt="Herald" width={28} height={28} className="rounded-full" />
           </div>
           <div>
             <div className="text-[#f5f5f5] font-semibold text-[15px]">Herald Bot</div>

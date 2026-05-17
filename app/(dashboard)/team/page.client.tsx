@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listTeam, inviteMember, removeMember, updateMemberRole } from "@/lib/api/team";
+import { getBillingStatus } from "@/lib/api/billing";
 import {
   Select,
   SelectContent,
@@ -32,6 +33,13 @@ export default function TeamPage() {
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<TeamMemberDto["role"]>("developer");
+
+  const { data: billing } = useQuery({
+    queryKey: ["billing-status"],
+    queryFn: getBillingStatus,
+    staleTime: 60_000,
+  });
+  const canInviteMembers = (billing?.tier ?? 0) >= 2;
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["team"],
@@ -131,14 +139,27 @@ export default function TeamPage() {
             Control access levels and manage permissions for your Herald protocol infrastructure.
           </p>
         </div>
-        <Button
-          id="team-invite-btn"
-          onClick={() => setIsInviteOpen(true)}
-          className="gap-2 h-12 px-6 rounded-xl shadow-lg shadow-teal/20 hover:shadow-teal/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
-        >
-          <FiUserPlus className="h-4 w-4" />
-          <span>Invite New Member</span>
-        </Button>
+        {canInviteMembers ? (
+          <Button
+            id="team-invite-btn"
+            onClick={() => setIsInviteOpen(true)}
+            className="gap-2 h-12 px-6 rounded-xl shadow-lg shadow-teal/20 hover:shadow-teal/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <FiUserPlus className="h-4 w-4" />
+            <span>Invite New Member</span>
+          </Button>
+        ) : (
+          <a
+            href="/billing"
+            className="flex items-center gap-2 h-12 px-6 rounded-xl text-sm font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+          >
+            <FiUserPlus className="h-4 w-4" />
+            <span>Invite Member</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.5 rounded ml-1">
+              Growth+
+            </span>
+          </a>
+        )}
       </div>
 
       <div id="team-members-table" className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">

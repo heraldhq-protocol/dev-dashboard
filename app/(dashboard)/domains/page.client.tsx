@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -11,6 +12,8 @@ import { useSession } from "next-auth/react";
 import { Globe } from "lucide-react";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { getBillingStatus } from "@/lib/api/billing";
+import { TierGatePage } from "@/components/shared/TierGatePage";
 
 function BimiSection({
   bimi,
@@ -104,6 +107,13 @@ interface DomainWithConfig extends Domain {
 export default function DomainsPage() {
   const { axios } = useApi();
   const { data: session, status } = useSession();
+
+  const { data: billing } = useQuery({
+    queryKey: ["billing-status"],
+    queryFn: getBillingStatus,
+    staleTime: 60_000,
+  });
+
   const [domains, setDomains] = useState<DomainWithConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -232,6 +242,16 @@ export default function DomainsPage() {
       d.id === domainId ? { ...d, showConfig: !d.showConfig } : d
     ));
   };
+
+  if (billing && billing.tier < 2) {
+    return (
+      <TierGatePage
+        feature="Custom Domains"
+        description="Send emails from your own branded domain with custom DKIM signing and BIMI brand indicators."
+        currentTierName={billing.tierName}
+      />
+    );
+  }
 
   if (isLoading || status === "loading") {
     return (

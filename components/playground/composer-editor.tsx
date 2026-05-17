@@ -172,6 +172,15 @@ export function ComposerEditor() {
     },
   }, [activeChannel]); // Re-create editor when channel changes to reset content properly
 
+  // Sync editor when store content changes externally (e.g. resetDraft)
+  useEffect(() => {
+    if (!editor) return;
+    const storeContent = activeChannel === "email" ? emailContent : activeChannel === "telegram" ? telegramContent : smsContent;
+    if (editor.getHTML() !== storeContent) {
+      editor.commands.setContent(storeContent, false);
+    }
+  }, [editor, emailContent, telegramContent, smsContent, activeChannel]);
+
   if (!editor) {
     return null;
   }
@@ -195,7 +204,7 @@ export function ComposerEditor() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-text-muted w-12 shrink-0">From</span>
-            <Input value="notifications@yourdomain.com" disabled className="bg-card-2/50 border-border h-8 text-xs flex-1 text-text-muted" />
+            <Input value="noreply@useherald.xyz" disabled className="bg-card-2/50 border-border h-8 text-xs flex-1 text-text-muted" />
           </div>
         </div>
       )}

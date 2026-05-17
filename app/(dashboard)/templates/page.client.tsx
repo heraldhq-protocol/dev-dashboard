@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -16,8 +18,10 @@ import {
 } from "@/components/ui/select";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { Copy, Check, ChevronRight, Code2, BookOpen, Wand2 } from "lucide-react";
+import { Copy, Check, ChevronRight, Code2, BookOpen, Wand2, Lock, ArrowUpRight } from "lucide-react";
+import { toast } from "sonner";
 import { getStarterTemplate } from "@/lib/api/templates";
+import { getBillingStatus } from "@/lib/api/billing";
 
 const CodeEditor = dynamic(
   () => import("@/components/ui/CodeEditor").then((m) => ({ default: m.CodeEditor })),
@@ -80,6 +84,14 @@ const HERALD_FOOTER_OPTIONS = [
 export default function TemplatesPage() {
   const { axios } = useApi();
   const router = useRouter();
+
+  const { data: billing } = useQuery({
+    queryKey: ["billing-status"],
+    queryFn: getBillingStatus,
+    staleTime: 60_000,
+  });
+  const canCreateTemplates = (billing?.tier ?? 0) >= 2;
+
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -160,9 +172,15 @@ export default function TemplatesPage() {
         setNewTemplate({ name: "", category: "defi", subjectTemplate: "", htmlSource: "", heraldFooter: "full", isDefault: false });
         setPreviewHtml(null);
         loadTemplates();
+        toast.success("Template created successfully.");
       }
-    } catch (error) {
-      console.error("Failed to create template:", error);
+    } catch (error: any) {
+      const msg: string =
+        error?.response?.data?.message ??
+        error?.response?.data ??
+        error?.message ??
+        "Failed to create template. Please try again.";
+      toast.error(typeof msg === "string" ? msg : "Failed to create template.");
     } finally {
       setIsCreating(false);
     }
@@ -223,28 +241,90 @@ export default function TemplatesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Templates</h1>
           <p className="text-sm text-text-muted mt-1">
-            Custom email templates for your notifications. Requires Growth tier or higher.
+            Custom email templates for your notifications.{" "}
+            {!canCreateTemplates && billing && (
+              <span className="text-amber-400 font-medium">Requires Growth tier or higher.</span>
+            )}
           </p>
         </div>
-        <Button
-          id="templates-create-btn"
-          onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); setNoAnimations(true); }}
-        >
-          Create Template
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/templates/marketplace"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-border bg-card-2 text-text-muted hover:text-foreground transition-colors"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+            Browse Marketplace
+          </Link>
+          {canCreateTemplates ? (
+            <Button
+              id="templates-create-btn"
+              onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); setNoAnimations(true); }}
+            >
+              Create Template
+            </Button>
+          ) : (
+            <a
+              href="/billing"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Upgrade to Growth
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
       </div>
+
+      {/* Tier gate banner */}
+      {!canCreateTemplates && billing && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
+          <Lock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-300">Custom templates require Growth tier</p>
+            <p className="text-xs text-amber-400/80 mt-0.5">
+              You&apos;re on the <span className="font-medium">{billing.tierName}</span> plan. Upgrade to Growth or higher to create and manage custom email templates.
+              Browse the <Link href="/templates/marketplace" className="underline hover:text-amber-300">Marketplace</Link> to use pre-built templates on any plan.
+            </p>
+          </div>
+          <a
+            href="/billing"
+            className="shrink-0 flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition-colors"
+          >
+            View Plans
+            <ArrowUpRight className="h-3 w-3" />
+          </a>
+        </div>
+      )}
 
       {templates.length === 0 ? (
         <Card id="templates-list" className="border border-border">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="w-14 h-14 rounded-2xl bg-teal/10 border border-teal/20 flex items-center justify-center mb-4">
-              <Code2 className="w-7 h-7 text-teal" />
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${canCreateTemplates ? "bg-teal/10 border border-teal/20" : "bg-amber-500/10 border border-amber-500/20"}`}>
+              {canCreateTemplates ? <Code2 className="w-7 h-7 text-teal" /> : <Lock className="w-7 h-7 text-amber-400" />}
             </div>
-            <p className="text-foreground font-semibold mb-1">No templates yet</p>
-            <p className="text-text-muted text-sm mb-5">Create your first email template to start customising notifications.</p>
-            <Button onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); }}>
-              Create Template
-            </Button>
+            <p className="text-foreground font-semibold mb-1">
+              {canCreateTemplates ? "No templates yet" : "Custom templates locked"}
+            </p>
+            <p className="text-text-muted text-sm mb-5 text-center max-w-sm">
+              {canCreateTemplates
+                ? "Create your first email template to start customising notifications."
+                : `You're on the ${billing?.tierName ?? "Developer"} plan. Upgrade to Growth to create custom email templates.`}
+            </p>
+            {canCreateTemplates ? (
+              <Button onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); }}>
+                Create Template
+              </Button>
+            ) : (
+              <a
+                href="/billing"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+              >
+                <ArrowUpRight className="h-4 w-4" />
+                Upgrade to Growth
+              </a>
+            )}
           </CardContent>
         </Card>
       ) : (

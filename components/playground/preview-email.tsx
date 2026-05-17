@@ -1,21 +1,57 @@
 import { useComposerStore } from "@/hooks/use-composer-store";
-import { renderEmailHtml } from "@/lib/email-renderer";
-import { useEffect, useState } from "react";
-import { Smartphone, Monitor } from "lucide-react";
+import { renderEmailHtml, stripMentionSpans } from "@/lib/email-renderer";
+import { previewNotification } from "@/lib/api/notifications";
+import { usePlaygroundKey } from "@/hooks/use-playground-key";
+import { useEffect, useState, useRef } from "react";
+import { Smartphone, Monitor, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export function PreviewEmail() {
   const { emailContent, emailSubject, testData } = useComposerStore();
+  const { activeKey } = usePlaygroundKey();
   const [html, setHtml] = useState("");
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Debounce rendering
-    const timer = setTimeout(() => {
-      setHtml(renderEmailHtml(emailContent, testData));
-    }, 300);
+    const timer = setTimeout(async () => {
+      // Strip TipTap mention spans, then interpolate variables
+      const interpolated = stripMentionSpans(emailContent).replace(
+        /{{\s*([^}]+?)\s*}}/g,
+        (match, key) => testData[key.trim()] ?? match,
+      );
+      const subject = emailSubject.replace(
+        /{{\s*([^}]+?)\s*}}/g,
+        (match, key) => testData[key.trim()] ?? match,
+      );
+
+      if (activeKey.startsWith("hrld_test_")) {
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+        setIsLoadingPreview(true);
+        try {
+          const result = await previewNotification(
+            { walletAddress: "preview", subject, body: interpolated, category: "system" },
+            activeKey,
+            "email",
+          );
+          if (result.renderedHtml) {
+            setHtml(result.renderedHtml);
+            return;
+          }
+        } catch {
+          // fall through to local renderer
+        } finally {
+          setIsLoadingPreview(false);
+        }
+      }
+
+      // Local fallback: content is TipTap HTML — interpolate and wrap in a clean shell
+      setHtml(renderEmailHtml(interpolated, {}));
+    }, 400);
     return () => clearTimeout(timer);
-  }, [emailContent, testData]);
+  }, [emailContent, emailSubject, testData, activeKey]);
 
   const subjectLine = emailSubject
     ? emailSubject.replace(/{{\s*([^}]+?)\s*}}/g, (match, key) => testData[key.trim()] ?? match)
@@ -29,7 +65,7 @@ export function PreviewEmail() {
           <div className="h-6 w-6 rounded-full bg-teal/20 flex items-center justify-center text-teal text-xs font-bold">H</div>
           <div>
             <div className="text-xs font-semibold text-foreground">{subjectLine}</div>
-            <div className="text-[10px] text-text-muted">From: notifications@yourdomain.com</div>
+            <div className="text-[10px] text-text-muted">From: noreply@useherald.xyz</div>
           </div>
         </div>
         <div className="flex items-center gap-1 bg-card-2 p-1 rounded-md border border-border">
@@ -59,7 +95,12 @@ export function PreviewEmail() {
             device === "mobile" ? "w-full sm:w-[375px] rounded-3xl min-h-[667px]" : "w-full max-w-[600px] rounded-lg min-h-full"
           }`}
         >
-          {html ? (
+          {isLoadingPreview ? (
+            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 min-h-[400px]">
+              <Loader2 className="w-5 h-5 animate-spin mb-2 opacity-40" />
+              <p className="text-xs opacity-50">Rendering template…</p>
+            </div>
+          ) : html ? (
             <iframe
               title="Email Preview"
               srcDoc={html}
@@ -67,7 +108,7 @@ export function PreviewEmail() {
               sandbox="allow-same-origin"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 min-h-[400px]">
               <Monitor className="w-8 h-8 mb-2 opacity-20" />
               <p className="text-xs">No content to preview</p>
             </div>

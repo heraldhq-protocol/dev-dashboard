@@ -39,3 +39,36 @@ export async function getRecentNotifications(
   });
   return data;
 }
+
+export interface AudienceAnalytics {
+  totalRegistered: number;
+  activeLastThirtyDays: number;
+  retentionRate: number;
+  channelCoverage: { email: number; telegram: number; sms: number };
+  registrationTrend: { date: string; count: number }[];
+}
+
+export async function getAudienceAnalytics(): Promise<AudienceAnalytics> {
+  const { data } = await apiClient.get<AudienceAnalytics>("/analytics/audience");
+  return data;
+}
+
+export interface EngagementMetrics {
+  totalSends: number;
+  opens: number;
+  clicks: number;
+  unsubscribes: number;
+  openRate: number;
+  clickRate: number;
+  unsubscribeRate: number;
+  period: { from: string; to: string };
+}
+
+export async function getEngagementMetrics(params?: {
+  startDate?: string;
+  endDate?: string;
+  templateId?: string;
+}): Promise<EngagementMetrics> {
+  const { data } = await apiClient.get<EngagementMetrics>("/analytics/engagement", { params });
+  return data;
+}

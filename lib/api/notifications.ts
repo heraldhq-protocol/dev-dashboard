@@ -98,6 +98,30 @@ export async function testSend(
   return data;
 }
 
+export interface NotificationStatus {
+  notification_id: string;
+  status: "queued" | "processing" | "delivered" | "partial" | "failed" | "opted_out" | "digested";
+  category: string;
+  created_at: string;
+  delivered_at: string | null;
+  receipt_tx: string | null;
+  email_provider: string | null;
+  bounce: boolean;
+  error_code?: string;
+}
+
+export async function getNotificationStatus(
+  notificationId: string,
+  apiKey: string,
+): Promise<NotificationStatus> {
+  const notificationClient = getNotificationApiClient(apiKey);
+  const gatewayUrl = getNotificationGatewayUrl();
+  const { data } = await notificationClient.get<NotificationStatus>(
+    `${gatewayUrl}/v1/notifications/${notificationId}`,
+  );
+  return data;
+}
+
 export async function sandboxSend(
   dto: {
     subject: string;

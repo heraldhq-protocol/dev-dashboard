@@ -108,3 +108,21 @@ export async function updateProtocolAsset(
 export async function deleteProtocolAsset(assetId: string): Promise<void> {
   await apiClient.delete(`${BASE}/me/assets/${assetId}`);
 }
+
+export interface RetryPolicy {
+  retryMaxAttempts: number;
+  retryWindowHours: number;
+  retryBackoff: "linear" | "exponential";
+  criticalCategories: string[];
+  trackEngagement: boolean;
+}
+
+export async function getRetryPolicy(): Promise<RetryPolicy> {
+  const { data } = await apiClient.get<RetryPolicy>(`${BASE}/me/retry-policy`);
+  return data;
+}
+
+export async function updateRetryPolicy(dto: Partial<RetryPolicy>): Promise<RetryPolicy> {
+  const { data } = await apiClient.patch<RetryPolicy>(`${BASE}/me/retry-policy`, dto);
+  return data;
+}

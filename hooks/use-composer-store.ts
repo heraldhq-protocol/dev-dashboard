@@ -29,9 +29,9 @@ export interface ComposerState {
 }
 
 const DEFAULT_CONTENT = {
-  email: "<p>Hello {{name}},</p><p>This is a test notification from your protocol.</p>",
-  telegram: "Hello {{name}},\n\nThis is a test notification from your protocol.",
-  sms: "Hello {{name}},\n\nThis is a test notification from your protocol.",
+  email: `<p>Hello <strong>{{name}}</strong>,</p><p>Your transaction of <strong>{{amount}}</strong> has been confirmed on-chain.</p><p>Everything looks good — your position is active and earning. Check your dashboard for the latest details.</p><p>If you didn't initiate this action, please review your account immediately.</p>`,
+  telegram: "Hello {{name}},\n\nYour transaction of *{{amount}}* has been confirmed on-chain.\n\nCheck your dashboard for details.",
+  sms: "Herald: Hi {{name}}, your {{amount}} transaction is confirmed. Reply STOP to opt out.",
 };
 
 export const useComposerStore = create<ComposerState>()(
@@ -43,12 +43,12 @@ export const useComposerStore = create<ComposerState>()(
       telegramContent: DEFAULT_CONTENT.telegram,
       smsContent: DEFAULT_CONTENT.sms,
       
-      emailSubject: "Test Notification",
+      emailSubject: "Transaction Confirmed — {{amount}}",
       telegramParseMode: "MarkdownV2",
-      
+
       testData: {
-        name: "User",
-        amount: "100.50 USDC",
+        name: "Alex",
+        amount: "250.00 USDC",
       },
       
       setActiveChannel: (channel) => set({ activeChannel: channel }),
@@ -73,7 +73,7 @@ export const useComposerStore = create<ComposerState>()(
       }),
       
       resetDraft: (channel) => set(() => {
-        if (channel === "email") return { emailContent: DEFAULT_CONTENT.email, emailSubject: "Test Notification" };
+        if (channel === "email") return { emailContent: DEFAULT_CONTENT.email, emailSubject: "Transaction Confirmed — {{amount}}" };
         if (channel === "telegram") return { telegramContent: DEFAULT_CONTENT.telegram };
         return { smsContent: DEFAULT_CONTENT.sms };
       }),

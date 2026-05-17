@@ -43,6 +43,7 @@ export function getNotificationApiClient(apiKey: string) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      "X-Herald-Environment": getActiveEnvironment(),
     },
   });
 
@@ -64,6 +65,19 @@ export function getNotificationApiClient(apiKey: string) {
   );
 
   return client;
+}
+
+// Read the persisted environment from Zustand localStorage
+function getActiveEnvironment(): "sandbox" | "live" {
+  if (typeof window === "undefined") return "live";
+  try {
+    const raw = localStorage.getItem("herald-ui-storage");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed?.state?.activeEnvironment ?? "sandbox";
+    }
+  } catch {}
+  return "sandbox";
 }
 
 // Request interceptor for injecting auth token
