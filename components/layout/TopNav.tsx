@@ -10,17 +10,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FiLogOut, FiUser, FiSettings } from "react-icons/fi";
-import { Bell } from "lucide-react";
+import { FiLogOut, FiSettings, FiUsers } from "react-icons/fi";
+import { Bell, ShieldCheck, Copy, Check } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { ChangelogDrawer } from "@/components/changelog/ChangelogDrawer";
 import { DocsDrawer } from "@/components/docs/DocsDrawer";
 import { getUnreadCount } from "@/lib/changelog";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getProtocol } from "@/lib/api/protocol";
+import { cn } from "@/lib/utils";
 
 // ─── Breadcrumb helper ──────────────────────────────────────
 
@@ -37,6 +39,10 @@ const ROUTE_LABELS: Record<string, string> = {
   team: "Team",
   status: "System Status",
   settings: "Settings",
+  campaigns: "Campaigns",
+  scheduled: "Scheduled",
+  requests: "Request Inspector",
+  engagement: "Engagement",
 };
 
 function Breadcrumb({ pathname }: { pathname: string }) {
@@ -88,10 +94,35 @@ function Breadcrumb({ pathname }: { pathname: string }) {
   );
 }
 
-// ─── Avatar monogram ────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────
 
-function UserAvatar({ userId }: { userId?: string }) {
-  const initials = userId ? userId.slice(0, 2).toUpperCase() : "D";
+function getInitials(name?: string | null, fallback?: string | null): string {
+  if (name) {
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  }
+  if (fallback) return fallback.slice(0, 2).toUpperCase();
+  return "P";
+}
+
+const TIER_LABELS: Record<number, string> = {
+  0: "Developer",
+  1: "Growth",
+  2: "Scale",
+  3: "Enterprise",
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  owner: "Owner",
+  admin: "Admin",
+  developer: "Developer",
+  read_only: "Read-only",
+};
+
+// ─── Avatar ─────────────────────────────────────────────────
+
+function UserAvatar({ initials }: { initials: string }) {
   return (
     <div
       className="relative h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-navy shrink-0 cursor-pointer select-none"
@@ -102,6 +133,33 @@ function UserAvatar({ userId }: { userId?: string }) {
       {initials}
       <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green border-2 border-navy" />
     </div>
+  );
+}
+
+// ─── Copy button for wallet address ─────────────────────────
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="shrink-0 text-text-muted hover:text-teal transition-colors"
+      title="Copy wallet address"
+    >
+      {copied ? (
+        <Check className="h-3 w-3 text-teal" />
+      ) : (
+        <Copy className="h-3 w-3" />
+      )}
+    </button>
   );
 }
 
@@ -165,6 +223,26 @@ export function TopNav() {
   const pathname = usePathname();
   const unreadCount = getUnreadCount(lastReadChangelog);
   const queryClient = useQueryClient();
+
+  const { data: protocol } = useQuery({
+    queryKey: ["protocol"],
+    queryFn: getProtocol,
+    staleTime: 5 * 60 * 1000,
+    enabled: !!session?.user,
+  });
+
+  const protocolName = protocol?.protocolName ?? protocol?.name ?? null;
+  const walletAddress = session?.user?.id ?? null;
+  const role = session?.user?.role ?? "owner";
+  const tier = session?.user?.tier ?? 0;
+  const initials = getInitials(protocolName, walletAddress);
+  const tierLabel = TIER_LABELS[tier] ?? "Developer";
+  const roleLabel = ROLE_LABELS[role] ?? "Owner";
+  const isVerified = protocol?.verificationStatus === "VERIFIED";
+
+  const shortWallet = walletAddress
+    ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`
+    : null;
 
   const handleEnvSwitch = (env: "sandbox" | "live") => {
     if (env === activeEnvironment) return;
@@ -302,14 +380,17 @@ export function TopNav() {
         {session?.user && (
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-secondary p-1 rounded-lg transition-colors cursor-pointer outline-hidden">
-              <UserAvatar userId={session?.user?.id} />
-              <span className="hidden sm:inline text-sm text-text-muted">
-                {session?.user?.id
-                  ? `${session.user.id.slice(0, 4)}…${session.user.id.slice(-4)}`
-                  : "user..."}
-              </span>
+              <UserAvatar initials={initials} />
+              <div className="hidden sm:flex flex-col items-start min-w-0">
+                <span className="text-xs font-semibold text-foreground leading-tight truncate max-w-[120px]">
+                  {protocolName ?? shortWallet ?? "My Protocol"}
+                </span>
+                <span className="text-[10px] text-text-muted leading-tight">
+                  {roleLabel} · {tierLabel}
+                </span>
+              </div>
               <svg
-                className="hidden sm:block h-4 w-4 text-text-muted"
+                className="hidden sm:block h-4 w-4 text-text-muted shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
               >
@@ -322,26 +403,74 @@ export function TopNav() {
                 />
               </svg>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent
               align="end"
-              className="w-60 bg-navy border-border/60 shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl p-1.5 rounded-2xl"
+              className="w-64 bg-navy border-border/60 shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl p-1.5 rounded-2xl"
             >
+              {/* ── Identity header ── */}
               <DropdownMenuLabel className="px-1.5 py-1.5 mb-1">
-                <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-card-2/30 border border-border/20 relative overflow-hidden group/header">
-                  <div className="absolute top-0 right-0 w-12 h-12 bg-teal/5 rounded-full -mr-6 -mt-6 blur-xl group-hover/header:bg-teal/10 transition-colors" />
-                  <span className="text-[9px] text-teal font-bold uppercase tracking-[0.2em]">
-                    Authorized
-                  </span>
-                  {session?.user?.id && (
-                    <span className="text-xs font-mono text-foreground truncate">
-                      {session?.user?.id
-                        ? `${session.user.id.slice(0, 8)}...${session.user.id.slice(-6)}`
-                        : "Unknown"}
+                <div className="p-3 rounded-xl bg-card-2/30 border border-border/20 space-y-3 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-teal/5 rounded-full -mr-8 -mt-8 blur-xl" />
+
+                  {/* Protocol name + verification */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-foreground truncate leading-tight">
+                        {protocolName ?? "Unnamed Protocol"}
+                      </p>
+                      <p className="text-[10px] text-text-muted mt-0.5">
+                        Protocol account
+                      </p>
+                    </div>
+                    {isVerified && (
+                      <div
+                        className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-teal/10 border border-teal/20"
+                        title="Verified protocol"
+                      >
+                        <ShieldCheck className="h-3 w-3 text-teal" />
+                        <span className="text-[10px] font-semibold text-teal">
+                          Verified
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Role + Tier badges */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-foreground border border-border/40">
+                      {roleLabel}
                     </span>
+                    <span
+                      className={cn(
+                        "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+                        tier === 0
+                          ? "bg-secondary text-text-muted border-border/40"
+                          : tier === 1
+                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            : tier === 2
+                              ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                              : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                      )}
+                    >
+                      {tierLabel}
+                    </span>
+                  </div>
+
+                  {/* Wallet address */}
+                  {walletAddress && (
+                    <div className="flex items-center gap-1.5 pt-0.5 border-t border-border/20">
+                      <span className="text-[10px] text-text-muted">Wallet</span>
+                      <code className="text-[10px] font-mono text-foreground/70 truncate flex-1">
+                        {shortWallet}
+                      </code>
+                      <CopyButton text={walletAddress} />
+                    </div>
                   )}
                 </div>
               </DropdownMenuLabel>
 
+              {/* ── Menu items ── */}
               <div className="space-y-0.5">
                 <DropdownMenuItem
                   className="flex items-center gap-3 px-2 py-1.5 cursor-pointer rounded-xl focus:bg-secondary focus:text-foreground transition-all duration-200"
@@ -352,8 +481,8 @@ export function TopNav() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold">Settings</span>
-                    <span className="text-[9px] text-text-muted">
-                      Preferences & keys
+                    <span className="text-[10px] text-text-muted">
+                      Protocol & preferences
                     </span>
                   </div>
                 </DropdownMenuItem>
@@ -363,12 +492,29 @@ export function TopNav() {
                   onClick={() => (window.location.href = "/team")}
                 >
                   <div className="w-7 h-7 rounded-lg bg-secondary/50 flex items-center justify-center text-text-muted">
-                    <FiUser className="w-3.5 h-3.5" />
+                    <FiUsers className="w-3.5 h-3.5" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold">Team</span>
-                    <span className="text-[9px] text-text-muted">
+                    <span className="text-[10px] text-text-muted">
                       Members & roles
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  className="flex items-center gap-3 px-2 py-1.5 cursor-pointer rounded-xl focus:bg-secondary focus:text-foreground transition-all duration-200"
+                  onClick={() => (window.location.href = "/billing")}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-secondary/50 flex items-center justify-center text-text-muted">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold">Billing & Plan</span>
+                    <span className="text-[10px] text-text-muted">
+                      Usage & upgrades
                     </span>
                   </div>
                 </DropdownMenuItem>
@@ -384,8 +530,10 @@ export function TopNav() {
                   <FiLogOut className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-semibold">Log out</span>
-                  <span className="text-[9px] opacity-70">End session</span>
+                  <span className="text-xs font-semibold">Sign out</span>
+                  <span className="text-[10px] opacity-70">
+                    End your session
+                  </span>
                 </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
