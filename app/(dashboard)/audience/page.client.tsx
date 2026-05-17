@@ -66,9 +66,9 @@ export default function AudiencePage() {
           isLoading={isLoading}
         />
         <StatCard
-          label="Email Coverage"
-          value={isLoading ? "—" : `${data?.channelCoverage.email ?? 0}%`}
-          detail="subscribers with email"
+          label="Broadcastable"
+          value={isLoading ? "—" : (data?.broadcastableSubscribers ?? 0).toLocaleString()}
+          detail="reachable via broadcast"
           isLoading={isLoading}
         />
       </div>
@@ -119,6 +119,20 @@ export default function AudiencePage() {
           )}
         </DashboardCard>
       </div>
+
+      {/* Source breakdown */}
+      {!isLoading && data?.bySource && Object.keys(data.bySource).length > 0 && (
+        <DashboardCard header={{ title: "Subscriber Sources" }}>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {Object.entries(data.bySource).map(([source, count]) => (
+              <div key={source} className="flex items-center justify-between rounded-lg border border-border bg-card-2 px-4 py-3">
+                <span className="text-xs text-text-muted capitalize">{source.replace(/_/g, " ")}</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">{(count as number).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
+      )}
 
       {/* Audience Registration — shareable link */}
       <DashboardCard

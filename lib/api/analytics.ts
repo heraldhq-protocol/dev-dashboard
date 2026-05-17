@@ -42,14 +42,16 @@ export async function getRecentNotifications(
 
 export interface AudienceAnalytics {
   totalRegistered: number;
+  broadcastableSubscribers: number;
   activeLastThirtyDays: number;
   retentionRate: number;
   channelCoverage: { email: number; telegram: number; sms: number };
+  bySource: Record<string, number>;
   registrationTrend: { date: string; count: number }[];
 }
 
 export async function getAudienceAnalytics(): Promise<AudienceAnalytics> {
-  const { data } = await apiClient.get<AudienceAnalytics>("/analytics/audience");
+  const { data } = await apiClient.get<AudienceAnalytics>("/v1/audience");
   return data;
 }
 
