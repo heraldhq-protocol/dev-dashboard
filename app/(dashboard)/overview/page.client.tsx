@@ -24,6 +24,8 @@ import Link from "next/link";
 import { BarChart3, ShieldCheck, Webhook } from "lucide-react";
 import { ProjectedUsageCard } from "@/components/billing/ProjectedUsageCard";
 import { WebhookReliabilityBadge } from "@/components/webhooks/WebhookReliabilityBadge";
+import { getProtocol } from "@/lib/api/protocol";
+import { VerificationCard } from "@/components/protocol/VerificationCard";
 
 export default function OverviewPage() {
   const { data: stats, isLoading } = useQuery({
@@ -46,6 +48,12 @@ export default function OverviewPage() {
   const { data: webhookReliability } = useQuery({
     queryKey: ["webhooks", "reliability"],
     queryFn: getWebhookReliability,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: protocol } = useQuery({
+    queryKey: ["protocol"],
+    queryFn: getProtocol,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -358,6 +366,14 @@ export default function OverviewPage() {
           </div>
         </DashboardCard>
       </div>
+
+      {/* Protocol Verification */}
+      {protocol && (
+        <VerificationCard
+          status={protocol.verificationStatus ?? "UNVERIFIED"}
+          verifiedAt={protocol.verifiedAt}
+        />
+      )}
     </div>
   );
 }

@@ -126,3 +126,12 @@ export async function updateRetryPolicy(dto: Partial<RetryPolicy>): Promise<Retr
   const { data } = await apiClient.patch<RetryPolicy>(`${BASE}/me/retry-policy`, dto);
   return data;
 }
+
+export interface VerificationRequest {
+  reason: string;
+}
+
+export async function requestVerification(dto: VerificationRequest): Promise<{ status: string }> {
+  const { data } = await apiClient.post<{ status: string }>(`${BASE}/me/request-verification`, dto);
+  return data;
+}

@@ -5,33 +5,23 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { EngagementKpiRow } from "@/components/analytics/EngagementKpiRow";
 import { DashboardCard } from "@/components/ui/DashboardCard";
 import { getEngagementMetrics } from "@/lib/api/analytics";
-import { getBillingStatus } from "@/lib/api/billing";
-import { TierGatePage } from "@/components/shared/TierGatePage";
 import { format } from "date-fns";
+import { UpgradeGate } from "@/components/billing/UpgradeGate";
 
 export default function EngagementAnalyticsPage() {
-  const { data: billing } = useQuery({
-    queryKey: ["billing-status"],
-    queryFn: getBillingStatus,
-    staleTime: 60_000,
-  });
+  return (
+    <UpgradeGate minTier={1} feature="Engagement Analytics" description="Track open rates, click rates, and unsubscribes across your email notifications.">
+      <EngagementContent />
+    </UpgradeGate>
+  );
+}
 
+function EngagementContent() {
   const { data, isLoading } = useQuery({
     queryKey: ["engagementMetrics"],
     queryFn: () => getEngagementMetrics(),
     staleTime: 120_000,
-    enabled: (billing?.tier ?? 0) >= 1,
   });
-
-  if (billing && billing.tier < 1) {
-    return (
-      <TierGatePage
-        feature="Engagement Analytics"
-        description="Track open rates, click rates, and unsubscribes across your email notifications."
-        currentTierName={billing.tierName}
-      />
-    );
-  }
 
   const periodStr =
     data?.period

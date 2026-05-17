@@ -11,6 +11,8 @@ export interface AuthTokensResponse {
 
 // ── Protocol ─────────────────────────────────────────────────────────────────
 
+export type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
+
 export interface ProtocolProfileDto {
   id: string;
   name: string;
@@ -24,11 +26,17 @@ export interface ProtocolProfileDto {
   tier?: number;
   tierName?: string;
   isActive?: boolean;
+  isSuspended?: boolean;
   website?: string;
   customFromName?: string;
   notificationCategories?: string[];
   createdAt?: string;
   sendsThisPeriod?: number;
+  // Verification
+  verificationStatus?: VerificationStatus;
+  verifiedAt?: string | null;
+  // Herald platform admin flag
+  isHeraldAdmin?: boolean;
 }
 
 export interface UpdateProtocolDto {

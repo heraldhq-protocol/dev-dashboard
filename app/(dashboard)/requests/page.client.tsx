@@ -8,8 +8,7 @@ import { RequestFilters } from "@/components/requests/RequestFilters";
 import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestDetailDrawer } from "@/components/requests/RequestDetailDrawer";
 import { getRequestLogs, type RequestLogItem, type RequestLogFilters } from "@/lib/api/requests";
-import { getBillingStatus } from "@/lib/api/billing";
-import { TierGatePage } from "@/components/shared/TierGatePage";
+import { UpgradeGate } from "@/components/billing/UpgradeGate";
 
 const DEFAULT_FILTERS: RequestLogFilters = {
   page: 1,
@@ -17,21 +16,22 @@ const DEFAULT_FILTERS: RequestLogFilters = {
 };
 
 export default function RequestInspectorPage() {
+  return (
+    <UpgradeGate minTier={2} feature="Request Inspector" description="Inspect every API request — payloads, status codes, latency, and full response bodies.">
+      <RequestInspectorContent />
+    </UpgradeGate>
+  );
+}
+
+function RequestInspectorContent() {
   const [filters, setFilters] = useState<RequestLogFilters>(DEFAULT_FILTERS);
   const [selectedLog, setSelectedLog] = useState<RequestLogItem | null>(null);
-
-  const { data: billing } = useQuery({
-    queryKey: ["billing-status"],
-    queryFn: getBillingStatus,
-    staleTime: 60_000,
-  });
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["requests", filters],
     queryFn: () => getRequestLogs(filters),
     staleTime: 30_000,
     placeholderData: (prev) => prev,
-    enabled: (billing?.tier ?? 0) >= 2,
   });
 
   const handleFiltersChange = useCallback((next: RequestLogFilters) => {
@@ -45,16 +45,6 @@ export default function RequestInspectorPage() {
   const handleCloseDrawer = useCallback(() => {
     setSelectedLog(null);
   }, []);
-
-  if (billing && billing.tier < 2) {
-    return (
-      <TierGatePage
-        feature="Request Inspector"
-        description="Inspect every API request — payloads, status codes, latency, and full response bodies."
-        currentTierName={billing.tierName}
-      />
-    );
-  }
 
   const page = filters.page ?? 1;
   const limit = filters.limit ?? 50;
