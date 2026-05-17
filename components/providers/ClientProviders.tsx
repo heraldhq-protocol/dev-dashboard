@@ -27,6 +27,7 @@ const RPC_ENDPOINT =
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { OnboardingTourProvider } from "@/components/providers/OnboardingTourProvider";
+import { PrivyProvider } from "@/components/providers/PrivyProvider";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -42,17 +43,18 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   const wallets = useState(() => [new PhantomWalletAdapter()])[0];
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <SessionProvider>
-        <QueryClientProvider client={queryClient}>
-          <ConnectionProvider endpoint={RPC_ENDPOINT}>
-            <WalletProvider wallets={wallets} autoConnect>
-              <WalletModalProvider>
-                <TooltipProvider>
-                  <OnboardingTourProvider>
-                    {children}
-                  </OnboardingTourProvider>
-                </TooltipProvider>
+    <PrivyProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <SessionProvider>
+          <QueryClientProvider client={queryClient}>
+            <ConnectionProvider endpoint={RPC_ENDPOINT}>
+              <WalletProvider wallets={wallets} autoConnect>
+                <WalletModalProvider>
+                  <TooltipProvider>
+                    <OnboardingTourProvider>
+                      {children}
+                    </OnboardingTourProvider>
+                  </TooltipProvider>
                 <Toaster
                   position="bottom-right"
                   toastOptions={{
@@ -73,5 +75,6 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
         </QueryClientProvider>
       </SessionProvider>
     </ThemeProvider>
+  </PrivyProvider>
   );
 }

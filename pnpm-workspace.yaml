@@ -1,9 +1,11 @@
 allowBuilds:
+  '@reown/appkit': true
   '@stellar/stellar-sdk': true
   bcrypt: true
   bigint-buffer: true
   blake-hash: true
   bufferutil: true
+  keccak: true
   msw: true
   protobufjs: true
   sharp: true
