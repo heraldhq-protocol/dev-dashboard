@@ -20,10 +20,10 @@ export default function EngagementAnalyticsPage() {
     queryKey: ["engagementMetrics"],
     queryFn: () => getEngagementMetrics(),
     staleTime: 120_000,
-    enabled: (billing?.tier ?? 0) >= 2,
+    enabled: (billing?.tier ?? 0) >= 1,
   });
 
-  if (billing && billing.tier < 2) {
+  if (billing && billing.tier < 1) {
     return (
       <TierGatePage
         feature="Engagement Analytics"

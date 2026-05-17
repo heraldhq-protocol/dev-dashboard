@@ -90,7 +90,11 @@ export default function TemplatesPage() {
     queryFn: getBillingStatus,
     staleTime: 60_000,
   });
-  const canCreateTemplates = (billing?.tier ?? 0) >= 2;
+  const TEMPLATE_LIMITS: Record<number, number | null> = { 0: 3, 1: 10, 2: null, 3: null };
+  const currentTier = billing?.tier ?? 0;
+  const templateLimit = TEMPLATE_LIMITS[currentTier] ?? 3;
+  const atTemplateLimit = templateLimit !== null && templates.length >= templateLimit;
+  const canCreateTemplates = !atTemplateLimit;
 
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -242,8 +246,10 @@ export default function TemplatesPage() {
           <h1 className="text-2xl font-bold text-foreground">Email Templates</h1>
           <p className="text-sm text-text-muted mt-1">
             Custom email templates for your notifications.{" "}
-            {!canCreateTemplates && billing && (
-              <span className="text-amber-400 font-medium">Requires Growth tier or higher.</span>
+            {templateLimit !== null && (
+              <span className={atTemplateLimit ? "text-amber-400 font-medium" : "text-text-muted/70"}>
+                {templates.length}/{templateLimit} used
+              </span>
             )}
           </p>
         </div>
@@ -270,22 +276,25 @@ export default function TemplatesPage() {
               className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
             >
               <Lock className="h-3.5 w-3.5" />
-              Upgrade to Growth
+              Upgrade to unlock more
               <ArrowUpRight className="h-3.5 w-3.5" />
             </a>
           )}
         </div>
       </div>
 
-      {/* Tier gate banner */}
-      {!canCreateTemplates && billing && (
+      {/* Template limit banner */}
+      {atTemplateLimit && billing && (
         <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
           <Lock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-300">Custom templates require Growth tier</p>
+            <p className="text-sm font-semibold text-amber-300">
+              Template limit reached ({templateLimit}/{templateLimit})
+            </p>
             <p className="text-xs text-amber-400/80 mt-0.5">
-              You&apos;re on the <span className="font-medium">{billing.tierName}</span> plan. Upgrade to Growth or higher to create and manage custom email templates.
-              Browse the <Link href="/templates/marketplace" className="underline hover:text-amber-300">Marketplace</Link> to use pre-built templates on any plan.
+              You&apos;re on the <span className="font-medium">{billing.tierName}</span> plan ({templateLimit} template limit).
+              Upgrade to create more custom templates, or browse the{" "}
+              <Link href="/templates/marketplace" className="underline hover:text-amber-300">Marketplace</Link> for pre-built options.
             </p>
           </div>
           <a
@@ -301,30 +310,16 @@ export default function TemplatesPage() {
       {templates.length === 0 ? (
         <Card id="templates-list" className="border border-border">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${canCreateTemplates ? "bg-teal/10 border border-teal/20" : "bg-amber-500/10 border border-amber-500/20"}`}>
-              {canCreateTemplates ? <Code2 className="w-7 h-7 text-teal" /> : <Lock className="w-7 h-7 text-amber-400" />}
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-teal/10 border border-teal/20">
+              <Code2 className="w-7 h-7 text-teal" />
             </div>
-            <p className="text-foreground font-semibold mb-1">
-              {canCreateTemplates ? "No templates yet" : "Custom templates locked"}
-            </p>
+            <p className="text-foreground font-semibold mb-1">No templates yet</p>
             <p className="text-text-muted text-sm mb-5 text-center max-w-sm">
-              {canCreateTemplates
-                ? "Create your first email template to start customising notifications."
-                : `You're on the ${billing?.tierName ?? "Developer"} plan. Upgrade to Growth to create custom email templates.`}
+              Create your first email template to start customising notifications.
             </p>
-            {canCreateTemplates ? (
-              <Button onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); }}>
-                Create Template
-              </Button>
-            ) : (
-              <a
-                href="/billing"
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
-              >
-                <ArrowUpRight className="h-4 w-4" />
-                Upgrade to Growth
-              </a>
-            )}
+            <Button onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); }}>
+              Create Template
+            </Button>
           </CardContent>
         </Card>
       ) : (
