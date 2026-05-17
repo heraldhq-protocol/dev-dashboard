@@ -309,7 +309,7 @@ export default function ComposersPlaygroundPage() {
         }
       />
 
-      {/* ── Delivery Status Banner ── */}
+{/* ── Delivery Status Banner ── */}
       {deliveryStatus && (
         <DeliveryStatusBanner
           status={deliveryStatus}
@@ -399,7 +399,7 @@ export default function ComposersPlaygroundPage() {
           <DialogHeader>
             <DialogTitle>Send Test Notification</DialogTitle>
             <DialogDescription>
-              {sendMode === "test-contacts"
+{sendMode === "test-contacts"
                 ? "Deliver to your configured test contacts — no recipient address needed."
                 : `Send a test ${store.activeChannel} to verify delivery. Variables will be replaced with your Test Data.`}
             </DialogDescription>
@@ -523,7 +523,7 @@ export default function ComposersPlaygroundPage() {
             </Button>
             <Button
               onClick={() => sendMutation.mutate()}
-              disabled={
+disabled={
                 (sendMode === "manual-address" && !recipient) ||
                 !hasValidKey ||
                 sendMutation.isPending ||
