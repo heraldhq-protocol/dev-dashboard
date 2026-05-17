@@ -177,7 +177,7 @@ export function ComposerEditor() {
     if (!editor) return;
     const storeContent = activeChannel === "email" ? emailContent : activeChannel === "telegram" ? telegramContent : smsContent;
     if (editor.getHTML() !== storeContent) {
-      editor.commands.setContent(storeContent, false);
+      editor.commands.setContent(storeContent, { emitUpdate: false });
     }
   }, [editor, emailContent, telegramContent, smsContent, activeChannel]);
 

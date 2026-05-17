@@ -90,13 +90,14 @@ export default function TemplatesPage() {
     queryFn: getBillingStatus,
     staleTime: 60_000,
   });
+
+  const [templates, setTemplates] = useState<Template[]>([]);
+
   const TEMPLATE_LIMITS: Record<number, number | null> = { 0: 3, 1: 10, 2: null, 3: null };
   const currentTier = billing?.tier ?? 0;
   const templateLimit = TEMPLATE_LIMITS[currentTier] ?? 3;
   const atTemplateLimit = templateLimit !== null && templates.length >= templateLimit;
   const canCreateTemplates = !atTemplateLimit;
-
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);

@@ -60,7 +60,7 @@ const SECTIONS: DocSection[] = [
     content: (
       <div>
         <H3>1. Install the SDK</H3>
-        <CodeBlock lang="bash" code={`npm install @herald-protocol/sdk\n# or\npnpm add @herald-protocol/sdk`} />
+        <CodeBlock code={`npm install @herald-protocol/sdk\n# or\npnpm add @herald-protocol/sdk`} />
 
         <H3>2. Initialize the client</H3>
         <Prose>Use your <code className="text-teal text-xs">hrld_live_...</code> key from the API Keys page.</Prose>
@@ -118,7 +118,7 @@ if (status.delivered) {
 });`} />
 
         <H3>cURL example</H3>
-        <CodeBlock lang="bash" code={`curl -X POST https://api.useherald.xyz/v1/notify \\
+        <CodeBlock code={`curl -X POST https://api.useherald.xyz/v1/notify \\
   -H "Authorization: Bearer $HERALD_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
