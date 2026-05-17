@@ -8,15 +8,28 @@ import { CreateKeyModal } from "@/components/api-keys/CreateKeyModal";
 import { KeyRevealModal } from "@/components/api-keys/KeyRevealModal";
 import { RevokeKeyModal } from "@/components/api-keys/RevokeKeyModal";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { useQuery } from "@tanstack/react-query";
+import { getBillingStatus } from "@/lib/api/billing";
+import { ArrowUpRight, Lock, Plus } from "lucide-react";
 
-import { Plus } from "lucide-react";
+const LIVE_KEY_LIMITS: Record<number, number | null> = { 0: 1, 1: 5, 2: null, 3: null };
 
 export default function ApiKeysPage() {
   const { query, createKey, revokeKey } = useApiKeys();
   const keys = query.data || [];
 
+  const { data: billing } = useQuery({
+    queryKey: ["billingStatus"],
+    queryFn: getBillingStatus,
+    staleTime: 60_000,
+  });
+
   const liveKeys = keys.filter((k) => k.environment === "live");
   const testKeys = keys.filter((k) => k.environment === "test");
+
+  const currentTier = billing?.tier ?? 0;
+  const liveKeyLimit = LIVE_KEY_LIMITS[currentTier] ?? 1;
+  const atLiveKeyLimit = liveKeyLimit !== null && liveKeys.length >= liveKeyLimit;
 
   // Modal states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -62,15 +75,26 @@ export default function ApiKeysPage() {
         title="API Keys"
         description="Manage network access tokens for emitting notifications."
         actions={
-          <Button
-            id="create-api-key-btn"
-            size="sm"
-            onClick={() => setIsCreateOpen(true)}
-            className="gap-2 shrink-0 group"
-          >
-            <Plus className="h-4 w-4" />
-            Create Key
-          </Button>
+          atLiveKeyLimit ? (
+            <a
+              href="/billing#billing-plans"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Upgrade for more keys
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <Button
+              id="create-api-key-btn"
+              size="sm"
+              onClick={() => setIsCreateOpen(true)}
+              className="gap-2 shrink-0 group"
+            >
+              <Plus className="h-4 w-4" />
+              Create Key
+            </Button>
+          )
         }
       />
 
@@ -92,6 +116,23 @@ export default function ApiKeysPage() {
         </div>
       </div>
 
+      {atLiveKeyLimit && billing && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
+          <Lock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-300">
+              Live key limit reached ({liveKeyLimit}/{liveKeyLimit})
+            </p>
+            <p className="text-xs text-amber-400/80 mt-0.5">
+              You&apos;re on the <span className="font-medium">{billing.tierName}</span> plan. Upgrade to create additional live API keys.
+            </p>
+          </div>
+          <a href="/billing#billing-plans" className="shrink-0 flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition-colors">
+            View Plans <ArrowUpRight className="h-3 w-3" />
+          </a>
+        </div>
+      )}
+
       <div id="apikeys-live-section" className="space-y-4">
         <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
           <span className="h-2 w-2 rounded-full bg-status-success" />
@@ -99,7 +140,7 @@ export default function ApiKeysPage() {
             Live Environment
           </h2>
           <span className="ml-auto bg-secondary border border-border text-text-muted text-xs px-2.5 py-0.5 rounded-full font-medium">
-            {liveKeys.length} keys
+            {liveKeyLimit !== null ? `${liveKeys.length}/${liveKeyLimit}` : liveKeys.length} keys
           </span>
         </div>
         <ApiKeyTable keys={liveKeys} onRevokeClick={setRevokeTarget} />

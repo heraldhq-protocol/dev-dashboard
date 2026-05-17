@@ -14,17 +14,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listWebhooks, createWebhook, updateWebhook, deleteWebhook, getWebhookReliability, promoteWebhook } from "@/lib/api/webhooks";
 import { PromoteDiffModal, type PromoteTarget } from "@/components/shared/PromoteDiffModal";
-import { UpgradeGate } from "@/components/billing/UpgradeGate";
+import { getBillingStatus } from "@/lib/api/billing";
+import { Lock, ArrowUpRight } from "lucide-react";
+
+const WEBHOOK_LIMITS: Record<number, number | null> = { 0: 1, 1: 5, 2: null, 3: null };
 
 export default function WebhooksPage() {
-  return (
-    <UpgradeGate minTier={1} feature="Webhooks" description="Receive real-time delivery events at your endpoint via signed HTTP callbacks.">
-      <WebhooksContent />
-    </UpgradeGate>
-  );
-}
-
-function WebhooksContent() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");
@@ -36,10 +31,19 @@ function WebhooksContent() {
   const [webhookToDelete, setWebhookToDelete] = useState<string | null>(null);
   const [promoteTarget, setPromoteTarget] = useState<PromoteTarget | null>(null);
 
+  const { data: billing } = useQuery({
+    queryKey: ["billingStatus"],
+    queryFn: getBillingStatus,
+    staleTime: 60_000,
+  });
+
   const { data: webhooks = [], isLoading } = useQuery({
     queryKey: ["webhooks"],
     queryFn: listWebhooks,
   });
+
+  const webhookLimit = WEBHOOK_LIMITS[billing?.tier ?? 0] ?? 1;
+  const atWebhookLimit = webhookLimit !== null && webhooks.length >= webhookLimit;
 
   const { data: reliabilityData } = useQuery({
     queryKey: ["webhooks", "reliability"],
@@ -170,16 +174,44 @@ function WebhooksContent() {
         title="Webhooks"
         description="Receive real-time HTTP callbacks when events occur on the Herald network."
         actions={
-          <Button
-            id="webhooks-add-btn"
-            onClick={() => setIsCreateOpen(true)}
-            className="gap-2 shrink-0 group"
-          >
-            <Plus className="h-4 w-4" />
-            Add Endpoint
-          </Button>
+          atWebhookLimit ? (
+            <a
+              href="/billing#billing-plans"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Upgrade for more endpoints
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <Button
+              id="webhooks-add-btn"
+              onClick={() => setIsCreateOpen(true)}
+              className="gap-2 shrink-0 group"
+            >
+              <Plus className="h-4 w-4" />
+              Add Endpoint
+            </Button>
+          )
         }
       />
+
+      {atWebhookLimit && billing && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
+          <Lock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-300">
+              Endpoint limit reached ({webhookLimit}/{webhookLimit})
+            </p>
+            <p className="text-xs text-amber-400/80 mt-0.5">
+              You&apos;re on the <span className="font-medium">{billing.tierName}</span> plan. Upgrade to add more webhook endpoints.
+            </p>
+          </div>
+          <a href="/billing#billing-plans" className="shrink-0 flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition-colors">
+            View Plans <ArrowUpRight className="h-3 w-3" />
+          </a>
+        </div>
+      )}
 
       <div id="webhooks-list">
       <WebhookList

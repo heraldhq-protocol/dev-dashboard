@@ -26,10 +26,10 @@ const TIER_FEATURES: Record<number, string[]> = {
 };
 
 const FALLBACK_TIERS = [
-  { tier: 0, name: "Developer", priceUsdc: 0, limit: 1000 },
-  { tier: 1, name: "Growth", priceUsdc: 99, limit: 50000 },
-  { tier: 2, name: "Scale", priceUsdc: 299, limit: 250000 },
-  { tier: 3, name: "Enterprise", priceUsdc: 999, limit: 1000000 },
+  { tier: 0, name: "Developer", priceUsdc: 0, limit: 1000, overageRate: "$0.005" },
+  { tier: 1, name: "Growth", priceUsdc: 99, limit: 50000, overageRate: "$0.002" },
+  { tier: 2, name: "Scale", priceUsdc: 299, limit: 250000, overageRate: "$0.0015" },
+  { tier: 3, name: "Enterprise", priceUsdc: 999, limit: 1000000, overageRate: "custom" },
 ];
 
 function formatRelativeTime(date: Date): string {

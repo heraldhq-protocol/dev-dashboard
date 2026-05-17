@@ -12,6 +12,7 @@ interface PricingCardProps {
     name: string;
     priceUsdc: number;
     limit: number;
+    overageRate?: string;
   };
   features: string[];
   isCurrent: boolean;
@@ -57,8 +58,13 @@ export function PricingCard({
           <span className="font-bold text-foreground">
             {tier.limit.toLocaleString()}
           </span>{" "}
-          Notifications
+          notifications/mo
         </p>
+        {tier.overageRate && (
+          <p className="text-xs text-text-muted/70 mt-1">
+            +{tier.overageRate} per overage notification
+          </p>
+        )}
       </div>
 
       <div className="my-6 border-t border-border" />

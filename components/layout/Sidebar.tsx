@@ -73,7 +73,6 @@ const NAV_SECTIONS = [
         name: "Webhooks",
         href: "/webhooks",
         id: "sidebar-webhooks",
-        minTier: 1,
         icon: "M13 10V3L4 14h7v7l9-11h-7z",
       },
       {
