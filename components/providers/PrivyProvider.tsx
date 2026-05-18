@@ -22,13 +22,7 @@ export function PrivyProvider({ children }: { children: React.ReactNode }) {
           walletChainType: "solana-only",
           showWalletLoginFirst: true,
           landingHeader: "Log in to Herald",
-          walletList: [
-            "phantom",
-            "backpack",
-            "solflare",
-            "detected_solana_wallets",
-            "wallet_connect",
-          ],
+          walletList: ["detected_solana_wallets", "wallet_connect"],
         },
         embeddedWallets: {
           solana: {
