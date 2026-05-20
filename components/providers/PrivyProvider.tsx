@@ -1,8 +1,13 @@
 "use client";
 
 import { PrivyProvider as PrivyAuthProvider } from "@privy-io/react-auth";
+import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+
+const solanaConnectors = toSolanaWalletConnectors({
+  shouldAutoConnect: false,
+});
 
 export function PrivyProvider({ children }: { children: React.ReactNode }) {
   if (!PRIVY_APP_ID) {
@@ -23,6 +28,11 @@ export function PrivyProvider({ children }: { children: React.ReactNode }) {
           showWalletLoginFirst: true,
           landingHeader: "Log in to Herald",
           walletList: ["phantom", "detected_solana_wallets", "wallet_connect"],
+        },
+        externalWallets: {
+          solana: {
+            connectors: solanaConnectors,
+          },
         },
         embeddedWallets: {
           solana: {
