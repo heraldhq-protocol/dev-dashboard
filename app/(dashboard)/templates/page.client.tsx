@@ -139,6 +139,7 @@ export default function TemplatesPage() {
       setTemplates(data.data || []);
     } catch (error) {
       console.error("Failed to load templates:", error);
+      toast.error("Failed to load templates");
     } finally {
       setIsLoading(false);
     }
@@ -157,6 +158,7 @@ export default function TemplatesPage() {
       }));
     } catch (error) {
       console.error("Failed to load starter template:", error);
+      toast.error("Failed to load starter template");
     } finally {
       setIsLoadingStarter(false);
     }
@@ -210,6 +212,7 @@ export default function TemplatesPage() {
       }
     } catch (error) {
       console.error("Failed to preview template:", error);
+      toast.error("Failed to generate preview");
     } finally {
       setIsPreviewLoading(false);
     }
@@ -226,6 +229,7 @@ export default function TemplatesPage() {
       setTemplateToDelete(null);
     } catch (error) {
       console.error("Failed to delete template:", error);
+      toast.error("Failed to delete template");
     } finally {
       setIsDeleting(false);
     }

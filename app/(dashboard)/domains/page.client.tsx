@@ -131,6 +131,7 @@ export default function DomainsPage() {
       setDomains((data || []).map((d: Domain) => ({ ...d, showConfig: false })));
     } catch (error) {
       console.error("Failed to load domains:", error);
+      toast.error("Failed to load domains");
     } finally {
       setIsLoading(false);
     }

@@ -49,15 +49,26 @@ function SuccessContent() {
     // Initial check
     verifyStatus();
 
-    // Polling
+    // Polling — stops when verified or after 60s (webhook may be delayed)
     const interval = setInterval(async () => {
       const isDone = await verifyStatus();
       if (isDone) {
         clearInterval(interval);
+        clearTimeout(giveUp);
       }
     }, 3000);
 
-    return () => clearInterval(interval);
+    // Fallback: stop spinning after 60s and show success anyway.
+    // The subscription activates in the background once the webhook arrives.
+    const giveUp = setTimeout(() => {
+      clearInterval(interval);
+      setIsVerifying(false);
+    }, 60_000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(giveUp);
+    };
   }, [tier, queryClient]);
 
   return (
