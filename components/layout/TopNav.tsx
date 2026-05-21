@@ -38,6 +38,7 @@ const ROUTE_LABELS: Record<string, string> = {
   billing: "Billing & Usage",
   team: "Team",
   status: "System Status",
+  support: "Support",
   settings: "Settings",
   campaigns: "Campaigns",
   scheduled: "Scheduled",
