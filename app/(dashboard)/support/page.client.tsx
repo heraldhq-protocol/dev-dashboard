@@ -4,17 +4,15 @@ import Image from "next/image";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MessageCircle, Plus, ChevronRight, Clock, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
+import { MessageCircle, Plus, ChevronRight, Clock, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import {
   createTicket,
   listTickets,
   getTicket,
   replyToTicket,
-  type SupportTicket,
   type SupportTicketCategory,
   type SupportTicketStatus,
 } from "@/lib/api/support";
