@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MessageCircle, Plus, ChevronRight, Clock, Loader2, ExternalLink } from "lucide-react";
+import { MessageCircle, Plus, ChevronRight, ChevronLeft, Clock, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
@@ -53,6 +53,8 @@ export default function SupportPage() {
   const [view, setView] = useState<"list" | "new" | "detail">("list");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
 
   // New ticket form state
   const [category, setCategory] = useState<SupportTicketCategory>("api_issue");
@@ -60,8 +62,8 @@ export default function SupportPage() {
   const [body, setBody] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["support-tickets"],
-    queryFn: () => listTickets({ limit: 50 }),
+    queryKey: ["support-tickets", page],
+    queryFn: () => listTickets({ limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
     staleTime: 30_000,
   });
 
@@ -98,6 +100,8 @@ export default function SupportPage() {
   });
 
   const tickets = data?.items ?? [];
+  const totalTickets = data?.total ?? 0;
+  const totalPages = Math.ceil(totalTickets / PAGE_SIZE);
   const openCount = tickets.filter((t) => ["open", "in_progress", "waiting_on_protocol"].includes(t.status)).length;
 
   return (
@@ -124,7 +128,7 @@ export default function SupportPage() {
         </div>
         <div className="flex items-center gap-3">
           {view !== "list" && (
-            <Button variant="ghost" size="sm" onClick={() => setView("list")}>
+            <Button variant="ghost" size="sm" onClick={() => { setView("list"); setPage(0); }}>
               ← Back
             </Button>
           )}
@@ -308,30 +312,56 @@ export default function SupportPage() {
               </Button>
             </Card>
           ) : (
-            tickets.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => { setSelectedId(t.id); setView("detail"); }}
-                className="w-full text-left rounded-lg border border-[#1E293B] bg-[#0D1F35] px-4 py-3.5 hover:border-[#334155] hover:bg-[#112240] transition-colors group"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 space-y-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B]">
-                      {CATEGORIES.find((c) => c.value === t.category)?.label ?? t.category}
-                    </p>
-                    <p className="text-sm font-medium text-[#E2E8F0] truncate">{t.subject}</p>
-                    <div className="flex items-center gap-1.5 text-xs text-[#475569]">
-                      <Clock className="h-3 w-3" />
-                      {formatDate(t.createdAt)}
+            <>
+              {tickets.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => { setSelectedId(t.id); setView("detail"); }}
+                  className="w-full text-left rounded-lg border border-[#1E293B] bg-[#0D1F35] px-4 py-3.5 hover:border-[#334155] hover:bg-[#112240] transition-colors group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B]">
+                        {CATEGORIES.find((c) => c.value === t.category)?.label ?? t.category}
+                      </p>
+                      <p className="text-sm font-medium text-[#E2E8F0] truncate">{t.subject}</p>
+                      <div className="flex items-center gap-1.5 text-xs text-[#475569]">
+                        <Clock className="h-3 w-3" />
+                        {formatDate(t.createdAt)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <StatusBadge status={t.status as SupportTicketStatus} />
+                      <ChevronRight className="h-4 w-4 text-[#334155] group-hover:text-[#64748B] transition-colors" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <StatusBadge status={t.status as SupportTicketStatus} />
-                    <ChevronRight className="h-4 w-4 text-[#334155] group-hover:text-[#64748B] transition-colors" />
+                </button>
+              ))}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-xs text-[#64748B]">
+                    Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalTickets)} of {totalTickets}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={page === 0}
+                      onClick={() => setPage((p) => p - 1)}
+                      className="p-1.5 rounded border border-[#1E293B] text-[#64748B] hover:border-[#334155] hover:text-[#94A3B8] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs text-[#64748B] tabular-nums">{page + 1} / {totalPages}</span>
+                    <button
+                      disabled={page >= totalPages - 1}
+                      onClick={() => setPage((p) => p + 1)}
+                      className="p-1.5 rounded border border-[#1E293B] text-[#64748B] hover:border-[#334155] hover:text-[#94A3B8] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
-              </button>
-            ))
+              )}
+            </>
           )}
         </div>
       )}
