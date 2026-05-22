@@ -79,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           return {
             id: payload.sub,
+            walletAddress: credentials.wallet as string,
             protocolId: payload.protocolId ?? null,
             role: payload.role ?? null,
             tier: 0,
@@ -99,6 +100,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           ...token,
           id: user.id,
+          walletAddress: user.walletAddress,
           protocolId: user.protocolId,
           role: user.role,
           tier: user.tier,
@@ -121,6 +123,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
+        session.user.walletAddress = token.walletAddress as string | undefined;
         session.user.protocolId = token.protocolId as string | null;
         session.user.role = token.role as "owner" | "admin" | "developer" | "read_only" | null;
         session.user.tier = token.tier as number;

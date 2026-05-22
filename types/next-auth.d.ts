@@ -2,6 +2,7 @@ import "next-auth";
 
 declare module "next-auth" {
   interface User {
+    walletAddress?: string;
     protocolId: string | null;
     role: "owner" | "admin" | "developer" | "read_only" | null;
     tier: number;
@@ -19,6 +20,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
+    walletAddress?: string;
     protocolId?: string | null;
     role?: "owner" | "admin" | "developer" | "read_only" | null;
     tier?: number;

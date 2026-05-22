@@ -1,9 +1,9 @@
 "use client";
 
+import { useNextStep } from "nextstepjs";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DashboardCard } from "@/components/ui/DashboardCard";
 import { MetricCard } from "@/components/ui/MetricCard";
-import { Button } from "@/components/ui/Button";
 
 import {
   AreaChart,
@@ -14,7 +14,6 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts";
-import { FiZap, FiCode, FiKey, FiActivity } from "react-icons/fi";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats, getAnalyticsTrends } from "@/lib/api/analytics";
@@ -26,8 +25,13 @@ import { ProjectedUsageCard } from "@/components/billing/ProjectedUsageCard";
 import { WebhookReliabilityBadge } from "@/components/webhooks/WebhookReliabilityBadge";
 import { getProtocol } from "@/lib/api/protocol";
 import { VerificationCard } from "@/components/protocol/VerificationCard";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 
 export default function OverviewPage() {
+  const { checklist } = useOnboardingStore();
+  const { isNextStepVisible } = useNextStep();
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboardStats"],
     queryFn: getDashboardStats,
@@ -83,71 +87,19 @@ export default function OverviewPage() {
         </span>
       </div>
 
+      {/* First-run checklist — hidden once dismissed, during tour, or while loading */}
+      {!checklist.checklistDismissed && !isLoading && !isNextStepVisible && (
+        <OnboardingChecklist
+          hasApiKey={(stats?.activeApiKeys ?? 0) > 0}
+          hasWebhook={(stats?.activeWebhooks ?? 0) > 0}
+          hasSentNotification={(stats?.sendsThisPeriod ?? 0) > 0}
+        />
+      )}
+
       <PageHeader
         title="Overview"
         description="Monitor your Herald notification infrastructure."
       />
-
-      {/* Quick Start (Shows only if 0 sends) */}
-      {!isLoading && totalSends === 0 && (
-        <DashboardCard id="overview-quickstart" className="bg-linear-to-r from-card to-navy-2 border-l-2 border-l-teal">
-          <div className="flex items-start gap-3 mb-4">
-            <FiZap className="w-5 h-5 text-teal" />
-            <div>
-              <h2
-                className="text-xl font-bold text-foreground"
-                style={{ fontFamily: '"Syne", system-ui, sans-serif' }}
-              >
-                Let&apos;s get started
-              </h2>
-              <p className="text-sm text-text-muted mt-1">
-                Your dashboard is ready, but we haven&apos;t received any notifications yet.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4">
-            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
-              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
-                <FiKey className="w-5 h-5 text-teal" />
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-foreground">1. Create API Key</h4>
-                <p className="text-xs text-text-muted mt-1">Generate a live or test key.</p>
-              </div>
-              <Button variant="ghost" size="sm" asChild className="w-full mt-auto">
-                <Link href="/api-keys">Go to API Keys</Link>
-              </Button>
-            </div>
-
-            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
-              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
-                <FiCode className="w-5 h-5 text-teal" />
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-foreground">2. Read the Docs</h4>
-                <p className="text-xs text-text-muted mt-1">Learn how to format payloads.</p>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-auto">
-                View Documentation
-              </Button>
-            </div>
-
-            <div className="flex flex-col gap-3 p-5 md:p-0 bg-card-2 md:bg-transparent rounded-2xl md:rounded-none border border-border/50 md:border-0 shadow-sm md:shadow-none transition-all hover:shadow-md md:hover:shadow-none">
-              <div className="w-10 h-10 rounded-lg bg-card-2 flex items-center justify-center border border-border/50 md:border-border">
-                <FiActivity className="w-5 h-5 text-teal" />
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-foreground">3. Send First Event</h4>
-                <p className="text-xs text-text-muted mt-1">Use the playground to test.</p>
-              </div>
-              <Button size="sm" asChild className="w-full mt-auto">
-                <Link href="/playground">Open Playground</Link>
-              </Button>
-            </div>
-          </div>
-        </DashboardCard>
-      )}
 
       {/* KPI Cards */}
       <div id="overview-metrics" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

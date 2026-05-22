@@ -40,10 +40,23 @@ function useIsMobile() {
   return isMobile;
 }
 
+// Sidebar is a hidden drawer below lg (1024px) — its IDs are not in the layout flow
+function useIsSidebarHidden() {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    setHidden(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setHidden(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return hidden;
+}
+
 // ── buildTourSteps ────────────────────────────────────────────────────────────
-function buildTourSteps(isMobile: boolean): Tour[] {
-  // On mobile the sidebar is hidden, so use undefined selector (centered modal)
-  const sel = (id: string): string | undefined => (isMobile ? undefined : id);
+function buildTourSteps(isSidebarHidden: boolean): Tour[] {
+  // Sidebar IDs only exist in layout flow on lg+ screens
+  const sel = (id: string): string | undefined => (isSidebarHidden ? undefined : id);
 
   // Shared pointer styles
   const ptr = { pointerPadding: 8, pointerRadius: 10 };
@@ -110,7 +123,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "An area chart of your daily notification volume. Toggle between 7-day and 30-day views. Hover any point to see exact send counts for that day.",
       selector: "#overview-volume-chart",
-      side: "right",
+      side: "bottom",
       showControls: true,
       showSkip: true,
       ...inPage,
@@ -122,7 +135,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Failed notifications surface here with the recipient wallet, channel, and error reason. Click 'View all logs →' to open the full history with filtering.",
       selector: "#overview-failures",
-      side: "left",
+      side: "bottom",
       showControls: true,
       showSkip: true,
       ...inPage,
@@ -217,7 +230,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
     },
     {
       group: "API Keys",
@@ -229,7 +242,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
     },
     {
       group: "API Keys",
@@ -241,7 +254,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
       nextRoute: "/webhooks",
     },
 
@@ -266,10 +279,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "All your registered endpoints appear here with URL, active toggle, and a 'View Logs' button. Disable endpoints without deleting them — useful during maintenance windows.",
       selector: "#webhooks-list",
-      side: "left",
+      side: "bottom",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
     },
     {
       group: "Webhooks",
@@ -281,7 +294,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
       nextRoute: "/templates",
     },
 
@@ -309,7 +322,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "top",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
     },
     {
       group: "Templates",
@@ -321,7 +334,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
       nextRoute: "/domains",
     },
 
@@ -349,7 +362,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "top-left",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
     },
     {
       group: "Domains",
@@ -361,7 +374,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
       nextRoute: "/notifications",
     },
 
@@ -398,10 +411,10 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Each row shows the wallet, channel, status badge, and timestamp. Click any row to open the detail drawer with the full payload, delivery receipt, and error trace if it failed.",
       selector: "#notifications-table",
-      side: "left",
+      side: "bottom",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
       nextRoute: "/billing",
     },
 
@@ -438,7 +451,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       content:
         "Developer (free), Growth ($99/mo), Scale ($299/mo), and Enterprise. Each tier unlocks more sends per month, reduced latency, additional webhook endpoints, and dedicated support.",
       selector: "#billing-plans",
-      side: "right",
+      side: "bottom",
       showControls: true,
       showSkip: true,
       ...inPage,
@@ -481,7 +494,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
     },
     {
       group: "Team",
@@ -493,7 +506,7 @@ function buildTourSteps(isMobile: boolean): Tour[] {
       side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...ptr,
+      ...inPage,
     },
 
     // ── Settings ──────────────────────────────────────────────────────────
@@ -535,9 +548,9 @@ function buildTourSteps(isMobile: boolean): Tour[] {
 
 // ── NextStepInner ─────────────────────────────────────────────────────────────
 
-function NextStepInner({ children, isMobile }: { children: React.ReactNode; isMobile: boolean }) {
+function NextStepInner({ children, isSidebarHidden }: { children: React.ReactNode; isSidebarHidden: boolean }) {
   const { setTourCompleted, setTourSkipped, setLastTourStep } = useOnboardingStore();
-  const steps = buildTourSteps(isMobile);
+  const steps = buildTourSteps(isSidebarHidden);
 
   return (
     <NextStep
@@ -560,16 +573,16 @@ function NextStepInner({ children, isMobile }: { children: React.ReactNode; isMo
 
 export function OnboardingTourProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
+  const isSidebarHidden = useIsSidebarHidden();
 
-  // On mobile screens the sidebar is hidden and tour step targets don't exist,
-  // so we skip the entire tour wrapper to avoid rendering artifacts.
+  // Tour is skipped entirely on phones — no targets exist and layout is too narrow
   if (isMobile) {
     return <>{children}</>;
   }
 
   return (
     <NextStepProvider>
-      <NextStepInner isMobile={false}>{children}</NextStepInner>
+      <NextStepInner isSidebarHidden={isSidebarHidden}>{children}</NextStepInner>
     </NextStepProvider>
   );
 }

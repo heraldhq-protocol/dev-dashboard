@@ -233,7 +233,7 @@ export function TopNav() {
   });
 
   const protocolName = protocol?.protocolName ?? protocol?.name ?? null;
-  const walletAddress = session?.user?.id ?? null;
+  const walletAddress = session?.user?.walletAddress ?? null;
   const role = session?.user?.role ?? "owner";
   const tier = session?.user?.tier ?? 0;
   const initials = getInitials(protocolName, walletAddress);
@@ -466,6 +466,17 @@ export function TopNav() {
                         {shortWallet}
                       </code>
                       <CopyButton text={walletAddress} />
+                    </div>
+                  )}
+
+                  {/* Protocol ID */}
+                  {session?.user?.protocolId && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-text-muted">Protocol ID</span>
+                      <code className="text-[10px] font-mono text-foreground/70 truncate flex-1">
+                        {session.user.protocolId.slice(0, 8)}…
+                      </code>
+                      <CopyButton text={session.user.protocolId} />
                     </div>
                   )}
                 </div>

@@ -184,6 +184,13 @@ export function TourCard({
         )}
       </div>
 
+      {/* Keyboard hint */}
+      <div className="flex justify-center pb-2">
+        <span className="text-[9px] text-white/20 font-mono tracking-widest select-none">
+          ← → arrow keys to navigate
+        </span>
+      </div>
+
       {/* Arrow pointer rendered by NextStep */}
       {arrow}
     </div>

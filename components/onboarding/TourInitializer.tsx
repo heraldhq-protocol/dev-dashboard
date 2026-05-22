@@ -4,6 +4,11 @@ import { useEffect, useRef } from "react";
 import { useNextStep } from "nextstepjs";
 import { usePathname, useRouter } from "next/navigation";
 import { useOnboardingStore, TOUR_VERSION } from "@/lib/stores/onboarding.store";
+import { useUiStore } from "@/lib/stores/ui.store";
+
+// Steps that target a sidebar nav item — sidebar must be expanded on desktop
+const SIDEBAR_STEPS = new Set([1, 6, 10, 15, 18, 21, 24, 27, 31, 34]);
+const TOTAL_STEPS = 36;
 
 // ── Module-level flag ─────────────────────────────────────────────────────────
 // useRef resets on every unmount (navigation causes DashboardShell to remount).
@@ -84,9 +89,11 @@ const STEP_ROUTES: Record<number, string> = {
 export function TourInitializer() {
   const { startNextStep, setCurrentStep, currentStep, isNextStepVisible } = useNextStep();
   const { tourCompleted, completedTourVersion, lastTourStep } = useOnboardingStore();
+  const { desktopSidebarCollapsed, toggleDesktopSidebar } = useUiStore();
   const pathname = usePathname();
   const router = useRouter();
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoExpandedSidebar = useRef(false);
 
   const shouldFire = !tourCompleted || completedTourVersion < TOUR_VERSION;
   const shouldResume = shouldFire && lastTourStep > 0;
@@ -217,6 +224,40 @@ export function TourInitializer() {
       document.body.classList.remove("tour-waiting");
     };
   }, [currentStep, isNextStepVisible]);
+
+  // ── 4. Sidebar auto-expand ───────────────────────────────────────────────
+  // When a sidebar step is active on desktop, expand the sidebar so the
+  // highlight is visible. Restore the collapsed state once we leave.
+  useEffect(() => {
+    if (!isNextStepVisible) return;
+    if (typeof window !== "undefined" && window.innerWidth < 1024) return;
+
+    if (SIDEBAR_STEPS.has(currentStep) && desktopSidebarCollapsed) {
+      toggleDesktopSidebar();
+      autoExpandedSidebar.current = true;
+    } else if (!SIDEBAR_STEPS.has(currentStep) && autoExpandedSidebar.current) {
+      toggleDesktopSidebar();
+      autoExpandedSidebar.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, isNextStepVisible]);
+
+  // ── 5. Keyboard navigation ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!isNextStepVisible) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "ArrowRight" && currentStep < TOTAL_STEPS - 1) {
+        setCurrentStep(currentStep + 1);
+      } else if (e.key === "ArrowLeft" && currentStep > 0) {
+        setCurrentStep(currentStep - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isNextStepVisible, currentStep, setCurrentStep]);
 
   return null;
 }

@@ -284,8 +284,9 @@ export default function DomainsPage() {
         </Button>
       </div>
 
+      <div id="domains-list">
       {domains.length === 0 ? (
-        <Card id="domains-list" className="border-border">
+        <Card className="border-border">
           <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
             <Globe className="w-12 h-12 text-muted-foreground" />
             <p className="text-muted-foreground">No custom domains yet. Add one to get started.</p>
@@ -443,6 +444,7 @@ export default function DomainsPage() {
           ))}
         </div>
       )}
+      </div>
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">

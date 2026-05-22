@@ -2,45 +2,44 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { testWebhook } from "@/lib/api/webhooks";
 
 interface WebhookTestButtonProps {
   webhookId: string;
   endpointUrl: string;
 }
 
-export function WebhookTestButton({ webhookId, endpointUrl }: WebhookTestButtonProps) {
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+export function WebhookTestButton({ webhookId, endpointUrl: _endpointUrl }: WebhookTestButtonProps) {
+  const [status, setStatus] = useState<"idle" | "sending" | "queued" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleTest = async () => {
     setStatus("sending");
-    // MOCK: simulate test payload delivery
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-
-    // Simulate 90% success rate
-    if (Math.random() > 0.1) {
-      setStatus("success");
-    } else {
+    setErrorMsg(null);
+    try {
+      await testWebhook(webhookId);
+      setStatus("queued");
+    } catch (err: any) {
       setStatus("error");
+      // Surface a short reason if the API returned one
+      setErrorMsg(err?.response?.data?.message ?? err?.message ?? "Request failed");
+    } finally {
+      setTimeout(() => setStatus("idle"), 4000);
     }
-
-    setTimeout(() => setStatus("idle"), 3000);
   };
-
-  // Suppress lint: webhookId and endpointUrl will be used in production API call
-  void webhookId;
-  void endpointUrl;
 
   return (
     <Button
-      variant={status === "error" ? "destructive" : status === "success" ? "default" : "outline"}
+      variant={status === "error" ? "destructive" : status === "queued" ? "default" : "outline"}
       size="sm"
       onClick={handleTest}
       disabled={status === "sending"}
       className="min-w-[100px] text-xs"
+      title={status === "error" && errorMsg ? errorMsg : undefined}
     >
       {status === "idle" && "Send Test"}
       {status === "sending" && "Sending..."}
-      {status === "success" && "✓ 200 OK"}
+      {status === "queued" && "✓ Dispatched"}
       {status === "error" && "✗ Failed"}
     </Button>
   );
