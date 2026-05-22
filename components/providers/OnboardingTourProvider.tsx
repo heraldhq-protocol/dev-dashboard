@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { NextStepProvider, NextStep, type Tour, type Step } from "nextstepjs";
+import { useSession } from "next-auth/react";
 import { TourCard } from "@/components/onboarding/TourCard";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 
@@ -58,9 +59,11 @@ function useIsSidebarHidden() {
 }
 
 // ── buildTourSteps ────────────────────────────────────────────────────────────
-function buildTourSteps(isSidebarHidden: boolean): Tour[] {
+function buildTourSteps(isSidebarHidden: boolean, isPaidTier: boolean): Tour[] {
   // Sidebar IDs only exist in layout flow on lg+ screens
   const sel = (id: string): string | undefined => (isSidebarHidden ? undefined : id);
+  // Gated pages (Domains content, Team content) only render real UI for Growth+
+  const gated = (id: string): string | undefined => (isPaidTier ? id : undefined);
 
   // Shared pointer styles
   const ptr = { pointerPadding: 8, pointerRadius: 10 };
@@ -360,25 +363,27 @@ function buildTourSteps(isSidebarHidden: boolean): Tour[] {
       group: "Domains",
       icon: "🔑",
       title: "Domain DKIM Setup",
-      content:
-        "When you add a domain, Herald generates a DKIM TXT record. Add it to your DNS provider (Cloudflare, Vercel, GoDaddy, etc.) and click Verify. DNS propagation takes 5-30 minutes.",
-      selector: "#domains-list",
-      side: "top-left",
+      content: isPaidTier
+        ? "When you add a domain, Herald generates a DKIM TXT record. Add it to your DNS provider (Cloudflare, Vercel, GoDaddy, etc.) and click Verify. DNS propagation takes 5-30 minutes."
+        : "When you add a domain, Herald generates a DKIM TXT record. Add it to your DNS provider and click Verify.\n\n🔒 Custom domain sending is available on Growth tier and above.",
+      selector: gated("#domains-list"),
+      side: "bottom",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...(isPaidTier ? inPage : ptr),
     },
     {
       group: "Domains",
       icon: "➕",
       title: "Add Your Domain",
-      content:
-        "Click 'Add Domain' and enter your sending subdomain (e.g. alerts.myprotocol.com). After verification, emails you send will show your domain in the From header — boosting trust and deliverability.",
-      selector: "#domains-add-btn",
+      content: isPaidTier
+        ? "Click 'Add Domain' and enter your sending subdomain (e.g. alerts.myprotocol.com). After verification, emails you send will show your domain in the From header — boosting trust and deliverability."
+        : "Click 'Add Domain' to register a verified sending domain. Upgrade to Growth or above to unlock this feature and send from your own domain.",
+      selector: gated("#domains-add-btn"),
       side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...(isPaidTier ? inPage : ptr),
       nextRoute: "/notifications",
     },
 
@@ -492,25 +497,27 @@ function buildTourSteps(isSidebarHidden: boolean): Tour[] {
       group: "Team",
       icon: "🛡️",
       title: "Members & Roles",
-      content:
-        "The table shows each member's email, wallet address, role, account status, and last activity. Change roles inline via the dropdown — changes take effect immediately.",
-      selector: "#team-members-table",
+      content: isPaidTier
+        ? "The table shows each member's email, wallet address, role, account status, and last activity. Change roles inline via the dropdown — changes take effect immediately."
+        : "The members table shows each person's email, wallet, role, and last activity. Role changes take effect immediately.\n\n🔒 Team management is available on Growth tier and above.",
+      selector: gated("#team-members-table"),
       side: "bottom",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...(isPaidTier ? inPage : ptr),
     },
     {
       group: "Team",
       icon: "✉️",
       title: "Invite a Member",
-      content:
-        "Click 'Invite New Member', enter their email, and select a role. They receive an invitation email with a one-click setup link. Seat limits depend on your billing tier.",
-      selector: "#team-invite-btn",
+      content: isPaidTier
+        ? "Click 'Invite New Member', enter their email, and select a role. They receive an invitation email with a one-click setup link. Seat limits depend on your billing tier."
+        : "Click 'Invite New Member' to add teammates with granular roles — Owner, Admin, Developer, or Read Only. Upgrade to Growth or above to enable team access.",
+      selector: gated("#team-invite-btn"),
       side: "bottom-right",
       showControls: true,
       showSkip: true,
-      ...inPage,
+      ...(isPaidTier ? inPage : ptr),
     },
 
     // ── Settings ──────────────────────────────────────────────────────────
@@ -552,9 +559,9 @@ function buildTourSteps(isSidebarHidden: boolean): Tour[] {
 
 // ── NextStepInner ─────────────────────────────────────────────────────────────
 
-function NextStepInner({ children, isSidebarHidden }: { children: React.ReactNode; isSidebarHidden: boolean }) {
+function NextStepInner({ children, isSidebarHidden, isPaidTier }: { children: React.ReactNode; isSidebarHidden: boolean; isPaidTier: boolean }) {
   const { setTourCompleted, setTourSkipped, setLastTourStep } = useOnboardingStore();
-  const steps = buildTourSteps(isSidebarHidden);
+  const steps = buildTourSteps(isSidebarHidden, isPaidTier);
 
   return (
     <NextStep
@@ -578,6 +585,9 @@ function NextStepInner({ children, isSidebarHidden }: { children: React.ReactNod
 export function OnboardingTourProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const isSidebarHidden = useIsSidebarHidden();
+  const { data: session } = useSession();
+  // Tier 0 = Developer (free). Growth (1) and above unlock gated tour steps.
+  const isPaidTier = (session?.user?.tier ?? 0) >= 1;
 
   // Tour is skipped entirely on phones — no targets exist and layout is too narrow
   if (isMobile) {
@@ -586,7 +596,7 @@ export function OnboardingTourProvider({ children }: { children: React.ReactNode
 
   return (
     <NextStepProvider>
-      <NextStepInner isSidebarHidden={isSidebarHidden}>{children}</NextStepInner>
+      <NextStepInner isSidebarHidden={isSidebarHidden} isPaidTier={isPaidTier}>{children}</NextStepInner>
     </NextStepProvider>
   );
 }

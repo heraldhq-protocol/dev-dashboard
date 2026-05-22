@@ -155,7 +155,22 @@ export function TourInitializer() {
     let timeoutId: NodeJS.Timeout;
     let frameId: number;
 
+    const requiredRoute = STEP_ROUTES[currentStep];
+
     const checkDOM = () => {
+      // Wait until the router has actually landed on the required page before
+      // declaring the element ready. Sidebar items exist on every page, so
+      // without this check the card would render before navigation completes.
+      if (requiredRoute) {
+        const currentPath = window.location.pathname;
+        const onCorrectPage =
+          currentPath === requiredRoute || currentPath.startsWith(requiredRoute + "/");
+        if (!onCorrectPage) {
+          frameId = requestAnimationFrame(checkDOM);
+          return;
+        }
+      }
+
       const el = document.querySelector(stepSelector);
 
       if (el && el.getBoundingClientRect().height > 0) {
@@ -269,15 +284,14 @@ const STEP_SELECTORS: Record<number, string> = {
   17: "#webhooks-add-btn",
   19: "#templates-list",
   20: "#templates-create-btn",
-  22: "#domains-list",
-  23: "#domains-add-btn",
+  // 22, 23 (domains content) and 32, 33 (team content) are omitted:
+  // selectors are undefined for free (Developer) tier users, and for paid users
+  // the elements load fast enough that polling isn't needed.
   25: "#notifications-filters",
   26: "#notifications-table",
   28: "#billing-current-plan",
   29: "#billing-plans",
   30: "#billing-overage",
-  32: "#team-members-table",
-  33: "#team-invite-btn",
 };
 
 function _getStepSelector(step: number): string | null {
