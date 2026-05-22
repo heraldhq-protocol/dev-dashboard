@@ -25,6 +25,8 @@ interface OnboardingState {
   completedTourVersion: number;
   /** last step index the user reached — used for mid-tour resume */
   lastTourStep: number;
+  /** true once the user has pressed an arrow key — hides the keyboard hint */
+  hasUsedKeyboard: boolean;
 
   /** Manual-check state for checklist items that can't be auto-detected from the API */
   checklist: ChecklistState;
@@ -32,6 +34,7 @@ interface OnboardingState {
   setTourCompleted: () => void;
   setTourSkipped: () => void;
   setLastTourStep: (step: number) => void;
+  setHasUsedKeyboard: () => void;
   /** Resets tour state so it fires again on next render */
   resetTour: () => void;
 
@@ -46,6 +49,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       tourSkipped: false,
       completedTourVersion: 0,
       lastTourStep: 0,
+      hasUsedKeyboard: false,
 
       checklist: {
         playgroundUsed: false,
@@ -60,6 +64,8 @@ export const useOnboardingStore = create<OnboardingState>()(
         set({ tourCompleted: true, tourSkipped: true, completedTourVersion: TOUR_VERSION, lastTourStep: 0 }),
 
       setLastTourStep: (step: number) => set({ lastTourStep: step }),
+
+      setHasUsedKeyboard: () => set({ hasUsedKeyboard: true }),
 
       resetTour: () =>
         set({ tourCompleted: false, tourSkipped: false, completedTourVersion: 0, lastTourStep: 0 }),
@@ -77,6 +83,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         tourSkipped: state.tourSkipped,
         completedTourVersion: state.completedTourVersion,
         lastTourStep: state.lastTourStep,
+        hasUsedKeyboard: state.hasUsedKeyboard,
         checklist: state.checklist,
       }),
     }

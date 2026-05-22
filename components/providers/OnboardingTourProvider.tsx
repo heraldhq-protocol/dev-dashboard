@@ -5,6 +5,10 @@ import { NextStepProvider, NextStep, type Tour, type Step } from "nextstepjs";
 import { TourCard } from "@/components/onboarding/TourCard";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 
+// Total number of steps — exported so TourInitializer can derive bounds without hardcoding.
+// Update whenever steps are added or removed from buildTourSteps.
+export const HERALD_TOUR_STEP_COUNT = 36;
+
 // ── Extended step type ────────────────────────────────────────────────────────
 export type GroupedStep = Step & {
   group?: string;

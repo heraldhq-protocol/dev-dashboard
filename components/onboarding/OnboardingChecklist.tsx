@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, Circle, X, ChevronRight } from "lucide-react";
+import { CheckCircle2, Circle, X, ChevronRight, RotateCcw } from "lucide-react";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
+import { useTourControls } from "@/components/onboarding/TourInitializer";
 import { Button } from "@/components/ui/Button";
 
 interface ChecklistItem {
@@ -10,16 +12,12 @@ interface ChecklistItem {
   label: string;
   description: string;
   done: boolean;
-  /** If present, rendered as a Link. If absent, action is "Mark done" button. */
   href?: string;
-  /** Label for the CTA */
   cta: string;
-  /** Called when the user clicks "Mark done" (manual items only) */
   onMarkDone?: () => void;
 }
 
 interface OnboardingChecklistProps {
-  /** Auto-detected from API — no store state needed */
   hasApiKey: boolean;
   hasWebhook: boolean;
   hasSentNotification: boolean;
@@ -31,8 +29,7 @@ export function OnboardingChecklist({
   hasSentNotification,
 }: OnboardingChecklistProps) {
   const { checklist, setChecklistItem, dismissChecklist } = useOnboardingStore();
-
-  if (checklist.checklistDismissed) return null;
+  const { restartTour } = useTourControls();
 
   const items: ChecklistItem[] = [
     {
@@ -82,6 +79,15 @@ export function OnboardingChecklist({
   const allDone = completedCount === items.length;
   const progressPct = Math.round((completedCount / items.length) * 100);
 
+  // Auto-dismiss 2.5 s after all items are complete so the user sees the success state
+  useEffect(() => {
+    if (!allDone) return;
+    const timer = setTimeout(() => dismissChecklist(), 2500);
+    return () => clearTimeout(timer);
+  }, [allDone, dismissChecklist]);
+
+  if (checklist.checklistDismissed) return null;
+
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Header */}
@@ -93,7 +99,6 @@ export function OnboardingChecklist({
               {completedCount}/{items.length}
             </span>
           </div>
-          {/* Progress bar */}
           <div className="w-full bg-card-2 rounded-full h-1.5 mt-2">
             <div
               className="bg-teal rounded-full h-1.5 transition-all duration-500"
@@ -101,13 +106,25 @@ export function OnboardingChecklist({
             />
           </div>
         </div>
-        <button
-          onClick={dismissChecklist}
-          className="ml-4 text-text-muted hover:text-foreground transition-colors p-1 rounded"
-          title="Dismiss checklist"
-        >
-          <X className="w-4 h-4" />
-        </button>
+
+        <div className="flex items-center gap-1 ml-4 shrink-0">
+          {/* Restart tour */}
+          <button
+            onClick={restartTour}
+            className="text-text-muted hover:text-teal transition-colors p-1 rounded"
+            title="Restart onboarding tour"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+          {/* Dismiss checklist */}
+          <button
+            onClick={dismissChecklist}
+            className="text-text-muted hover:text-foreground transition-colors p-1 rounded"
+            title="Dismiss checklist"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Items */}
@@ -117,7 +134,6 @@ export function OnboardingChecklist({
             key={item.id}
             className={`flex items-center gap-4 px-5 py-3.5 transition-colors ${item.done ? "opacity-60" : "hover:bg-card-2/50"}`}
           >
-            {/* Status icon */}
             <div className="shrink-0">
               {item.done ? (
                 <CheckCircle2 className="w-5 h-5 text-teal" />
@@ -126,7 +142,6 @@ export function OnboardingChecklist({
               )}
             </div>
 
-            {/* Text */}
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-medium ${item.done ? "line-through text-text-muted" : "text-foreground"}`}>
                 {item.label}
@@ -136,7 +151,6 @@ export function OnboardingChecklist({
               )}
             </div>
 
-            {/* CTA */}
             {!item.done && (
               item.href && !item.onMarkDone ? (
                 <Link

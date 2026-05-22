@@ -5,10 +5,10 @@ import { useNextStep } from "nextstepjs";
 import { usePathname, useRouter } from "next/navigation";
 import { useOnboardingStore, TOUR_VERSION } from "@/lib/stores/onboarding.store";
 import { useUiStore } from "@/lib/stores/ui.store";
+import { HERALD_TOUR_STEP_COUNT } from "@/components/providers/OnboardingTourProvider";
 
 // Steps that target a sidebar nav item — sidebar must be expanded on desktop
 const SIDEBAR_STEPS = new Set([1, 6, 10, 15, 18, 21, 24, 27, 31, 34]);
-const TOTAL_STEPS = 36;
 
 // ── Module-level flag ─────────────────────────────────────────────────────────
 // useRef resets on every unmount (navigation causes DashboardShell to remount).
@@ -18,9 +18,8 @@ let _tourSessionFired = false;
 
 /**
  * Maps each step index in heraldMainTour to the pathname where its target
- * element lives. Sidebar steps (undefined selector on mobile) are skipped
- * because they don't target in-page elements. Steps with `selector: undefined`
- * are modal-only and render fine anywhere.
+ * element lives. Steps with `selector: undefined` are modal-only and render
+ * fine anywhere — omit them so the route guard skips navigation for those steps.
  *
  * IMPORTANT: keep this in sync with the step order in OnboardingTourProvider.
  */
@@ -69,8 +68,8 @@ const STEP_ROUTES: Record<number, string> = {
   31: "/team",      // sidebar-team
   32: "/team",      // team-members-table
   33: "/team",      // team-invite-btn
-  // Settings + Done (sidebar/modal — render anywhere)
-  34: "/overview",
+  // Step 34 (Settings sidebar) is present on every page — no route required
+  // Done modal — bring user back to overview for a clean finish
   35: "/overview",
 };
 
@@ -81,15 +80,17 @@ const STEP_ROUTES: Record<number, string> = {
  *  1. Auto-fires the tour once per browser session (or when version bumped).
  *  2. Resumes from the last saved step if the user was mid-tour.
  *  3. ROUTE GUARD: if the tour is active and the current step targets an element
- *     on a different page, this hook navigates there immediately before the card
- *     tries to position itself. This prevents "blind renders" on the wrong page.
- *  4. SCROLL RECOVERY: if the target element is out of view (user scrolled away),
- *     scrolls it back to center on each step change.
+ *     on a different page, this hook navigates there before the card positions.
+ *  4. SCROLL RECOVERY: scrolls the target element into view on each step change.
+ *  5. SIDEBAR EXPAND: expands a collapsed sidebar when a sidebar step is active.
+ *  6. KEYBOARD NAV: ArrowLeft/ArrowRight navigate steps; Escape pauses the tour.
  */
 export function TourInitializer() {
-  const { startNextStep, setCurrentStep, currentStep, isNextStepVisible } = useNextStep();
-  const { tourCompleted, completedTourVersion, lastTourStep } = useOnboardingStore();
-  const { desktopSidebarCollapsed, toggleDesktopSidebar } = useUiStore();
+  const { startNextStep, closeNextStep, setCurrentStep, currentStep, isNextStepVisible } =
+    useNextStep() as ReturnType<typeof useNextStep> & { closeNextStep?: () => void };
+  const { tourCompleted, completedTourVersion, lastTourStep, setHasUsedKeyboard } =
+    useOnboardingStore();
+  const { toggleDesktopSidebar } = useUiStore();
   const pathname = usePathname();
   const router = useRouter();
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,15 +121,12 @@ export function TourInitializer() {
   }, []);
 
   // ── 2. Route guard ───────────────────────────────────────────────────────
-  // If the tour is active and the current step belongs to a different page,
-  // navigate there so the target element exists in the DOM.
   useEffect(() => {
     if (!isNextStepVisible) return;
 
     const requiredRoute = STEP_ROUTES[currentStep];
     if (!requiredRoute) return;
 
-    // Normalize: pathname might be "/overview", requiredRoute is "/overview"
     const alreadyThere = pathname === requiredRoute || pathname.startsWith(requiredRoute + "/");
     if (!alreadyThere) {
       router.push(requiredRoute);
@@ -136,10 +134,6 @@ export function TourInitializer() {
   }, [currentStep, isNextStepVisible, pathname, router]);
 
   // ── 3. Render Guard & Scroll Recovery ────────────────────────────────────
-  // When a step changes (especially cross-page), the new component might not
-  // be in the DOM yet. We hide the tour card, poll the DOM until the element
-  // is fully rendered, scroll it into view within the scroll container,
-  // trigger a recalculation, and then reveal the card perfectly positioned.
   useEffect(() => {
     if (!isNextStepVisible) return;
 
@@ -149,14 +143,12 @@ export function TourInitializer() {
     }
 
     const stepSelector = _getStepSelector(currentStep);
-    
-    // If no selector (e.g., modal or sidebar step), just ensure it's visible.
+
     if (!stepSelector) {
       document.body.classList.remove("tour-waiting");
       return;
     }
 
-    // Hide the tour while we wait for the target to mount
     document.body.classList.add("tour-waiting");
 
     // eslint-disable-next-line prefer-const
@@ -165,58 +157,43 @@ export function TourInitializer() {
 
     const checkDOM = () => {
       const el = document.querySelector(stepSelector);
-      
-      // If the element exists and has dimensions (is painted)
+
       if (el && el.getBoundingClientRect().height > 0) {
         clearTimeout(timeoutId);
 
-        // 1. Scroll within the dashboard scroll container, not the window.
-        //    The scroll container is the actual overflow element so using it
-        //    gives NextStep stable coordinates for card positioning.
         const scrollContainer = document.getElementById("dashboard-scroll-container");
         if (scrollContainer) {
           const containerRect = scrollContainer.getBoundingClientRect();
           const elRect = el.getBoundingClientRect();
-
           const inView =
             elRect.top >= containerRect.top + 16 &&
             elRect.bottom <= containerRect.bottom - 16;
-
           if (!inView) {
-            // scrollIntoView on the element scrolls its nearest scrollable
-            // ancestor (the dashboard container), not the window.
             el.scrollIntoView({ behavior: "instant", block: "center" });
           }
         } else {
-          // Fallback: use window scroll
           el.scrollIntoView({ behavior: "instant", block: "center" });
         }
 
-        // 2. Force NextStep to recalculate popper positioning
         window.dispatchEvent(new Event("resize"));
 
-        // 3. Reveal the tour card after a tiny paint frame
         requestAnimationFrame(() => {
           document.body.classList.remove("tour-waiting");
         });
         return;
       }
 
-      // Element not ready, check again next frame
       frameId = requestAnimationFrame(checkDOM);
     };
 
-    // Start checking
     frameId = requestAnimationFrame(checkDOM);
 
-    // Failsafe: if element never appears within 3 seconds, unblock the tour
     timeoutId = setTimeout(() => {
       cancelAnimationFrame(frameId);
       document.body.classList.remove("tour-waiting");
     }, 3000);
 
-    // Save timeout so we can clean it up on unmount/re-run
-    scrollTimerRef.current = timeoutId as any;
+    scrollTimerRef.current = timeoutId as unknown as ReturnType<typeof setTimeout>;
 
     return () => {
       cancelAnimationFrame(frameId);
@@ -226,17 +203,21 @@ export function TourInitializer() {
   }, [currentStep, isNextStepVisible]);
 
   // ── 4. Sidebar auto-expand ───────────────────────────────────────────────
-  // When a sidebar step is active on desktop, expand the sidebar so the
-  // highlight is visible. Restore the collapsed state once we leave.
+  // Read fresh state from the store at effect time to avoid stale closure.
   useEffect(() => {
     if (!isNextStepVisible) return;
     if (typeof window !== "undefined" && window.innerWidth < 1024) return;
 
-    if (SIDEBAR_STEPS.has(currentStep) && desktopSidebarCollapsed) {
+    const collapsed = useUiStore.getState().desktopSidebarCollapsed;
+
+    if (SIDEBAR_STEPS.has(currentStep) && collapsed) {
       toggleDesktopSidebar();
       autoExpandedSidebar.current = true;
     } else if (!SIDEBAR_STEPS.has(currentStep) && autoExpandedSidebar.current) {
-      toggleDesktopSidebar();
+      // Only collapse if we are the ones who expanded it (still expanded)
+      if (!useUiStore.getState().desktopSidebarCollapsed) {
+        toggleDesktopSidebar();
+      }
       autoExpandedSidebar.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -248,16 +229,22 @@ export function TourInitializer() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowRight" && currentStep < TOTAL_STEPS - 1) {
+
+      if (e.key === "ArrowRight" && currentStep < HERALD_TOUR_STEP_COUNT - 1) {
+        setHasUsedKeyboard();
         setCurrentStep(currentStep + 1);
       } else if (e.key === "ArrowLeft" && currentStep > 0) {
+        setHasUsedKeyboard();
         setCurrentStep(currentStep - 1);
+      } else if (e.key === "Escape") {
+        // Pause: close the card without marking the tour as skipped
+        closeNextStep?.();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isNextStepVisible, currentStep, setCurrentStep]);
+  }, [isNextStepVisible, currentStep, setCurrentStep, setHasUsedKeyboard, closeNextStep]);
 
   return null;
 }
@@ -265,8 +252,6 @@ export function TourInitializer() {
 /**
  * Maps a step index to its CSS selector string.
  * Must stay in sync with OnboardingTourProvider step order.
- * Only in-page selectors are needed (sidebar steps use sel() which returns
- * the sidebar ID string, and modal steps have no selector).
  */
 const STEP_SELECTORS: Record<number, string> = {
   2: "#overview-status-strip",
@@ -300,7 +285,7 @@ function _getStepSelector(step: number): string | null {
 }
 
 /**
- * useTourControls — used by Settings restart button.
+ * useTourControls — used by Settings restart button and the checklist.
  */
 export function useTourControls() {
   const { startNextStep } = useNextStep();
