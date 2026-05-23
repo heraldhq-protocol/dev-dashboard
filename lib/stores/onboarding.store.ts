@@ -5,6 +5,10 @@ import { persist } from "zustand/middleware";
 // Bump to force the tour to re-fire for ALL users on next login.
 export const TOUR_VERSION = 1;
 
+// Total steps in heraldMainTour — kept here to avoid circular imports between
+// OnboardingTourProvider (defines steps) and TourInitializer (consumes this count).
+export const HERALD_TOUR_STEP_COUNT = 36;
+
 // ── Checklist ─────────────────────────────────────────────────────────────────
 export interface ChecklistState {
   /** User clicked "Mark done" on the playground step */

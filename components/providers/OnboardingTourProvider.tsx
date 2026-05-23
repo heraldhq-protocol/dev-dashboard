@@ -4,12 +4,9 @@ import { useEffect, useState } from "react";
 import { NextStepProvider, NextStep, type Tour, type Step } from "nextstepjs";
 import { useSession } from "next-auth/react";
 import { TourCard } from "@/components/onboarding/TourCard";
+import { TourInitializer } from "@/components/onboarding/TourInitializer";
 import { useOnboardingStore, TOUR_VERSION } from "@/lib/stores/onboarding.store";
 import { updateProtocol } from "@/lib/api/protocol";
-
-// Total number of steps — exported so TourInitializer can derive bounds without hardcoding.
-// Update whenever steps are added or removed from buildTourSteps.
-export const HERALD_TOUR_STEP_COUNT = 36;
 
 // ── Extended step type ────────────────────────────────────────────────────────
 export type GroupedStep = Step & {
@@ -577,13 +574,14 @@ function NextStepInner({ children, isSidebarHidden, isPaidTier }: { children: Re
         updateProtocol({ registrationFlags: { tourCompleted: true, tourVersion: TOUR_VERSION } }).catch(() => {});
       }}
       onSkip={() => {
-        // nextstepjs's onSkip is kept as a safety fallback, but the primary skip
-        // path goes through TourCard's handleSkipTour which calls closeNextStep directly.
         setTourSkipped();
         updateProtocol({ registrationFlags: { tourCompleted: true, tourVersion: TOUR_VERSION } }).catch(() => {});
       }}
       onStepChange={(step) => setLastTourStep(step)}
     >
+      {/* TourInitializer lives here so it is always inside NextStepProvider context
+          and is never rendered on mobile (NextStepInner is skipped on mobile). */}
+      <TourInitializer />
       {children}
     </NextStep>
   );

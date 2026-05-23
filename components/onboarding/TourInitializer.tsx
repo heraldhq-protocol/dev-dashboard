@@ -4,9 +4,9 @@ import { useEffect, useRef } from "react";
 import { useNextStep } from "nextstepjs";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useOnboardingStore, TOUR_VERSION } from "@/lib/stores/onboarding.store";
+import { useSession } from "next-auth/react";
+import { useOnboardingStore, TOUR_VERSION, HERALD_TOUR_STEP_COUNT } from "@/lib/stores/onboarding.store";
 import { useUiStore } from "@/lib/stores/ui.store";
-import { HERALD_TOUR_STEP_COUNT } from "@/components/providers/OnboardingTourProvider";
 import { getProtocol } from "@/lib/api/protocol";
 
 // Steps that target a sidebar nav item — sidebar must be expanded on desktop
@@ -90,6 +90,7 @@ const STEP_ROUTES: Record<number, string> = {
 export function TourInitializer() {
   const { startNextStep, closeNextStep, setCurrentStep, currentStep, isNextStepVisible } =
     useNextStep() as ReturnType<typeof useNextStep> & { closeNextStep?: () => void };
+  const { data: session } = useSession();
   const { tourCompleted, completedTourVersion, lastTourStep, setHasUsedKeyboard, setTourSkipped } =
     useOnboardingStore();
   const { toggleDesktopSidebar } = useUiStore();
@@ -106,6 +107,7 @@ export function TourInitializer() {
     queryKey: ["protocol-me"],
     queryFn: getProtocol,
     staleTime: 5 * 60 * 1000,
+    enabled: !!session?.user,
   });
 
   useEffect(() => {

@@ -4,7 +4,6 @@ import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 import { useUiStore } from "@/lib/stores/ui.store";
 import { useQueryClient } from "@tanstack/react-query";
-import { TourInitializer } from "@/components/onboarding/TourInitializer";
 import { NextStepViewport } from "nextstepjs";
 import { FlaskConical } from "lucide-react";
 
@@ -54,8 +53,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Tour fires once on first load, invisible component */}
-      <TourInitializer />
     </div>
   );
 }
