@@ -70,7 +70,7 @@ export function NotificationsTable({ page, onPageChange, statusFilter, categoryF
                     <StatusBadge status={log.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ReceiptProof signature={log.receiptTx} />
+                    <ReceiptProof receiptTx={log.receiptTx} status={log.status} />
                   </td>
                 </tr>
               ))

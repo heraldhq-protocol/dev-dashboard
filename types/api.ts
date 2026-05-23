@@ -106,6 +106,13 @@ export interface NotificationDto {
   receiptTx: string | undefined;
 }
 
+export interface NotificationDetailDto extends NotificationDto {
+  channel?: string | null;
+  errorCode?: string | null;
+  errorReason?: string | null;
+  payload?: Record<string, unknown> | null;
+}
+
 // ── Webhooks ──────────────────────────────────────────────────────────────────
 
 export interface WebhookDto {

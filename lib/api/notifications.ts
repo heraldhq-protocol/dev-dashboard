@@ -8,6 +8,7 @@ import {
   TestSendResult,
   SandboxSendResult,
   PaginatedNotifications,
+  NotificationDetailDto,
 } from "@/types/api";
 
 const BASE = "/notifications";
@@ -143,6 +144,11 @@ export async function sandboxSend(
     dto,
   );
 
+  return data;
+}
+
+export async function getNotificationById(id: string): Promise<NotificationDetailDto> {
+  const { data } = await apiClient.get<NotificationDetailDto>(`${BASE}/${id}`);
   return data;
 }
 
