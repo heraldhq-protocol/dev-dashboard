@@ -123,15 +123,30 @@ const ROLE_LABELS: Record<string, string> = {
 
 // ─── Avatar ─────────────────────────────────────────────────
 
-function UserAvatar({ initials }: { initials: string }) {
+function UserAvatar({ initials, logoUrl }: { initials: string; logoUrl?: string | null }) {
   return (
-    <div
-      className="relative h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-navy shrink-0 cursor-pointer select-none"
-      style={{
-        background: "linear-gradient(135deg, #00c896 0%, #00e5a8 100%)",
-      }}
-    >
-      {initials}
+    <div className="relative h-8 w-8 shrink-0 cursor-pointer select-none">
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt="Protocol logo"
+          className="h-8 w-8 rounded-full object-cover border border-border/40"
+          onError={(e) => {
+            // If image fails to load, hide it so the initials fallback shows
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+            (e.currentTarget.nextElementSibling as HTMLElement | null)?.style.setProperty("display", "flex");
+          }}
+        />
+      ) : null}
+      <div
+        className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-navy"
+        style={{
+          background: "linear-gradient(135deg, #00c896 0%, #00e5a8 100%)",
+          display: logoUrl ? "none" : "flex",
+        }}
+      >
+        {initials}
+      </div>
       <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green border-2 border-navy" />
     </div>
   );
@@ -381,7 +396,7 @@ export function TopNav() {
         {session?.user && (
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-secondary p-1 rounded-lg transition-colors cursor-pointer outline-hidden">
-              <UserAvatar initials={initials} />
+              <UserAvatar initials={initials} logoUrl={protocol?.logoUrl} />
               <div className="hidden sm:flex flex-col items-start min-w-0">
                 <span className="text-xs font-semibold text-foreground leading-tight truncate max-w-[120px]">
                   {protocolName ?? shortWallet ?? "My Protocol"}
@@ -416,13 +431,23 @@ export function TopNav() {
 
                   {/* Protocol name + verification */}
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate leading-tight">
-                        {protocolName ?? "Unnamed Protocol"}
-                      </p>
-                      <p className="text-[10px] text-text-muted mt-0.5">
-                        Protocol account
-                      </p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {protocol?.logoUrl && (
+                        <img
+                          src={protocol.logoUrl}
+                          alt="Protocol logo"
+                          className="h-8 w-8 rounded-lg object-cover border border-border/30 shrink-0"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate leading-tight">
+                          {protocolName ?? "Unnamed Protocol"}
+                        </p>
+                        <p className="text-[10px] text-text-muted mt-0.5">
+                          Protocol account
+                        </p>
+                      </div>
                     </div>
                     {isVerified && (
                       <div
