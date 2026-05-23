@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import type { CardComponentProps, Step } from "nextstepjs";
 import { useNextStep } from "nextstepjs";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
+import { updateProtocol } from "@/lib/api/protocol";
+import { TOUR_VERSION } from "@/lib/stores/onboarding.store";
 
 // Extend Step with our custom group fields
 type GroupedStep = Step & {
@@ -36,13 +38,20 @@ export function TourCard({
   totalSteps,
   nextStep,
   prevStep,
-  skipTour,
   arrow,
 }: CardComponentProps) {
   const { setCurrentStep, closeNextStep } = useNextStep() as ReturnType<typeof useNextStep> & {
     closeNextStep?: () => void;
   };
-  const { hasUsedKeyboard } = useOnboardingStore();
+  const { hasUsedKeyboard, setTourSkipped } = useOnboardingStore();
+
+  const handleSkipTour = () => {
+    setTourSkipped();
+    updateProtocol({ registrationFlags: { tourCompleted: true, tourVersion: TOUR_VERSION } }).catch(
+      () => { /* fire-and-forget */ }
+    );
+    closeNextStep?.();
+  };
 
   if (!step) return null;
 
@@ -215,9 +224,9 @@ export function TourCard({
               <span />
             )}
 
-            {step.showSkip && skipTour && (
+            {step.showSkip && (
               <button
-                onClick={skipTour}
+                onClick={handleSkipTour}
                 className="text-[10px] text-text-dim/60 hover:text-text-dim transition-colors"
               >
                 Skip tour

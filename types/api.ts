@@ -37,6 +37,8 @@ export interface ProtocolProfileDto {
   verifiedAt?: string | null;
   // Herald platform admin flag
   isHeraldAdmin?: boolean;
+  // Arbitrary per-protocol flags (e.g. { tourCompleted: true })
+  registrationFlags?: Record<string, unknown> | null;
 }
 
 export interface UpdateProtocolDto {
@@ -45,6 +47,7 @@ export interface UpdateProtocolDto {
   logoUrl?: string;
   customFromName?: string;
   notificationCategories?: string[];
+  registrationFlags?: Record<string, unknown>;
 }
 
 export interface RegisterProtocolDto {

@@ -23,6 +23,7 @@ export async function updateProtocol(
     logoUrl: dto.logoUrl,
     customFromName: dto.customFromName,
     notificationCategories: dto.notificationCategories,
+    registrationFlags: dto.registrationFlags,
   };
   const { data } = await apiClient.patch<ProtocolProfileDto>(
     `${BASE}/me`,
@@ -133,5 +134,15 @@ export interface VerificationRequest {
 
 export async function requestVerification(dto: VerificationRequest): Promise<{ status: string }> {
   const { data } = await apiClient.post<{ status: string }>(`${BASE}/me/request-verification`, dto);
+  return data;
+}
+
+export interface SyncOnChainResult {
+  status: "already_registered" | "registered";
+  tx?: string;
+}
+
+export async function syncOnChain(): Promise<SyncOnChainResult> {
+  const { data } = await apiClient.post<SyncOnChainResult>(`${BASE}/me/sync-onchain`);
   return data;
 }

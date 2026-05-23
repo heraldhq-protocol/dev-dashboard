@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset } from "@/lib/api/protocol";
+import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset, syncOnChain } from "@/lib/api/protocol";
 import { RetryPolicyForm } from "@/components/settings/RetryPolicyForm";
 import { apiClient } from "@/lib/api-client";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
@@ -229,6 +229,20 @@ export default function SettingsPage() {
     },
   });
 
+  const syncOnChainMutation = useMutation({
+    mutationFn: syncOnChain,
+    onSuccess: (result) => {
+      if (result.status === "already_registered") {
+        toast.success("Protocol account is already registered on-chain.");
+      } else {
+        toast.success("Protocol registered on-chain successfully.");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "On-chain sync failed. Check your authority key configuration.");
+    },
+  });
+
   // Telegram buttons state
   const [telegramButtonsValue, setTelegramButtonsValue] = useState("");
 
@@ -431,6 +445,51 @@ export default function SettingsPage() {
             )}
           </div>
         </form>
+
+        <hr className="border-border mt-8" />
+
+        {/* On-chain registration */}
+        <div className="mt-6 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal/10 text-teal">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">On-chain Registration</h3>
+              <p className="text-xs text-text-muted mt-0.5">
+                Herald writes ZK delivery receipts against your on-chain protocol account. If registration
+                failed during signup, use this to retry. Safe to run multiple times.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-navy-2 p-4 flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Protocol Pubkey</p>
+              <p className="text-sm font-mono text-foreground break-all">{profile?.protocolPubkey ?? "—"}</p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              isLoading={syncOnChainMutation.isPending}
+              disabled={syncOnChainMutation.isPending}
+              onClick={() => syncOnChainMutation.mutate()}
+              className="shrink-0"
+            >
+              Sync On-chain
+            </Button>
+          </div>
+
+          {syncOnChainMutation.isSuccess && syncOnChainMutation.data?.tx && (
+            <p className="text-xs text-text-muted animate-in fade-in duration-300">
+              Tx:{" "}
+              <span className="font-mono text-teal break-all">{syncOnChainMutation.data.tx}</span>
+            </p>
+          )}
+        </div>
       </div>
       )}
 

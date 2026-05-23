@@ -3,9 +3,11 @@
 import { useEffect, useRef } from "react";
 import { useNextStep } from "nextstepjs";
 import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useOnboardingStore, TOUR_VERSION } from "@/lib/stores/onboarding.store";
 import { useUiStore } from "@/lib/stores/ui.store";
 import { HERALD_TOUR_STEP_COUNT } from "@/components/providers/OnboardingTourProvider";
+import { getProtocol } from "@/lib/api/protocol";
 
 // Steps that target a sidebar nav item — sidebar must be expanded on desktop
 const SIDEBAR_STEPS = new Set([1, 6, 10, 15, 18, 21, 24, 27, 31, 34]);
@@ -88,7 +90,7 @@ const STEP_ROUTES: Record<number, string> = {
 export function TourInitializer() {
   const { startNextStep, closeNextStep, setCurrentStep, currentStep, isNextStepVisible } =
     useNextStep() as ReturnType<typeof useNextStep> & { closeNextStep?: () => void };
-  const { tourCompleted, completedTourVersion, lastTourStep, setHasUsedKeyboard } =
+  const { tourCompleted, completedTourVersion, lastTourStep, setHasUsedKeyboard, setTourSkipped } =
     useOnboardingStore();
   const { toggleDesktopSidebar } = useUiStore();
   const pathname = usePathname();
@@ -96,13 +98,36 @@ export function TourInitializer() {
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoExpandedSidebar = useRef(false);
 
-  const shouldFire = !tourCompleted || completedTourVersion < TOUR_VERSION;
+  // ── Server-side tour state ───────────────────────────────────────────────
+  // Fetch the protocol profile once to check if the user has already completed
+  // the tour on another device. If registrationFlags.tourCompleted is true,
+  // hydrate the store so the tour doesn't pop up on this device either.
+  const { data: protocolProfile } = useQuery({
+    queryKey: ["protocol-me"],
+    queryFn: getProtocol,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (!protocolProfile) return;
+    const flags = protocolProfile.registrationFlags;
+    if (flags?.tourCompleted && !tourCompleted) {
+      setTourSkipped();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [protocolProfile]);
+
+  const serverDone = protocolProfile?.registrationFlags?.tourCompleted === true;
+  const shouldFire = !serverDone && (!tourCompleted || completedTourVersion < TOUR_VERSION);
   const shouldResume = shouldFire && lastTourStep > 0;
 
   // ── 1. Auto-start / resume ───────────────────────────────────────────────
   useEffect(() => {
     // Skip tour on mobile — the provider doesn't render NextStep on small screens
     if (typeof window !== "undefined" && window.innerWidth < 768) return;
+    // Wait until the server check resolves before firing — avoids showing the
+    // tour briefly on devices where the user already completed it elsewhere.
+    if (protocolProfile === undefined) return;
     if (!shouldFire || _tourSessionFired) return;
     _tourSessionFired = true;
 
@@ -118,7 +143,7 @@ export function TourInitializer() {
 
     return () => clearTimeout(startTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [protocolProfile]);
 
   // ── 2. Route guard ───────────────────────────────────────────────────────
   useEffect(() => {
