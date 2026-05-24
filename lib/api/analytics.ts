@@ -51,7 +51,7 @@ export interface AudienceAnalytics {
 }
 
 export async function getAudienceAnalytics(): Promise<AudienceAnalytics> {
-  const { data } = await apiClient.get<AudienceAnalytics>("/v1/audience");
+  const { data } = await apiClient.get<AudienceAnalytics>("/audience");
   return data;
 }
 
