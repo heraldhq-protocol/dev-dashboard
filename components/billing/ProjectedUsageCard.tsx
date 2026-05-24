@@ -4,11 +4,36 @@ import { useQuery } from "@tanstack/react-query";
 import { getBillingProjection } from "@/lib/api/billing";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 function Skeleton({ className }: { className?: string }) {
   return (
     <div className={cn("animate-pulse rounded bg-card-2", className)} />
+  );
+}
+
+function VelocityBadge({ velocity }: { velocity: 'accelerating' | 'decelerating' | 'stable' }) {
+  if (velocity === 'accelerating') {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-gold bg-gold/10 border border-gold/20 rounded px-1.5 py-0.5">
+        <TrendingUp className="h-2.5 w-2.5" />
+        Accelerating
+      </span>
+    );
+  }
+  if (velocity === 'decelerating') {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-teal bg-teal/10 border border-teal/20 rounded px-1.5 py-0.5">
+        <TrendingDown className="h-2.5 w-2.5" />
+        Decelerating
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-text-muted bg-card-2 border border-border rounded px-1.5 py-0.5">
+      <Minus className="h-2.5 w-2.5" />
+      Steady
+    </span>
   );
 }
 
@@ -22,6 +47,7 @@ export function ProjectedUsageCard() {
   const usagePercent = data?.usagePercent ?? 0;
   const isWarning = usagePercent >= 70 && usagePercent < 90;
   const isCritical = usagePercent >= 90;
+  const periodEnded = (data?.daysRemaining ?? 1) === 0;
 
   const barColor = isCritical
     ? "bg-red shadow-[0_0_8px_rgba(239,68,68,0.4)]"
@@ -35,6 +61,16 @@ export function ProjectedUsageCard() {
       ? "text-gold"
       : "text-teal";
 
+  // Middle stat: "Projected" when period is ongoing, "Daily Avg" at period end
+  const midLabel = periodEnded ? "Daily Avg" : "Projected";
+  const midValue = periodEnded
+    ? (data?.recentDailyAvg ?? 0).toFixed(1)
+    : (data?.projectedEndOfMonth ?? 0).toLocaleString();
+  const midColor =
+    !periodEnded && (data?.projectedOverage ?? 0) > 0
+      ? "text-gold"
+      : "text-foreground";
+
   return (
     <div className="bg-card border border-border rounded-xl p-5 space-y-4">
       {/* Header */}
@@ -47,13 +83,18 @@ export function ProjectedUsageCard() {
             Projected Usage
           </span>
         </div>
-        {isLoading ? (
-          <Skeleton className="h-4 w-16" />
-        ) : (
-          <span className={cn("text-xs font-bold", accentText)}>
-            {data?.usagePercent.toFixed(0)}% used
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {!isLoading && data?.velocity && data.daysElapsed >= 3 && (
+            <VelocityBadge velocity={data.velocity} />
+          )}
+          {isLoading ? (
+            <Skeleton className="h-4 w-16" />
+          ) : (
+            <span className={cn("text-xs font-bold", accentText)}>
+              {data?.usagePercent.toFixed(0)}% used
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -87,18 +128,13 @@ export function ProjectedUsageCard() {
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
-            Projected
+            {midLabel}
           </p>
           {isLoading ? (
             <Skeleton className="h-5 w-14 mx-auto mt-1" />
           ) : (
-            <p
-              className={cn(
-                "text-sm font-bold mt-0.5",
-                (data?.projectedOverage ?? 0) > 0 ? "text-gold" : "text-foreground"
-              )}
-            >
-              {(data?.projectedEndOfMonth ?? 0).toLocaleString()}
+            <p className={cn("text-sm font-bold mt-0.5", midColor)}>
+              {midValue}
             </p>
           )}
         </div>
@@ -116,29 +152,46 @@ export function ProjectedUsageCard() {
         </div>
       </div>
 
-      {/* Overage warning */}
-      {!isLoading && (data?.projectedOverage ?? 0) > 0 && (
+      {/* Daily rate row — only when there are days remaining */}
+      {!isLoading && !periodEnded && (data?.daysElapsed ?? 0) >= 3 && (
+        <div className="flex items-center justify-between text-[10px] text-text-muted border-t border-border pt-2">
+          <span>
+            Avg/day (period): <span className="text-foreground font-semibold">{data?.dailyAvg ?? 0}</span>
+          </span>
+          <span>
+            Avg/day (7d): <span className={cn("font-semibold", data?.velocity === 'accelerating' ? 'text-gold' : data?.velocity === 'decelerating' ? 'text-teal' : 'text-foreground')}>{data?.recentDailyAvg ?? 0}</span>
+          </span>
+        </div>
+      )}
+
+      {/* Limit breach warning */}
+      {!isLoading && data?.estimatedLimitBreachDay && (
         <div className="flex items-start gap-2 rounded-lg border border-gold/20 bg-gold/5 px-3 py-2.5">
-          <svg
-            className="h-3.5 w-3.5 text-gold shrink-0 mt-0.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
+          <svg className="h-3.5 w-3.5 text-gold shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <p className="text-[11px] text-gold leading-snug">
+            At this rate you&apos;ll hit your limit around{" "}
+            <strong>
+              {new Date(data.estimatedLimitBreachDay).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </strong>
+            {(data.projectedOverageCost ?? 0) > 0 && (
+              <> — est. overage ~${data.projectedOverageCost.toFixed(2)} USDC</>
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* Overage warning (when already projected to exceed, no breach date) */}
+      {!isLoading && (data?.projectedOverage ?? 0) > 0 && !data?.estimatedLimitBreachDay && (
+        <div className="flex items-start gap-2 rounded-lg border border-gold/20 bg-gold/5 px-3 py-2.5">
+          <svg className="h-3.5 w-3.5 text-gold shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <p className="text-[11px] text-gold leading-snug">
             Projected overage:{" "}
-            <strong>
-              {(data?.projectedOverage ?? 0).toLocaleString()} sends
-            </strong>{" "}
-            (~$
-            {data?.projectedOverageCost?.toFixed(2) ?? "0.00"} USDC)
+            <strong>{(data?.projectedOverage ?? 0).toLocaleString()} sends</strong>{" "}
+            (~${data?.projectedOverageCost?.toFixed(2) ?? "0.00"} USDC)
           </p>
         </div>
       )}
@@ -149,15 +202,14 @@ export function ProjectedUsageCard() {
           <Skeleton className="h-3 w-28" />
         ) : (
           <span>
-            {data?.daysRemaining ?? 0} days left in period
+            {periodEnded
+              ? "Period ended"
+              : `${data?.daysRemaining ?? 0} days left in period`}
             {data?.periodResetAt &&
               ` · resets ${new Date(data.periodResetAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
           </span>
         )}
-        <Link
-          href="/billing"
-          className="text-teal hover:underline font-semibold"
-        >
+        <Link href="/billing" className="text-teal hover:underline font-semibold">
           Billing →
         </Link>
       </div>

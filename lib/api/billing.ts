@@ -87,9 +87,14 @@ export interface BillingProjection {
   usagePercent: number;
   daysElapsed: number;
   daysRemaining: number;
+  dailyAvg: number;
+  recentDailyAvg: number;
+  velocity: 'accelerating' | 'decelerating' | 'stable';
   projectedEndOfMonth: number;
   projectedOverage: number;
   projectedOverageCost: number;
+  willExceedLimit: boolean;
+  estimatedLimitBreachDay: string | null;
   tier: number;
   tierName: string;
   periodResetAt: string | null;
