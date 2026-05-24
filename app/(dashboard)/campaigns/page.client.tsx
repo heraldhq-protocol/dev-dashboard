@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import Link from "next/link";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -302,7 +303,12 @@ function CampaignRow({
           <CampaignStatusBadge status={campaign.status} />
         </td>
         <td className="px-4 py-3">
-          <p className="font-medium text-foreground truncate max-w-[200px]">{campaign.subject}</p>
+          <Link
+            href={`/campaigns/${campaign.id}`}
+            className="font-medium text-foreground truncate max-w-[200px] hover:text-teal transition-colors block"
+          >
+            {campaign.subject}
+          </Link>
         </td>
         <td className="px-4 py-3 hidden md:table-cell">
           <span className="text-text-muted text-xs">
@@ -336,6 +342,13 @@ function CampaignRow({
         </td>
         <td className="px-4 py-3 text-right">
           <div className="flex items-center justify-end gap-1.5">
+            {campaign.status === "DRAFT" && (
+              <Link href={`/campaigns/${campaign.id}`}>
+                <Button size="xs" variant="secondary" disabled={isLoading}>
+                  Edit
+                </Button>
+              </Link>
+            )}
             {canLaunch && (
               <Button
                 size="xs"

@@ -46,6 +46,20 @@ export async function createCampaign(data: {
   return result;
 }
 
+export async function updateCampaign(
+  id: string,
+  data: {
+    subject?: string;
+    body?: string;
+    category?: string;
+    channels?: string[];
+    scheduledFor?: string | null;
+  }
+): Promise<Campaign> {
+  const { data: result } = await apiClient.patch<Campaign>(`${BASE}/${id}`, data);
+  return result;
+}
+
 export async function launchCampaign(id: string): Promise<{ launched: boolean }> {
   const { data } = await apiClient.post<{ launched: boolean }>(`${BASE}/${id}/launch`);
   return data;
