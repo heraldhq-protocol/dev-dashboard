@@ -1,5 +1,6 @@
 import CampaignDetailPage from "./page.client";
 
-export default function Page({ params }: { params: { id: string } }) {
-  return <CampaignDetailPage id={params.id} />;
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <CampaignDetailPage id={id} />;
 }

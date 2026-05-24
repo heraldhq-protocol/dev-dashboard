@@ -21,6 +21,7 @@ import {
 
 import { listAudiences, createAudience, type Audience } from "@/lib/api/audiences";
 import { createCampaign, launchCampaign } from "@/lib/api/campaigns";
+import { listTemplates, type ProtocolTemplate } from "@/lib/api/templates";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ interface FormData {
   body: string;
   category: string;
   channels: string[];
+  templateId: string | null;
   launchImmediately: boolean;
 }
 
@@ -47,6 +49,7 @@ const INITIAL_FORM: FormData = {
   body: "",
   category: "defi",
   channels: ["email"],
+  templateId: null,
   launchImmediately: false,
 };
 
@@ -125,6 +128,12 @@ export default function NewCampaignPage() {
     staleTime: 30_000,
   });
 
+  const { data: templates = [] } = useQuery<ProtocolTemplate[]>({
+    queryKey: ["templates"],
+    queryFn: listTemplates,
+    staleTime: 60_000,
+  });
+
   const selectedAudience =
     form.audienceMode === "existing"
       ? audiences.find((a) => a.id === form.audienceId) ?? null
@@ -194,6 +203,7 @@ export default function NewCampaignPage() {
         body: form.body.trim(),
         category: form.category,
         channels: form.channels,
+        templateId: form.templateId,
       });
 
       if (form.launchImmediately) {
@@ -423,6 +433,36 @@ export default function NewCampaignPage() {
               </div>
             </div>
 
+            {/* Email Template (optional) */}
+            {templates.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary">
+                  Email Template <span className="text-text-dim font-normal">(optional)</span>
+                </label>
+                <Select
+                  value={form.templateId ?? "__none__"}
+                  onValueChange={(val) =>
+                    setForm((f) => ({ ...f, templateId: val === "__none__" ? null : val }))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="No template (plain text)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">No template (plain text)</SelectItem>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-text-dim">
+                  Apply a branded HTML template to your email channel.
+                </p>
+              </div>
+            )}
+
             <div className="flex justify-between pt-2">
               <Button variant="secondary" onClick={() => setStep(1)}>
                 Back
@@ -495,6 +535,16 @@ export default function NewCampaignPage() {
                     </span>
                   ))}
                 </div>
+              </div>
+              <div className="flex items-start gap-3 px-4 py-3">
+                <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider w-20 shrink-0 mt-0.5">
+                  Template
+                </span>
+                <p className="text-foreground text-sm">
+                  {form.templateId
+                    ? (templates.find((t) => t.id === form.templateId)?.name ?? form.templateId)
+                    : <span className="italic text-text-muted">None (plain text)</span>}
+                </p>
               </div>
             </div>
 

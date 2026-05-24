@@ -29,6 +29,7 @@ import {
   launchCampaign,
   cancelCampaign,
 } from "@/lib/api/campaigns";
+import { listTemplates, type ProtocolTemplate } from "@/lib/api/templates";
 
 const CATEGORY_OPTIONS = [
   { value: "defi", label: "DeFi Alerts" },
@@ -56,6 +57,12 @@ export default function CampaignDetailPage({ id }: { id: string }) {
 
   const isDraft = campaign?.status === "DRAFT";
 
+  const { data: templates = [] } = useQuery<ProtocolTemplate[]>({
+    queryKey: ["templates"],
+    queryFn: listTemplates,
+    staleTime: 60_000,
+  });
+
   // Edit state — only relevant for DRAFT
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<{
@@ -63,6 +70,7 @@ export default function CampaignDetailPage({ id }: { id: string }) {
     body: string;
     category: string;
     channels: string[];
+    templateId: string | null;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isActing, setIsActing] = useState(false);
@@ -74,6 +82,7 @@ export default function CampaignDetailPage({ id }: { id: string }) {
       body: campaign.body,
       category: campaign.category,
       channels: campaign.channels,
+      templateId: campaign.templateId ?? null,
     });
     setEditing(true);
   };
@@ -92,6 +101,7 @@ export default function CampaignDetailPage({ id }: { id: string }) {
         body: form.body.trim(),
         category: form.category,
         channels: form.channels,
+        templateId: form.templateId,
       });
       toast.success("Campaign updated.");
       await queryClient.invalidateQueries({ queryKey: ["campaign", id] });
@@ -168,6 +178,8 @@ export default function CampaignDetailPage({ id }: { id: string }) {
   const displayBody = editing && form ? form.body : campaign.body;
   const displayCategory = editing && form ? form.category : campaign.category;
   const displayChannels = editing && form ? form.channels : campaign.channels;
+  const displayTemplateId = editing && form ? form.templateId : (campaign.templateId ?? null);
+  const displayTemplate = templates.find((t) => t.id === displayTemplateId) ?? null;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -360,6 +372,38 @@ export default function CampaignDetailPage({ id }: { id: string }) {
                 );
               })}
             </div>
+          </div>
+          {/* Email Template */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-text-secondary">Email Template</label>
+            {editing ? (
+              <Select
+                value={form?.templateId ?? "__none__"}
+                onValueChange={(val) =>
+                  setForm((f) => f ? { ...f, templateId: val === "__none__" ? null : val } : f)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="No template (plain text)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">No template (plain text)</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : displayTemplate ? (
+              <p className="text-sm text-foreground py-2 px-3 rounded-lg bg-card-2 border border-border">
+                {displayTemplate.name}
+              </p>
+            ) : (
+              <p className="text-sm text-text-muted py-2 px-3 rounded-lg bg-card-2 border border-border italic">
+                No template — plain text
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -2,6 +2,20 @@ import { apiClient } from "@/lib/api-client";
 
 const BASE = "/templates";
 
+export interface ProtocolTemplate {
+  id: string;
+  name: string;
+  subject?: string;
+  category?: string;
+  status?: string;
+  createdAt?: string;
+}
+
+export async function listTemplates(): Promise<ProtocolTemplate[]> {
+  const { data } = await apiClient.get<ProtocolTemplate[]>(BASE);
+  return data ?? [];
+}
+
 export interface StarterTemplateResponse {
   html: string;
   suggestedVariables: {

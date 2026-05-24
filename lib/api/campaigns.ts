@@ -9,6 +9,7 @@ export interface Campaign {
   id: string;
   protocolId: string;
   audienceId: string;
+  templateId?: string | null;
   subject: string;
   body: string;
   category: string;
@@ -41,6 +42,7 @@ export async function createCampaign(data: {
   category?: string;
   channels?: string[];
   scheduledFor?: string;
+  templateId?: string | null;
 }): Promise<Campaign> {
   const { data: result } = await apiClient.post<Campaign>(BASE, data);
   return result;
@@ -54,6 +56,7 @@ export async function updateCampaign(
     category?: string;
     channels?: string[];
     scheduledFor?: string | null;
+    templateId?: string | null;
   }
 ): Promise<Campaign> {
   const { data: result } = await apiClient.patch<Campaign>(`${BASE}/${id}`, data);
