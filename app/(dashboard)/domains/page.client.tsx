@@ -244,12 +244,13 @@ export default function DomainsPage() {
     ));
   };
 
-  if (billing && billing.tier < 2) {
+  if (billing && billing.tier < 1) {
     return (
       <TierGatePage
         feature="Custom Domains"
         description="Send emails from your own branded domain with custom DKIM signing and BIMI brand indicators."
         currentTierName={billing.tierName}
+        requiredTier="Growth"
       />
     );
   }
