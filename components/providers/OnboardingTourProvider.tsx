@@ -596,14 +596,15 @@ export function OnboardingTourProvider({ children }: { children: React.ReactNode
   // Tier 0 = Developer (free). Growth (1) and above unlock gated tour steps.
   const isPaidTier = (session?.user?.tier ?? 0) >= 1;
 
-  // Tour is skipped entirely on phones — no targets exist and layout is too narrow
-  if (isMobile) {
-    return <>{children}</>;
-  }
-
+  // Always render NextStepProvider so useNextStep() is valid anywhere in the tree.
+  // On mobile, skip NextStepInner (tour overlay + TourInitializer) — tour never fires on small screens.
   return (
     <NextStepProvider>
-      <NextStepInner isSidebarHidden={isSidebarHidden} isPaidTier={isPaidTier}>{children}</NextStepInner>
+      {isMobile ? (
+        children
+      ) : (
+        <NextStepInner isSidebarHidden={isSidebarHidden} isPaidTier={isPaidTier}>{children}</NextStepInner>
+      )}
     </NextStepProvider>
   );
 }
