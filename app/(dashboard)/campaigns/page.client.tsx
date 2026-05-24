@@ -322,16 +322,16 @@ function CampaignRow({
         </td>
         <td className="px-4 py-3 hidden lg:table-cell">
           <span className="font-mono text-xs text-text-muted">
-            {campaign.totalTargets.toLocaleString()}
+            {(campaign.totalTargets ?? 0).toLocaleString()}
           </span>
         </td>
         <td className="px-4 py-3 hidden lg:table-cell">
           <span className="font-mono text-xs text-teal">
-            {campaign.totalSent.toLocaleString()}
+            {(campaign.totalSent ?? 0).toLocaleString()}
           </span>
-          {campaign.totalFailed > 0 && (
+          {(campaign.totalFailed ?? 0) > 0 && (
             <span className="ml-1.5 font-mono text-xs text-red-400">
-              / {campaign.totalFailed.toLocaleString()} failed
+              / {(campaign.totalFailed ?? 0).toLocaleString()} failed
             </span>
           )}
         </td>

@@ -232,9 +232,9 @@ export default function CampaignDetailPage({ id }: { id: string }) {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Targets", value: campaign.totalTargets.toLocaleString() },
-          { label: "Sent", value: campaign.totalSent.toLocaleString(), color: "text-teal" },
-          { label: "Failed", value: campaign.totalFailed.toLocaleString(), color: campaign.totalFailed > 0 ? "text-red" : undefined },
+          { label: "Targets", value: (campaign.totalTargets ?? 0).toLocaleString() },
+          { label: "Sent", value: (campaign.totalSent ?? 0).toLocaleString(), color: "text-teal" },
+          { label: "Failed", value: (campaign.totalFailed ?? 0).toLocaleString(), color: (campaign.totalFailed ?? 0) > 0 ? "text-red" : undefined },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-card border border-border rounded-xl p-4 text-center">
             <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold mb-1">{label}</p>
