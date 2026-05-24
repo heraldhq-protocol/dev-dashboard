@@ -250,7 +250,7 @@ export function TopNav() {
   const protocolName = protocol?.protocolName ?? protocol?.name ?? null;
   const walletAddress = session?.user?.walletAddress ?? null;
   const role = session?.user?.role ?? "owner";
-  const tier = session?.user?.tier ?? 0;
+  const tier = protocol?.tier ?? session?.user?.tier ?? 0;
   const initials = getInitials(protocolName, walletAddress);
   const tierLabel = TIER_LABELS[tier] ?? "Developer";
   const roleLabel = ROLE_LABELS[role] ?? "Owner";

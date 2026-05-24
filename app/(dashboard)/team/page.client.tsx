@@ -48,7 +48,7 @@ function TeamContent() {
     queryFn: getBillingStatus,
     staleTime: 60_000,
   });
-  const canInviteMembers = (billing?.tier ?? 0) >= 2;
+  const canInviteMembers = (billing?.tier ?? 0) >= 1;
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["team"],
