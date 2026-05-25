@@ -221,6 +221,7 @@ export default function NotificationDetailPage({ params }: { params: Promise<{ i
           receiptTx={notification.receiptTx}
           status={notification.status}
           errorCode={notification.errorCode}
+          receiptFailureReason={notification.receiptFailureReason}
         />
       </div>
     </div>

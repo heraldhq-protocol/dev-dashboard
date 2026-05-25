@@ -110,6 +110,7 @@ export interface NotificationDetailDto extends NotificationDto {
   channel?: string | null;
   errorCode?: string | null;
   errorReason?: string | null;
+  receiptFailureReason?: string | null;
   payload?: Record<string, unknown> | null;
 }
 

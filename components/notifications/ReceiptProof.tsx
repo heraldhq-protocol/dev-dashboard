@@ -7,9 +7,10 @@ interface ReceiptProofProps {
   receiptTx?: string | null;
   status: string;
   errorCode?: string | null;
+  receiptFailureReason?: string | null;
 }
 
-export function ReceiptProof({ receiptTx, status, errorCode }: ReceiptProofProps) {
+export function ReceiptProof({ receiptTx, status, errorCode, receiptFailureReason }: ReceiptProofProps) {
   const [copied, setCopied] = useState(false);
 
   const isPending = status === "queued" || status === "processing";
@@ -76,9 +77,11 @@ export function ReceiptProof({ receiptTx, status, errorCode }: ReceiptProofProps
         <span className="text-xs text-red font-semibold uppercase tracking-wide">Not anchored</span>
       </div>
       <p className="text-xs text-text-muted">
-        {errorCode
+        {receiptFailureReason
+          ? receiptFailureReason
+          : errorCode
           ? `Delivery failed — no on-chain receipt was generated. Error: ${errorCode}`
-          : "Delivery failed — no on-chain receipt was generated."}
+          : "Receipt pending — will be anchored on the next batch cycle (every 5 minutes)."}
       </p>
     </div>
   );
