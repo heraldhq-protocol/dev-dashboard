@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, updateSandboxSettings, getProtocolAssets, createProtocolAsset, deleteProtocolAsset, syncOnChain } from "@/lib/api/protocol";
 import { RetryPolicyForm } from "@/components/settings/RetryPolicyForm";
 import { apiClient } from "@/lib/api-client";
+import { getTwitterAuthUrl, getTwitterStatus, disconnectTwitter } from "@/lib/api/twitter";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 import { useTourControls } from "@/components/onboarding/TourInitializer";
 import {
@@ -128,7 +129,15 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setModalOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "telegram" | "retry" | "tour" | "danger">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "sandbox" | "assets" | "telegram" | "retry" | "x" | "tour" | "danger">("general");
+  const [xConnecting, setXConnecting] = useState(false);
+  const [xDisconnecting, setXDisconnecting] = useState(false);
+
+  const { data: xStatus, refetch: refetchX } = useQuery({
+    queryKey: ["twitterStatus"],
+    queryFn: getTwitterStatus,
+    staleTime: 30_000,
+  });
 
   const { data: profile, isLoading, isError } = useQuery({
     queryKey: ["protocol", "me"],
@@ -318,6 +327,7 @@ export default function SettingsPage() {
           { id: "assets", label: "Brand Assets" },
           { id: "telegram", label: "Telegram" },
           { id: "retry", label: "Retry & Engagement" },
+          { id: "x", label: "X Account" },
           { id: "tour", label: "Tour & Onboarding" },
           { id: "danger", label: "Danger Zone" }
         ].map((tab) => (
@@ -714,6 +724,100 @@ export default function SettingsPage() {
 
       {activeTab === "retry" && (
       <RetryPolicyForm />
+      )}
+
+      {activeTab === "x" && (
+      <div className="rounded-xl border border-border bg-card p-6 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">X Account</h3>
+          <p className="text-xs text-text-muted mt-1">
+            Connect your project&apos;s X account to verify protocol ownership and activate notifications.
+            Herald only requests read-only access — we never post on your behalf.
+          </p>
+        </div>
+
+        {xStatus?.connected ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between rounded-xl border border-border bg-card-2 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-[#1d9bf0]/10 border border-[#1d9bf0]/20 flex items-center justify-center text-sm font-bold text-[#1d9bf0]">
+                  𝕏
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    @{xStatus.xUsername}
+                    {xStatus.xVerified && (
+                      <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400">
+                        ✓ Verified
+                      </span>
+                    )}
+                  </p>
+                  {xStatus.xConnectedAt && (
+                    <p className="text-xs text-text-dim">
+                      Connected {new Date(xStatus.xConnectedAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-teal bg-teal/10 border border-teal/20 rounded-full px-2.5 py-1">
+                ✓ Active
+              </span>
+            </div>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              isLoading={xDisconnecting}
+              onClick={async () => {
+                setXDisconnecting(true);
+                try {
+                  await disconnectTwitter();
+                  toast.success("X account disconnected. Protocol deactivated.");
+                  refetchX();
+                  queryClient.invalidateQueries({ queryKey: ["protocol"] });
+                } catch (err: any) {
+                  toast.error(err?.message ?? "Failed to disconnect X account.");
+                } finally {
+                  setXDisconnecting(false);
+                }
+              }}
+            >
+              Disconnect X Account
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border bg-card-2 p-4 space-y-2.5">
+              {[
+                { icon: "⚡", text: "Instant protocol activation — no manual review" },
+                { icon: "✓", text: "Verified mark shown to your subscribers" },
+                { icon: "🔒", text: "Read-only access — Herald never posts for you" },
+              ].map(({ icon, text }) => (
+                <div key={text} className="flex items-start gap-3">
+                  <span className="text-base mt-0.5">{icon}</span>
+                  <span className="text-sm text-text-muted">{text}</span>
+                </div>
+              ))}
+            </div>
+            <Button
+              className="bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white border-0"
+              isLoading={xConnecting}
+              onClick={async () => {
+                setXConnecting(true);
+                try {
+                  const { authUrl } = await getTwitterAuthUrl();
+                  window.location.href = authUrl;
+                } catch (err: any) {
+                  toast.error(err?.message ?? "Failed to start X connection.");
+                  setXConnecting(false);
+                }
+              }}
+            >
+              Connect @YourProject on X
+            </Button>
+          </div>
+        )}
+      </div>
       )}
 
       {activeTab === "tour" && (

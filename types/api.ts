@@ -39,6 +39,10 @@ export interface ProtocolProfileDto {
   isHeraldAdmin?: boolean;
   // Arbitrary per-protocol flags (e.g. { tourCompleted: true })
   registrationFlags?: Record<string, unknown> | null;
+  // X / Twitter connection
+  xUsername?: string | null;
+  xVerified?: boolean;
+  xConnectedAt?: string | null;
 }
 
 export interface UpdateProtocolDto {

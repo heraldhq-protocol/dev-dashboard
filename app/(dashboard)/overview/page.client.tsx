@@ -27,6 +27,8 @@ import { getProtocol } from "@/lib/api/protocol";
 import { VerificationCard } from "@/components/protocol/VerificationCard";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
+import { getTwitterAuthUrl } from "@/lib/api/twitter";
+import { toast } from "sonner";
 
 export default function OverviewPage() {
   const { checklist } = useOnboardingStore();
@@ -61,6 +63,15 @@ export default function OverviewPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const handleConnectX = async () => {
+    try {
+      const { authUrl } = await getTwitterAuthUrl();
+      window.location.href = authUrl;
+    } catch {
+      toast.error("Failed to start X connection. Please try again.");
+    }
+  };
+
   const performanceData = (trends?.dailyVolume ?? []).map((d) => ({
     date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     sends: d.volume,
@@ -86,6 +97,27 @@ export default function OverviewPage() {
           Herald Network: <span className="font-bold">Operational</span>
         </span>
       </div>
+
+      {/* Protocol Inactive Banner — shown when X not connected yet */}
+      {protocol && !protocol.isActive && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-amber-400 text-lg shrink-0">⚠</span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-amber-300">Your protocol is inactive</p>
+              <p className="text-xs text-amber-400/70 truncate">
+                Connect your project&apos;s X account to verify ownership and activate notifications.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleConnectX}
+            className="shrink-0 rounded-lg bg-amber-500 hover:bg-amber-400 text-navy text-xs font-bold px-3 py-1.5 transition-colors"
+          >
+            Connect X →
+          </button>
+        </div>
+      )}
 
       {/* First-run checklist — hidden once dismissed, during tour, or while loading */}
       {!checklist.checklistDismissed && !isLoading && !isNextStepVisible && (

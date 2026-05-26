@@ -14,10 +14,9 @@ import { Button } from "@/components/ui/Button";
 import { registerProtocol } from "@/lib/api/protocol";
 import { createSignInChallenge } from "@/lib/auth-utils";
 import { apiClient } from "@/lib/api-client";
+import { getTwitterAuthUrl } from "@/lib/api/twitter";
 
-const REDIRECT_DELAY = 60; // seconds before auto-redirect on success step
-
-const STEPS = ["Welcome", "Connect Wallet", "Protocol Details", "Register", "Success"] as const;
+const STEPS = ["Welcome", "Connect Wallet", "Protocol Details", "Register", "API Key", "Verify X"] as const;
 
 // ── Step Indicator ─────────────────────────────────────────────────────────────
 function StepIndicator({ current }: { current: number }) {
@@ -76,15 +75,14 @@ export default function OnboardingPage() {
   const [apiKeyPrefix, setApiKeyPrefix] = useState("");
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [xConnecting, setXConnecting] = useState(false);
 
-  // Countdown for auto-redirect on success step
-  const [countdown, setCountdown] = useState(REDIRECT_DELAY);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Already-registered guard ────────────────────────────────────────────────
   // If the user is authenticated AND already has a protocol, skip onboarding.
   useEffect(() => {
-    if (step === 4) return; // don't redirect if user just registered
+    if (step === 4 || step === 5) return; // don't redirect if user just registered
     if (sessionStatus !== "authenticated") return;
 
     setChecking(true);
@@ -108,27 +106,11 @@ export default function OnboardingPage() {
     }
   }, [publicKey, step]);
 
-  // ── Countdown timer on success step ────────────────────────────────────────
   useEffect(() => {
-    if (step !== 4) return;
-
-    setCountdown(REDIRECT_DELAY);
-
-    countdownRef.current = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownRef.current!);
-          router.push("/overview");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [step, router]);
+  }, []);
 
   // ── Step handlers ──────────────────────────────────────────────────────────
   const handleConnectWallet = () => {
@@ -183,7 +165,7 @@ export default function OnboardingPage() {
         toast.error("Registration succeeded but auto-login failed. Please log in from the login page.");
       }
 
-      setStep(4);
+      setStep(4); // API Key step
     } catch (err: unknown) {
       toast.error(
         err instanceof Error ? err.message : "Registration failed. Please try again."
@@ -200,8 +182,18 @@ export default function OnboardingPage() {
   };
 
   const handleGoToDashboard = () => {
-    if (countdownRef.current) clearInterval(countdownRef.current);
     router.push("/overview");
+  };
+
+  const handleConnectX = async () => {
+    setXConnecting(true);
+    try {
+      const { authUrl } = await getTwitterAuthUrl();
+      window.location.href = authUrl;
+    } catch {
+      toast.error("Failed to start X connection. Please try again.");
+      setXConnecting(false);
+    }
   };
 
   // ── Redirect guard loading state ───────────────────────────────────────────
@@ -456,21 +448,18 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Step 4: Success ── */}
+          {/* ── Step 4: API Key ── */}
           {step === 4 && (
             <div className="flex flex-col gap-5 text-center">
               <div className="flex flex-col items-center gap-3">
-                {/* Countdown badge */}
-                <div className="flex items-center gap-2">
-                  <div className="h-16 w-16 rounded-full bg-linear-to-br from-teal/20 to-teal/5 border border-teal/30 flex items-center justify-center text-3xl shadow-[0_0_30px_rgba(0,200,150,0.2)]">
-                    ✓
-                  </div>
+                <div className="h-16 w-16 rounded-full bg-linear-to-br from-teal/20 to-teal/5 border border-teal/30 flex items-center justify-center text-3xl shadow-[0_0_30px_rgba(0,200,150,0.2)]">
+                  ✓
                 </div>
                 <h1 className="text-2xl font-bold text-foreground tracking-tight mt-2">
                   Protocol Registered!
                 </h1>
                 <p className="text-sm text-text-muted max-w-sm mx-auto leading-relaxed">
-                  Your Herald protocol account is live. Save your Sandbox API key securely — it
+                  Your Herald protocol account is ready. Save your Sandbox API key securely — it
                   won&apos;t be shown again.
                 </p>
               </div>
@@ -503,24 +492,56 @@ export default function OnboardingPage() {
                 ⚠ This key will not be shown again. Store it in a secure environment variable.
               </p>
 
-              {/* Countdown + Go to Dashboard */}
-              <div className="flex flex-col gap-3 pt-1">
+              <Button variant="default" className="w-full" onClick={() => setStep(5)}>
+                Continue — Activate Protocol →
+              </Button>
+            </div>
+          )}
+
+          {/* ── Step 5: Verify X ── */}
+          {step === 5 && (
+            <div className="flex flex-col items-center gap-6 text-center py-4">
+              <div className="h-16 w-16 rounded-2xl bg-[#1d9bf0]/10 border border-[#1d9bf0]/20 flex items-center justify-center text-3xl">
+                𝕏
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                  Activate Your Protocol
+                </h1>
+                <p className="text-sm text-text-muted mt-2 max-w-sm mx-auto leading-relaxed">
+                  Connect your project&apos;s X account to verify ownership and instantly activate
+                  your protocol. Verified accounts get a badge in the Herald directory.
+                </p>
+              </div>
+
+              <div className="w-full rounded-xl border border-border bg-navy-2 p-4 text-left space-y-2.5">
+                {[
+                  { icon: "⚡", text: "Instant protocol activation — no waiting for review" },
+                  { icon: "✓", text: "Verified mark displayed to your subscribers" },
+                  { icon: "🔒", text: "Read-only access — Herald never posts on your behalf" },
+                ].map(({ icon, text }) => (
+                  <div key={text} className="flex items-start gap-3">
+                    <span className="text-base mt-0.5">{icon}</span>
+                    <span className="text-sm text-text-muted">{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-3 w-full">
                 <Button
                   variant="default"
-                  className="w-full"
-                  onClick={handleGoToDashboard}
+                  className="w-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white border-0"
+                  onClick={handleConnectX}
+                  isLoading={xConnecting}
                 >
-                  Go to Dashboard →
+                  {xConnecting ? "Redirecting to X…" : "Connect @YourProject on X"}
                 </Button>
-                <div className="flex items-center justify-center gap-2 text-xs text-text-dim">
-                  <div className="h-1.5 w-1.5 rounded-full bg-teal animate-pulse" />
-                  <span>
-                    Redirecting automatically in{" "}
-                    <span className="text-teal font-mono font-semibold tabular-nums">
-                      {countdown}s
-                    </span>
-                  </span>
-                </div>
+                <button
+                  onClick={handleGoToDashboard}
+                  className="text-xs text-text-dim hover:text-foreground transition-colors"
+                >
+                  Skip for now — activate later in Settings
+                </button>
               </div>
             </div>
           )}
