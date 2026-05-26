@@ -727,94 +727,150 @@ export default function SettingsPage() {
       )}
 
       {activeTab === "x" && (
-      <div className="rounded-xl border border-border bg-card p-6 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">X Account</h3>
-          <p className="text-xs text-text-muted mt-1">
-            Connect your project&apos;s X account to verify protocol ownership and activate notifications.
-            Herald only requests read-only access — we never post on your behalf.
-          </p>
+      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        {/* Header */}
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-border font-bold text-base text-foreground">
+                𝕏
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">X Account</h2>
+                <p className="text-sm text-text-muted mt-0.5">
+                  Connect your project&apos;s X account to self-verify and instantly activate your protocol.
+                </p>
+              </div>
+            </div>
+            {xStatus?.connected ? (
+              <span className="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal">
+                Active
+              </span>
+            ) : (
+              <span className="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-white/5 border border-border text-text-muted">
+                Not connected
+              </span>
+            )}
+          </div>
         </div>
 
         {xStatus?.connected ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border border-border bg-card-2 px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-[#1d9bf0]/10 border border-[#1d9bf0]/20 flex items-center justify-center text-sm font-bold text-[#1d9bf0]">
-                  𝕏
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    @{xStatus.xUsername}
-                    {xStatus.xVerified && (
-                      <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400">
-                        ✓ Verified
-                      </span>
-                    )}
-                  </p>
-                  {xStatus.xConnectedAt && (
-                    <p className="text-xs text-text-dim">
-                      Connected {new Date(xStatus.xConnectedAt).toLocaleDateString()}
-                    </p>
+          <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-card-2 border border-border">
+              <div className="h-10 w-10 rounded-full bg-white/5 border border-border flex items-center justify-center text-sm font-bold text-foreground shrink-0">
+                𝕏
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-foreground">@{xStatus.xUsername}</p>
+                  {xStatus.xVerified && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400">
+                      ✓ Verified
+                    </span>
                   )}
                 </div>
+                {xStatus.xConnectedAt && (
+                  <p className="text-xs text-text-dim mt-0.5">
+                    Connected {new Date(xStatus.xConnectedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                  </p>
+                )}
               </div>
-              <span className="text-xs font-semibold text-teal bg-teal/10 border border-teal/20 rounded-full px-2.5 py-1">
+              <span className="text-xs font-semibold text-teal bg-teal/10 border border-teal/20 rounded-full px-2.5 py-1 shrink-0">
                 ✓ Active
               </span>
             </div>
 
-            <Button
-              variant="destructive"
-              size="sm"
-              isLoading={xDisconnecting}
-              onClick={async () => {
-                setXDisconnecting(true);
-                try {
-                  await disconnectTwitter();
-                  toast.success("X account disconnected. Protocol deactivated.");
-                  refetchX();
-                  queryClient.invalidateQueries({ queryKey: ["protocol"] });
-                } catch (err: any) {
-                  toast.error(err?.message ?? "Failed to disconnect X account.");
-                } finally {
-                  setXDisconnecting(false);
-                }
-              }}
-            >
-              Disconnect X Account
-            </Button>
+            <div className="pt-1 border-t border-border flex items-center justify-between gap-4">
+              <p className="text-xs text-text-dim">Disconnecting will deactivate your protocol until reconnected.</p>
+              <Button
+                variant="destructive"
+                size="sm"
+                isLoading={xDisconnecting}
+                onClick={async () => {
+                  setXDisconnecting(true);
+                  try {
+                    await disconnectTwitter();
+                    toast.success("X account disconnected. Protocol deactivated.");
+                    refetchX();
+                    queryClient.invalidateQueries({ queryKey: ["protocol"] });
+                  } catch (err: any) {
+                    toast.error(err?.message ?? "Failed to disconnect X account.");
+                  } finally {
+                    setXDisconnecting(false);
+                  }
+                }}
+              >
+                Disconnect
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-border bg-card-2 p-4 space-y-2.5">
+          <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { icon: "⚡", text: "Instant protocol activation — no manual review" },
-                { icon: "✓", text: "Verified mark shown to your subscribers" },
-                { icon: "🔒", text: "Read-only access — Herald never posts for you" },
-              ].map(({ icon, text }) => (
-                <div key={text} className="flex items-start gap-3">
-                  <span className="text-base mt-0.5">{icon}</span>
-                  <span className="text-sm text-text-muted">{text}</span>
+                {
+                  icon: (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  ),
+                  color: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+                  title: "Instant activation",
+                  desc: "No manual review. Your protocol goes live the moment you connect.",
+                },
+                {
+                  icon: (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                  ),
+                  color: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+                  title: "Verified badge",
+                  desc: "Subscribers see a verified mark if your X account is verified.",
+                },
+                {
+                  icon: (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  ),
+                  color: "text-teal bg-teal/10 border-teal/20",
+                  title: "Read-only access",
+                  desc: "We only read your public profile. Herald never posts on your behalf.",
+                },
+              ].map(({ icon, color, title, desc }) => (
+                <div key={title} className="rounded-xl border border-border bg-card-2 p-4 space-y-2.5">
+                  <div className={`h-7 w-7 rounded-lg border flex items-center justify-center ${color}`}>
+                    {icon}
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">{title}</p>
+                  <p className="text-xs text-text-muted leading-relaxed">{desc}</p>
                 </div>
               ))}
             </div>
-            <Button
-              className="bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white border-0"
-              isLoading={xConnecting}
-              onClick={async () => {
-                setXConnecting(true);
-                try {
-                  const { authUrl } = await getTwitterAuthUrl();
-                  window.location.href = authUrl;
-                } catch (err: any) {
-                  toast.error(err?.message ?? "Failed to start X connection.");
-                  setXConnecting(false);
-                }
-              }}
-            >
-              Connect @YourProject on X
-            </Button>
+
+            <div className="pt-1 border-t border-border flex items-center justify-between gap-4">
+              <p className="text-xs text-text-dim">
+                You&apos;ll be redirected to X to authorise. No posting permissions are requested.
+              </p>
+              <Button
+                className="shrink-0 bg-foreground hover:bg-foreground/90 text-background border-0 gap-2 font-semibold"
+                isLoading={xConnecting}
+                onClick={async () => {
+                  setXConnecting(true);
+                  try {
+                    const { authUrl } = await getTwitterAuthUrl();
+                    window.location.href = authUrl;
+                  } catch (err: any) {
+                    toast.error(err?.message ?? "Failed to start X connection.");
+                    setXConnecting(false);
+                  }
+                }}
+              >
+                {!xConnecting && <span className="font-bold text-sm">𝕏</span>}
+                Verify with X
+              </Button>
+            </div>
           </div>
         )}
       </div>
