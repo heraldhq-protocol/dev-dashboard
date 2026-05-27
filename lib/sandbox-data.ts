@@ -47,7 +47,7 @@ export function sandboxDashboardStats(): DashboardStats {
 // ── Analytics trends ──────────────────────────────────────────────────────────
 
 export function sandboxAnalyticsTrends(days: number): AnalyticsTrends {
-  const categories = ["defi", "governance", "marketing", "security", "staking", "yield"];
+  const categories = ["defi", "governance", "marketing", "security"];
 
   // Daily volume: gently trending upward with noise
   const base = ri(40, 200);
