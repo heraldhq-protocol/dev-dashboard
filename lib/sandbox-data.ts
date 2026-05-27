@@ -4,7 +4,7 @@
  * ranges chosen to look like a growing protocol in early traction.
  */
 
-import { subDays, format } from "date-fns";
+import { subDays, subHours, subMinutes, format } from "date-fns";
 import type {
   DashboardStats,
   AnalyticsTrends,
@@ -12,6 +12,9 @@ import type {
   EngagementMetrics,
 } from "@/lib/api/analytics";
 import type { WebhookReliabilityResponse } from "@/lib/api/webhooks";
+import type { NotificationDto, PaginatedNotifications } from "@/types/api";
+import type { Campaign } from "@/lib/api/campaigns";
+import type { Audience } from "@/lib/api/audiences";
 
 // ── Primitive helpers ─────────────────────────────────────────────────────────
 
@@ -153,6 +156,179 @@ export function sandboxAudienceAnalytics(): AudienceAnalytics {
     bySource,
     registrationTrend,
   };
+}
+
+// ── Notification log ──────────────────────────────────────────────────────────
+
+/** Base58 alphabet — mirrors Solana / wallet address charset */
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+function fakeWallet(): string {
+  return Array.from({ length: 44 }, () => B58[ri(0, B58.length - 1)]).join("");
+}
+
+function fakeId(): string {
+  const hex = "0123456789abcdef";
+  const seg = (n: number) => Array.from({ length: n }, () => hex[ri(0, 15)]).join("");
+  return `${seg(8)}-${seg(4)}-${seg(4)}-${seg(4)}-${seg(12)}`;
+}
+
+const NOTIFICATION_POOL_SIZE = 60;
+
+/** Lazily built per-render pool of fake notifications (stable within one render) */
+function buildNotificationPool(): NotificationDto[] {
+  const categories: NotificationDto["category"][] = [
+    "defi", "governance", "marketing", "system",
+  ];
+  const statuses: NotificationDto["status"][] = [
+    "delivered", "delivered", "delivered", "delivered", "delivered",
+    "failed", "queued", "processing",
+  ];
+
+  return Array.from({ length: NOTIFICATION_POOL_SIZE }, () => {
+    const status = pick(statuses);
+    const minutesAgo = ri(1, 60 * 24 * 7); // up to 7 days ago
+    const queuedAt = subMinutes(new Date(), minutesAgo).toISOString();
+    const deliveredAt =
+      status === "delivered"
+        ? subMinutes(new Date(), minutesAgo - ri(1, 15)).toISOString()
+        : null;
+    const receiptTx =
+      status === "delivered" && Math.random() > 0.3
+        ? `${Array.from({ length: 64 }, () => "0123456789abcdef"[ri(0, 15)]).join("")}`
+        : undefined;
+
+    return {
+      id: fakeId(),
+      protocolId: "sandbox-protocol",
+      walletHash: fakeWallet(),
+      category: pick(categories),
+      status,
+      subjectHash: Array.from({ length: 16 }, () => "0123456789abcdef"[ri(0, 15)]).join(""),
+      queuedAt,
+      deliveredAt,
+      receiptTx,
+    };
+  });
+}
+
+export function sandboxNotifications(
+  page = 1,
+  limit = 10,
+  statusFilter?: string,
+  categoryFilter?: string,
+  search?: string,
+): PaginatedNotifications {
+  const pool = buildNotificationPool();
+
+  // Apply filters
+  const filtered = pool.filter((n) => {
+    if (statusFilter && n.status !== statusFilter) return false;
+    if (categoryFilter && n.category !== categoryFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!n.walletHash.toLowerCase().includes(q) && !n.id.toLowerCase().includes(q))
+        return false;
+    }
+    return true;
+  });
+
+  // Sort newest first
+  filtered.sort((a, b) => new Date(b.queuedAt).getTime() - new Date(a.queuedAt).getTime());
+
+  const total = filtered.length;
+  const items = filtered.slice((page - 1) * limit, page * limit);
+
+  return { items, total, page, limit };
+}
+
+// ── Campaigns ─────────────────────────────────────────────────────────────────
+
+const CAMPAIGN_SUBJECTS = [
+  "Liquidation Risk Alert — Positions Below 1.2x",
+  "Governance Vote: Q3 Protocol Parameters",
+  "New Yield Opportunity: 28% APY on USDC Vaults",
+  "Security Notice: Upgrade Your Wallet Client",
+  "Monthly Protocol Performance Update",
+  "Flash Sale: Double Rewards This Weekend",
+];
+
+const AUDIENCE_NAMES = [
+  "DeFi Power Users",
+  "Governance Participants",
+  "High-Value Wallets",
+  "Newsletter Subscribers",
+  "Early Adopters",
+];
+
+export function sandboxCampaigns(): Campaign[] {
+  const now = new Date();
+  const statuses: Campaign["status"][] = [
+    "COMPLETED", "COMPLETED", "RUNNING", "DRAFT", "SCHEDULED", "FAILED",
+  ];
+
+  return statuses.slice(0, ri(3, 6)).map((status, i) => {
+    const createdAt = subDays(now, ri(1, 30)).toISOString();
+    const walletCount = ri(800, 15_000);
+    const totalTargets = walletCount;
+    const totalSent =
+      status === "COMPLETED" ? Math.floor(totalTargets * rf(0.92, 0.99, 3))
+      : status === "RUNNING"  ? Math.floor(totalTargets * rf(0.30, 0.70, 3))
+      : 0;
+    const totalFailed =
+      status === "FAILED" ? Math.floor(totalTargets * rf(0.1, 0.4, 3))
+      : status === "COMPLETED" ? Math.floor(totalSent * rf(0.005, 0.03, 3))
+      : 0;
+
+    return {
+      id: `sandbox-cmp-${i}`,
+      protocolId: "sandbox-protocol",
+      audienceId: `sandbox-aud-${i % 3}`,
+      subject: CAMPAIGN_SUBJECTS[i % CAMPAIGN_SUBJECTS.length],
+      body: "Herald sandbox demo campaign.",
+      category: pick(["defi", "governance", "marketing", "security"]),
+      channels: pick([["email"], ["email", "telegram"], ["telegram"]]),
+      status,
+      scheduledFor: status === "SCHEDULED" ? subDays(now, -2).toISOString() : undefined,
+      startedAt:
+        status === "RUNNING" || status === "COMPLETED" || status === "FAILED"
+          ? subHours(now, ri(1, 48)).toISOString()
+          : undefined,
+      completedAt:
+        status === "COMPLETED"
+          ? subHours(now, ri(0, 24)).toISOString()
+          : undefined,
+      totalTargets,
+      totalSent,
+      totalFailed,
+      createdAt,
+      audience: {
+        name: AUDIENCE_NAMES[i % AUDIENCE_NAMES.length],
+        walletCount,
+      },
+    };
+  });
+}
+
+// ── Audiences ─────────────────────────────────────────────────────────────────
+
+export function sandboxAudiences(): Audience[] {
+  const segments = [
+    { name: "DeFi Power Users",          description: "Wallets with active lending/borrowing positions" },
+    { name: "Governance Participants",    description: "Wallets that have cast at least one on-chain vote" },
+    { name: "High-Value Wallets",         description: "Top 20% by protocol TVL contribution" },
+    { name: "Newsletter Subscribers",     description: "Opted-in via the web widget" },
+    { name: "Early Adopters",             description: "Registered in the first 30 days after launch" },
+  ];
+
+  return segments.slice(0, ri(3, 5)).map((seg, i) => ({
+    id: `sandbox-aud-${i}`,
+    protocolId: "sandbox-protocol",
+    name: seg.name,
+    description: seg.description,
+    walletCount: ri(400, 12_000),
+    createdAt: subDays(new Date(), ri(5, 90)).toISOString(),
+  }));
 }
 
 // ── Webhook reliability ───────────────────────────────────────────────────────

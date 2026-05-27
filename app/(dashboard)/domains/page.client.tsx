@@ -14,7 +14,7 @@ import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { getBillingStatus } from "@/lib/api/billing";
 import { TierGatePage } from "@/components/shared/TierGatePage";
-import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
+import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
 
 function BimiSection({
   bimi,
@@ -110,7 +110,6 @@ interface DomainWithConfig extends Domain {
 export default function DomainsPage() {
   const { axios } = useApi();
   const { data: session, status } = useSession();
-  const { guard } = useSandboxGuard();
 
   const { data: billing } = useQuery({
     queryKey: ["billing-status"],

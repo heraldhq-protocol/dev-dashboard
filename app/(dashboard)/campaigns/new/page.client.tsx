@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
+import { sandboxAudiences } from "@/lib/sandbox-data";
+import { useUiStore } from "@/lib/stores/ui.store";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { AudienceUploader } from "@/components/campaigns/AudienceUploader";
@@ -118,15 +120,16 @@ function StepIndicator({ step, total }: { step: Step; total: number }) {
 
 export default function NewCampaignPage() {
   const router = useRouter();
+  const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [isBusy, setIsBusy] = useState(false);
   const [resolvedAudience, setResolvedAudience] = useState<Audience | null>(null);
 
   const { data: audiences = [], isLoading: audiencesLoading } = useQuery({
-    queryKey: ["audiences"],
-    queryFn: listAudiences,
-    staleTime: 30_000,
+    queryKey: ["audiences", isSandbox],
+    queryFn: isSandbox ? sandboxAudiences : listAudiences,
+    staleTime: isSandbox ? 0 : 30_000,
   });
 
   const { data: templates = [] } = useQuery<ProtocolTemplate[]>({

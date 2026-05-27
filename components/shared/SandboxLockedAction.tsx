@@ -36,8 +36,7 @@ function fireSandboxToast(message: string) {
 export function useSandboxGuard(message = "Switch to Live mode to perform this action.") {
   const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const guard = useCallback(<T extends any[]>(fn: (...args: T) => void) =>
+  const guard = useCallback(<T extends unknown[]>(fn: (...args: T) => void) =>
     (...args: T) => {
       if (isSandbox) {
         fireSandboxToast(message);

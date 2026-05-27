@@ -51,10 +51,10 @@ export function ChannelCoverageDonut({ email, telegram, sms }: Props) {
               color: "var(--text-main)",
               fontSize: "12px",
             }}
-            formatter={(value: number) => [
-              `${total > 0 ? Math.round((value / total) * 100) : 0}%`,
-              "",
-            ]}
+            formatter={(value) => {
+              const n = typeof value === "number" ? value : 0;
+              return [`${total > 0 ? Math.round((n / total) * 100) : 0}%`, ""];
+            }}
           />
           <Legend
             iconType="circle"

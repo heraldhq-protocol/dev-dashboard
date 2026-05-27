@@ -21,6 +21,8 @@ import {
 } from "@/lib/api/campaigns";
 import { usePlanGate } from "@/hooks/usePlanGate";
 import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
+import { sandboxCampaigns } from "@/lib/sandbox-data";
+import { useUiStore } from "@/lib/stores/ui.store";
 
 export default function CampaignsPage() {
   const { tier } = usePlanGate();
@@ -177,12 +179,14 @@ function CampaignsContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { guard } = useSandboxGuard();
+  const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const { data: campaigns = [], isLoading } = useQuery({
-    queryKey: ["campaigns"],
-    queryFn: listCampaigns,
-    refetchInterval: (query) => {
+    queryKey: ["campaigns", isSandbox],
+    queryFn: isSandbox ? sandboxCampaigns : listCampaigns,
+    staleTime: isSandbox ? 0 : undefined,
+    refetchInterval: isSandbox ? false : (query) => {
       const hasRunning = (query.state.data ?? []).some((c) => c.status === "RUNNING");
       return hasRunning ? 10_000 : false;
     },

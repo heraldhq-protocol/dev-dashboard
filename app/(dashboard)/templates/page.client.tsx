@@ -22,7 +22,7 @@ import { Copy, Check, ChevronRight, Code2, BookOpen, Wand2, Lock, ArrowUpRight }
 import { toast } from "sonner";
 import { getStarterTemplate } from "@/lib/api/templates";
 import { getBillingStatus } from "@/lib/api/billing";
-import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
+import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
 
 const CodeEditor = dynamic(
   () => import("@/components/ui/CodeEditor").then((m) => ({ default: m.CodeEditor })),
@@ -84,7 +84,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function TemplatesPage() {
   const { axios } = useApi();
   const router = useRouter();
-  const { guard } = useSandboxGuard();
 
   const { data: billing } = useQuery({
     queryKey: ["billing-status"],
