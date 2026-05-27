@@ -35,6 +35,7 @@ import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 import { getTwitterAuthUrl } from "@/lib/api/twitter";
 import { toast } from "sonner";
+import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
 
 export default function OverviewPage() {
   const { checklist } = useOnboardingStore();
@@ -122,12 +123,14 @@ export default function OverviewPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleConnectX}
-            className="shrink-0 rounded-lg bg-amber-500 hover:bg-amber-400 text-navy text-xs font-bold px-3 py-1.5 transition-colors"
-          >
-            Connect X →
-          </button>
+          <SandboxLockedAction message="Connect your X account in Live mode.">
+            <button
+              onClick={handleConnectX}
+              className="shrink-0 rounded-lg bg-amber-500 hover:bg-amber-400 text-navy text-xs font-bold px-3 py-1.5 transition-colors"
+            >
+              Connect X →
+            </button>
+          </SandboxLockedAction>
         </div>
       )}
 

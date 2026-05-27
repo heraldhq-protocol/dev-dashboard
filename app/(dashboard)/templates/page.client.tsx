@@ -22,6 +22,7 @@ import { Copy, Check, ChevronRight, Code2, BookOpen, Wand2, Lock, ArrowUpRight }
 import { toast } from "sonner";
 import { getStarterTemplate } from "@/lib/api/templates";
 import { getBillingStatus } from "@/lib/api/billing";
+import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
 
 const CodeEditor = dynamic(
   () => import("@/components/ui/CodeEditor").then((m) => ({ default: m.CodeEditor })),
@@ -83,6 +84,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function TemplatesPage() {
   const { axios } = useApi();
   const router = useRouter();
+  const { guard } = useSandboxGuard();
 
   const { data: billing } = useQuery({
     queryKey: ["billing-status"],
@@ -294,21 +296,25 @@ export default function TemplatesPage() {
             Browse Marketplace
           </Link>
           {canCreateTemplates ? (
-            <Button
-              id="templates-create-btn"
-              onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); setNoAnimations(true); }}
-            >
-              Create Template
-            </Button>
+            <SandboxLockedAction>
+              <Button
+                id="templates-create-btn"
+                onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); setNoAnimations(true); }}
+              >
+                Create Template
+              </Button>
+            </SandboxLockedAction>
           ) : (
-            <a
-              href="/billing"
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
-            >
-              <Lock className="h-3.5 w-3.5" />
-              Upgrade to unlock more
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </a>
+            <SandboxLockedAction>
+              <a
+                href="/billing"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                Upgrade to unlock more
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+            </SandboxLockedAction>
           )}
         </div>
       </div>
@@ -347,9 +353,11 @@ export default function TemplatesPage() {
             <p className="text-text-muted text-sm mb-5 text-center max-w-sm">
               Create your first email template to start customising notifications.
             </p>
-            <Button onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); }}>
-              Create Template
-            </Button>
+            <SandboxLockedAction>
+              <Button onClick={() => { setShowCreateModal(true); setActiveTab("editor"); setPreviewHtml(null); }}>
+                Create Template
+              </Button>
+            </SandboxLockedAction>
           </CardContent>
         </Card>
       ) : (
@@ -411,15 +419,17 @@ export default function TemplatesPage() {
                   </span>
                   <div className="flex gap-1">
                     {(template.status === "DRAFT" || template.status === "REJECTED") && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-amber-400 hover:text-amber-300 gap-1"
-                        disabled={isSubmitting === template.id}
-                        onClick={() => handleSubmitForReview(template.id)}
-                      >
-                        {isSubmitting === template.id ? "Reviewing…" : "Submit"}
-                      </Button>
+                      <SandboxLockedAction>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-amber-400 hover:text-amber-300 gap-1"
+                          disabled={isSubmitting === template.id}
+                          onClick={() => handleSubmitForReview(template.id)}
+                        >
+                          {isSubmitting === template.id ? "Reviewing…" : "Submit"}
+                        </Button>
+                      </SandboxLockedAction>
                     )}
                     <Button
                       variant="ghost"
@@ -430,14 +440,16 @@ export default function TemplatesPage() {
                       Edit
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-400 hover:text-red-400"
-                      onClick={() => handleDelete(template.id)}
-                    >
-                      Delete
-                    </Button>
+                    <SandboxLockedAction>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-400 hover:text-red-400"
+                        onClick={() => handleDelete(template.id)}
+                      >
+                        Delete
+                      </Button>
+                    </SandboxLockedAction>
                   </div>
                 </div>
               </CardContent>

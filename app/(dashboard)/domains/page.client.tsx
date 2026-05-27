@@ -14,6 +14,7 @@ import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { getBillingStatus } from "@/lib/api/billing";
 import { TierGatePage } from "@/components/shared/TierGatePage";
+import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
 
 function BimiSection({
   bimi,
@@ -63,13 +64,15 @@ function BimiSection({
             placeholder="https://yourdomain.com/logo.svg"
             className="flex-1 text-xs"
           />
-          <Button
-            size="sm"
-            onClick={() => onSave(logoUrl)}
-            disabled={!logoUrl}
-          >
-            Save
-          </Button>
+          <SandboxLockedAction>
+            <Button
+              size="sm"
+              onClick={() => onSave(logoUrl)}
+              disabled={!logoUrl}
+            >
+              Save
+            </Button>
+          </SandboxLockedAction>
         </div>
       </div>
       {bimi?.vmcUrl && (
@@ -107,6 +110,7 @@ interface DomainWithConfig extends Domain {
 export default function DomainsPage() {
   const { axios } = useApi();
   const { data: session, status } = useSession();
+  const { guard } = useSandboxGuard();
 
   const { data: billing } = useQuery({
     queryKey: ["billing-status"],
@@ -280,9 +284,11 @@ export default function DomainsPage() {
             Manage custom domains for sending emails with DKIM authentication.
           </p>
         </div>
-        <Button id="domains-add-btn" onClick={() => setShowAddModal(true)} className="shrink-0">
-          Add Domain
-        </Button>
+        <SandboxLockedAction>
+          <Button id="domains-add-btn" onClick={() => setShowAddModal(true)} className="shrink-0">
+            Add Domain
+          </Button>
+        </SandboxLockedAction>
       </div>
 
       <div id="domains-list">
@@ -291,9 +297,11 @@ export default function DomainsPage() {
           <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
             <Globe className="w-12 h-12 text-muted-foreground" />
             <p className="text-muted-foreground">No custom domains yet. Add one to get started.</p>
-            <Button onClick={() => setShowAddModal(true)}>
-              Add Domain
-            </Button>
+            <SandboxLockedAction>
+              <Button onClick={() => setShowAddModal(true)}>
+                Add Domain
+              </Button>
+            </SandboxLockedAction>
           </CardContent>
         </Card>
       ) : (
@@ -394,41 +402,49 @@ export default function DomainsPage() {
                 )}
 
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleVerify(domain.id)}
-                  >
-                    Verify
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSesRegister(domain.id)}
-                    disabled={!domain.dns_verified}
-                  >
-                    Register SES
-                  </Button>
-                  {domain.dns_verified && (
+                  <SandboxLockedAction>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        if (domain.bimiData === undefined) handleLoadBimi(domain.id);
-                        else handleLoadBimi(domain.id);
-                      }}
+                      onClick={() => handleVerify(domain.id)}
                     >
-                      {domain.bimiLoading ? "Loading…" : "BIMI Config"}
+                      Verify
                     </Button>
+                  </SandboxLockedAction>
+                  <SandboxLockedAction>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSesRegister(domain.id)}
+                      disabled={!domain.dns_verified}
+                    >
+                      Register SES
+                    </Button>
+                  </SandboxLockedAction>
+                  {domain.dns_verified && (
+                    <SandboxLockedAction>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (domain.bimiData === undefined) handleLoadBimi(domain.id);
+                          else handleLoadBimi(domain.id);
+                        }}
+                      >
+                        {domain.bimiLoading ? "Loading…" : "BIMI Config"}
+                      </Button>
+                    </SandboxLockedAction>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(domain.id)}
-                  >
-                    Remove
-                  </Button>
+                  <SandboxLockedAction>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(domain.id)}
+                    >
+                      Remove
+                    </Button>
+                  </SandboxLockedAction>
                 </div>
 
                 {/* BIMI Section */}
@@ -475,13 +491,15 @@ export default function DomainsPage() {
               <Button variant="outline" onClick={() => setShowAddModal(false)}>
                 Cancel
               </Button>
-              <Button
-                isLoading={isCreating}
-                onClick={handleCreate}
-                disabled={!newDomain}
-              >
-                Add Domain
-              </Button>
+              <SandboxLockedAction>
+                <Button
+                  isLoading={isCreating}
+                  onClick={handleCreate}
+                  disabled={!newDomain}
+                >
+                  Add Domain
+                </Button>
+              </SandboxLockedAction>
             </div>
           </Card>
         </div>

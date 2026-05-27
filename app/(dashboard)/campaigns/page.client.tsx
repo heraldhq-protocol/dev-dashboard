@@ -20,6 +20,7 @@ import {
   type Campaign,
 } from "@/lib/api/campaigns";
 import { usePlanGate } from "@/hooks/usePlanGate";
+import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
 
 export default function CampaignsPage() {
   const { tier } = usePlanGate();
@@ -175,6 +176,7 @@ function CampaignPreview() {
 function CampaignsContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { guard } = useSandboxGuard();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const { data: campaigns = [], isLoading } = useQuery({
@@ -226,9 +228,11 @@ function CampaignsContent() {
         title="Campaigns"
         description="Broadcast notifications to audience groups."
         actions={
-          <Button onClick={() => router.push("/campaigns/new")}>
-            New Campaign
-          </Button>
+          <SandboxLockedAction>
+            <Button onClick={() => router.push("/campaigns/new")}>
+              New Campaign
+            </Button>
+          </SandboxLockedAction>
         }
       />
 
@@ -245,9 +249,11 @@ function CampaignsContent() {
             <p className="text-text-muted text-sm mb-5 text-center max-w-sm">
               Create a campaign to send bulk notifications to your audience groups.
             </p>
-            <Button onClick={() => router.push("/campaigns/new")}>
-              New Campaign
-            </Button>
+            <SandboxLockedAction>
+              <Button onClick={() => router.push("/campaigns/new")}>
+                New Campaign
+              </Button>
+            </SandboxLockedAction>
           </CardContent>
         </Card>
       ) : (
@@ -270,8 +276,8 @@ function CampaignsContent() {
                   key={campaign.id}
                   campaign={campaign}
                   isLoading={loadingId === campaign.id}
-                  onLaunch={handleLaunch}
-                  onCancel={handleCancel}
+                  onLaunch={guard(handleLaunch)}
+                  onCancel={guard(handleCancel)}
                 />
               ))}
             </tbody>

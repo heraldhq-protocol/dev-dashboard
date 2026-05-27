@@ -16,11 +16,13 @@ import { listWebhooks, createWebhook, updateWebhook, deleteWebhook, getWebhookRe
 import { PromoteDiffModal, type PromoteTarget } from "@/components/shared/PromoteDiffModal";
 import { getBillingStatus } from "@/lib/api/billing";
 import { Lock, ArrowUpRight } from "lucide-react";
+import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
 
 const WEBHOOK_LIMITS: Record<number, number | null> = { 0: 1, 1: 5, 2: null, 3: null };
 
 export default function WebhooksPage() {
   const queryClient = useQueryClient();
+  const { guard } = useSandboxGuard();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
@@ -175,23 +177,27 @@ export default function WebhooksPage() {
         description="Receive real-time HTTP callbacks when events occur on the Herald network."
         actions={
           atWebhookLimit ? (
-            <a
-              href="/billing#billing-plans"
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
-            >
-              <Lock className="h-3.5 w-3.5" />
-              Upgrade for more endpoints
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </a>
+            <SandboxLockedAction>
+              <a
+                href="/billing#billing-plans"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                Upgrade for more endpoints
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+            </SandboxLockedAction>
           ) : (
-            <Button
-              id="webhooks-add-btn"
-              onClick={() => setIsCreateOpen(true)}
-              className="gap-2 shrink-0 group"
-            >
-              <Plus className="h-4 w-4" />
-              Add Endpoint
-            </Button>
+            <SandboxLockedAction>
+              <Button
+                id="webhooks-add-btn"
+                onClick={() => setIsCreateOpen(true)}
+                className="gap-2 shrink-0 group"
+              >
+                <Plus className="h-4 w-4" />
+                Add Endpoint
+              </Button>
+            </SandboxLockedAction>
           )
         }
       />
@@ -216,10 +222,10 @@ export default function WebhooksPage() {
       <div id="webhooks-list">
       <WebhookList
         webhooks={webhooks}
-        onToggle={handleToggle}
-        onDelete={handleDelete}
+        onToggle={guard(handleToggle)}
+        onDelete={guard(handleDelete)}
         onViewLogs={setViewLogsId}
-        onPromote={handlePromote}
+        onPromote={guard(handlePromote)}
         reliability={reliabilityData?.webhooks}
       />
       </div>
@@ -239,7 +245,7 @@ export default function WebhooksPage() {
       <PromoteDiffModal
         target={promoteTarget}
         onClose={() => setPromoteTarget(null)}
-        onConfirm={(id) => promoteMutation.mutate(id)}
+        onConfirm={guard((id: string) => promoteMutation.mutate(id))}
         isLoading={promoteMutation.isPending}
       />
 

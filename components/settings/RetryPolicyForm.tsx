@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getRetryPolicy, updateRetryPolicy, type RetryPolicy } from "@/lib/api/protocol";
+import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
 
 const BACKOFF_OPTIONS: { value: RetryPolicy["retryBackoff"]; label: string; desc: string }[] = [
   { value: "exponential", label: "Exponential", desc: "1m → 5m → 15m (recommended)" },
@@ -242,13 +243,15 @@ export function RetryPolicyForm() {
         {dirty && (
           <p className="text-xs text-text-muted">You have unsaved changes.</p>
         )}
-        <button
-          onClick={() => update.mutate(form)}
-          disabled={!dirty || update.isPending}
-          className="px-5 py-2 text-sm font-semibold rounded-lg bg-teal text-navy-2 hover:bg-teal-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {update.isPending ? "Saving…" : "Save Changes"}
-        </button>
+        <SandboxLockedAction>
+          <button
+            onClick={() => update.mutate(form)}
+            disabled={!dirty || update.isPending}
+            className="px-5 py-2 text-sm font-semibold rounded-lg bg-teal text-navy-2 hover:bg-teal-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {update.isPending ? "Saving…" : "Save Changes"}
+          </button>
+        </SandboxLockedAction>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/Button";
+import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { AudienceUploader } from "@/components/campaigns/AudienceUploader";
@@ -568,9 +569,11 @@ export default function NewCampaignPage() {
               <Button variant="secondary" onClick={() => setStep(2)}>
                 Back
               </Button>
-              <Button onClick={handleCreateDraft} isLoading={isBusy}>
-                {form.launchImmediately ? "Create & Launch" : "Create Draft"}
-              </Button>
+              <SandboxLockedAction>
+                <Button onClick={handleCreateDraft} isLoading={isBusy}>
+                  {form.launchImmediately ? "Create & Launch" : "Create Draft"}
+                </Button>
+              </SandboxLockedAction>
             </div>
           </CardContent>
         </Card>

@@ -8,6 +8,7 @@ import { CreateKeyModal } from "@/components/api-keys/CreateKeyModal";
 import { KeyRevealModal } from "@/components/api-keys/KeyRevealModal";
 import { RevokeKeyModal } from "@/components/api-keys/RevokeKeyModal";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
 import { useQuery } from "@tanstack/react-query";
 import { getBillingStatus } from "@/lib/api/billing";
 import { ArrowUpRight, Lock, Plus } from "lucide-react";
@@ -16,6 +17,7 @@ const LIVE_KEY_LIMITS: Record<number, number | null> = { 0: 1, 1: 5, 2: null, 3:
 
 export default function ApiKeysPage() {
   const { query, createKey, revokeKey } = useApiKeys();
+  const { guard } = useSandboxGuard();
   const keys = query.data || [];
 
   const { data: billing } = useQuery({
@@ -76,24 +78,28 @@ export default function ApiKeysPage() {
         description="Manage network access tokens for emitting notifications."
         actions={
           atLiveKeyLimit ? (
-            <a
-              href="/billing#billing-plans"
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
-            >
-              <Lock className="h-3.5 w-3.5" />
-              Upgrade for more keys
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </a>
+            <SandboxLockedAction>
+              <a
+                href="/billing#billing-plans"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                Upgrade for more keys
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+            </SandboxLockedAction>
           ) : (
-            <Button
-              id="create-api-key-btn"
-              size="sm"
-              onClick={() => setIsCreateOpen(true)}
-              className="gap-2 shrink-0 group"
-            >
-              <Plus className="h-4 w-4" />
-              Create Key
-            </Button>
+            <SandboxLockedAction>
+              <Button
+                id="create-api-key-btn"
+                size="sm"
+                onClick={() => setIsCreateOpen(true)}
+                className="gap-2 shrink-0 group"
+              >
+                <Plus className="h-4 w-4" />
+                Create Key
+              </Button>
+            </SandboxLockedAction>
           )
         }
       />
@@ -143,7 +149,7 @@ export default function ApiKeysPage() {
             {liveKeyLimit !== null ? `${liveKeys.length}/${liveKeyLimit}` : liveKeys.length} keys
           </span>
         </div>
-        <ApiKeyTable keys={liveKeys} onRevokeClick={setRevokeTarget} />
+        <ApiKeyTable keys={liveKeys} onRevokeClick={guard(setRevokeTarget)} />
       </div>
 
       {/* Styled Divider */}
@@ -168,7 +174,7 @@ export default function ApiKeysPage() {
             {testKeys.length} keys
           </span>
         </div>
-        <ApiKeyTable keys={testKeys} onRevokeClick={setRevokeTarget} />
+        <ApiKeyTable keys={testKeys} onRevokeClick={guard(setRevokeTarget)} />
       </div>
 
       <CreateKeyModal

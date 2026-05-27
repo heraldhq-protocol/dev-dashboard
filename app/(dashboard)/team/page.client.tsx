@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { listTeam, inviteMember, removeMember, updateMemberRole } from "@/lib/api/team";
 import { getBillingStatus } from "@/lib/api/billing";
 import { UpgradeGate } from "@/components/billing/UpgradeGate";
+import { SandboxLockedAction, useSandboxGuard } from "@/components/shared/SandboxLockedAction";
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ export default function TeamPage() {
 function TeamContent() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { guard } = useSandboxGuard();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -149,25 +151,29 @@ function TeamContent() {
           </p>
         </div>
         {canInviteMembers ? (
-          <Button
-            id="team-invite-btn"
-            onClick={() => setIsInviteOpen(true)}
-            className="gap-2 h-12 px-6 rounded-xl shadow-lg shadow-teal/20 hover:shadow-teal/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
-          >
-            <FiUserPlus className="h-4 w-4" />
-            <span>Invite New Member</span>
-          </Button>
+          <SandboxLockedAction>
+            <Button
+              id="team-invite-btn"
+              onClick={() => setIsInviteOpen(true)}
+              className="gap-2 h-12 px-6 rounded-xl shadow-lg shadow-teal/20 hover:shadow-teal/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <FiUserPlus className="h-4 w-4" />
+              <span>Invite New Member</span>
+            </Button>
+          </SandboxLockedAction>
         ) : (
-          <a
-            href="/billing"
-            className="flex items-center gap-2 h-12 px-6 rounded-xl text-sm font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
-          >
-            <FiUserPlus className="h-4 w-4" />
-            <span>Invite Member</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.5 rounded ml-1">
-              Growth+
-            </span>
-          </a>
+          <SandboxLockedAction>
+            <a
+              href="/billing"
+              className="flex items-center gap-2 h-12 px-6 rounded-xl text-sm font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
+            >
+              <FiUserPlus className="h-4 w-4" />
+              <span>Invite Member</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.5 rounded ml-1">
+                Growth+
+              </span>
+            </a>
+          </SandboxLockedAction>
         )}
       </div>
 
@@ -256,16 +262,18 @@ function TeamContent() {
                   </td>
                   <td className="px-8 py-5 text-right">
                     {m.role !== "owner" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={removeMutation.isPending}
-                        onClick={() => handleRemove(m.id)}
-                        className="text-red hover:bg-red/10 hover:text-red opacity-0 group-hover/row:opacity-100 transition-all h-9 w-9 p-0 rounded-lg border border-transparent hover:border-red/20"
-                        title="Remove member"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </Button>
+                      <SandboxLockedAction>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={removeMutation.isPending}
+                          onClick={() => handleRemove(m.id)}
+                          className="text-red hover:bg-red/10 hover:text-red opacity-0 group-hover/row:opacity-100 transition-all h-9 w-9 p-0 rounded-lg border border-transparent hover:border-red/20"
+                          title="Remove member"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </Button>
+                      </SandboxLockedAction>
                     )}
                   </td>
                 </tr>
@@ -334,7 +342,7 @@ function TeamContent() {
       <ConfirmModal
         isOpen={!!memberToRemove}
         onClose={() => setMemberToRemove(null)}
-        onConfirm={confirmRemove}
+        onConfirm={guard(confirmRemove)}
         title="Remove Team Member"
         description="Are you sure you want to remove this member from the team? They will lose all access to the dashboard and API keys."
         confirmText="Remove Member"

@@ -13,6 +13,7 @@ import { apiClient } from "@/lib/api-client";
 import { getTwitterAuthUrl, getTwitterStatus, disconnectTwitter } from "@/lib/api/twitter";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 import { useTourControls } from "@/components/onboarding/TourInitializer";
+import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
 import {
   Select,
   SelectContent,
@@ -432,9 +433,11 @@ export default function SettingsPage() {
           </div>
 
           <div className="pt-6 flex items-center gap-4 border-t border-border">
-            <Button type="submit" variant="default" isLoading={updateMutation.isPending}>
-              Save Changes
-            </Button>
+            <SandboxLockedAction>
+              <Button type="submit" variant="default" isLoading={updateMutation.isPending}>
+                Save Changes
+              </Button>
+            </SandboxLockedAction>
             {updateMutation.isSuccess && (
               <span className="text-sm text-green flex items-center gap-1.5 animate-in fade-in duration-300">
                 <svg
@@ -481,16 +484,18 @@ export default function SettingsPage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Protocol Pubkey</p>
               <p className="text-sm font-mono text-foreground break-all">{profile?.protocolPubkey ?? "—"}</p>
             </div>
-            <Button
-              type="button"
-              variant="secondary"
-              isLoading={syncOnChainMutation.isPending}
-              disabled={syncOnChainMutation.isPending}
-              onClick={() => syncOnChainMutation.mutate()}
-              className="shrink-0"
-            >
-              Sync On-chain
-            </Button>
+            <SandboxLockedAction>
+              <Button
+                type="button"
+                variant="secondary"
+                isLoading={syncOnChainMutation.isPending}
+                disabled={syncOnChainMutation.isPending}
+                onClick={() => syncOnChainMutation.mutate()}
+                className="shrink-0"
+              >
+                Sync On-chain
+              </Button>
+            </SandboxLockedAction>
           </div>
 
           {syncOnChainMutation.isSuccess && syncOnChainMutation.data?.tx && (
@@ -575,9 +580,11 @@ export default function SettingsPage() {
           </div>
 
           <div className="pt-4 flex items-center gap-4 border-t border-border">
-            <Button type="submit" variant="default" isLoading={sandboxMutation.isPending}>
-              Save Sandbox Contacts
-            </Button>
+            <SandboxLockedAction>
+              <Button type="submit" variant="default" isLoading={sandboxMutation.isPending}>
+                Save Sandbox Contacts
+              </Button>
+            </SandboxLockedAction>
             {sandboxMutation.isSuccess && (
               <span className="text-sm text-green flex items-center gap-1.5 animate-in fade-in duration-300">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -630,9 +637,11 @@ export default function SettingsPage() {
               className="w-full"
             />
           </div>
-          <Button type="submit" variant="default" isLoading={createAssetMutation.isPending} disabled={!newAssetUrl}>
-            Add
-          </Button>
+          <SandboxLockedAction>
+            <Button type="submit" variant="default" isLoading={createAssetMutation.isPending} disabled={!newAssetUrl}>
+              Add
+            </Button>
+          </SandboxLockedAction>
         </form>
 
         <div className="space-y-2">
@@ -644,14 +653,16 @@ export default function SettingsPage() {
                 </span>
                 <span className="text-sm text-text-muted truncate max-w-md">{asset.url}</span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => deleteAssetMutation.mutate(asset.id)}
-                className="text-red hover:text-red"
-              >
-                Remove
-              </Button>
+              <SandboxLockedAction>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteAssetMutation.mutate(asset.id)}
+                  className="text-red hover:text-red"
+                >
+                  Remove
+                </Button>
+              </SandboxLockedAction>
             </div>
           ))}
           {(!assets || assets.length === 0) && (
@@ -698,17 +709,19 @@ export default function SettingsPage() {
           </div>
 
           <div className="pt-4 flex items-center gap-4 border-t border-border">
-            <Button
-              variant="default"
-              isLoading={telegramButtonsMutation.isPending}
-              onClick={() =>
-                telegramButtonsMutation.mutate(
-                  telegramButtonsValue.trim() ? telegramButtonsValue.trim() : null
-                )
-              }
-            >
-              Save Limit
-            </Button>
+            <SandboxLockedAction>
+              <Button
+                variant="default"
+                isLoading={telegramButtonsMutation.isPending}
+                onClick={() =>
+                  telegramButtonsMutation.mutate(
+                    telegramButtonsValue.trim() ? telegramButtonsValue.trim() : null
+                  )
+                }
+              >
+                Save Limit
+              </Button>
+            </SandboxLockedAction>
             {telegramButtonsMutation.isSuccess && (
               <span className="text-sm text-green flex items-center gap-1.5 animate-in fade-in duration-300">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -782,26 +795,28 @@ export default function SettingsPage() {
 
             <div className="pt-1 border-t border-border flex items-center justify-between gap-4">
               <p className="text-xs text-text-dim">Disconnecting will deactivate your protocol until reconnected.</p>
-              <Button
-                variant="destructive"
-                size="sm"
-                isLoading={xDisconnecting}
-                onClick={async () => {
-                  setXDisconnecting(true);
-                  try {
-                    await disconnectTwitter();
-                    toast.success("X account disconnected. Protocol deactivated.");
-                    refetchX();
-                    queryClient.invalidateQueries({ queryKey: ["protocol"] });
-                  } catch (err: any) {
-                    toast.error(err?.message ?? "Failed to disconnect X account.");
-                  } finally {
-                    setXDisconnecting(false);
-                  }
-                }}
-              >
-                Disconnect
-              </Button>
+              <SandboxLockedAction message="Disconnect your X account in Live mode.">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  isLoading={xDisconnecting}
+                  onClick={async () => {
+                    setXDisconnecting(true);
+                    try {
+                      await disconnectTwitter();
+                      toast.success("X account disconnected. Protocol deactivated.");
+                      refetchX();
+                      queryClient.invalidateQueries({ queryKey: ["protocol"] });
+                    } catch (err: any) {
+                      toast.error(err?.message ?? "Failed to disconnect X account.");
+                    } finally {
+                      setXDisconnecting(false);
+                    }
+                  }}
+                >
+                  Disconnect
+                </Button>
+              </SandboxLockedAction>
             </div>
           </div>
         ) : (
@@ -853,6 +868,7 @@ export default function SettingsPage() {
               <p className="text-xs text-text-dim">
                 You&apos;ll be redirected to X to authorise. No posting permissions are requested.
               </p>
+              <SandboxLockedAction message="Connect your X account in Live mode.">
               <Button
                 className="shrink-0 bg-foreground hover:bg-foreground/90 text-background border-0 gap-2 font-semibold"
                 isLoading={xConnecting}
@@ -870,6 +886,7 @@ export default function SettingsPage() {
                 {!xConnecting && <span className="font-bold text-sm">𝕏</span>}
                 Verify with X
               </Button>
+              </SandboxLockedAction>
             </div>
           </div>
         )}
@@ -892,9 +909,11 @@ export default function SettingsPage() {
           Deleting your project will permanently drop all notification queues,
           revoke all active API keys, and terminate your webhook streams.
         </p>
-        <Button onClick={() => setModalOpen(true)} variant="destructive">
-          Delete Project...
-        </Button>
+        <SandboxLockedAction message="Switch to Live mode to delete your project.">
+          <Button onClick={() => setModalOpen(true)} variant="destructive">
+            Delete Project...
+          </Button>
+        </SandboxLockedAction>
       </div>
       )}
       </div>
