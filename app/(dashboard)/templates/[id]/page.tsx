@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 import {
   ArrowLeft, Save, Eye, Code, History, CheckCircle, AlertCircle,
-  ChevronDown, ChevronUp, Clock, Copy, Check, BookOpen, RotateCcw, Zap,
+  ChevronDown, ChevronUp, Clock, Copy, Check, BookOpen, RotateCcw, Zap, SendHorizonal,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -30,6 +30,7 @@ interface Template {
   id: string;
   name: string;
   category: string;
+  status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
   subjectTemplate?: string;
   htmlSource?: string;
   previewText?: string;
@@ -40,6 +41,13 @@ interface Template {
   createdAt: string;
   updatedAt: string;
 }
+
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  DRAFT:          { label: "Draft",          className: "bg-border text-text-muted border-border" },
+  PENDING_REVIEW: { label: "Pending Review", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  APPROVED:       { label: "Approved",       className: "bg-teal/10 text-teal border-teal/20" },
+  REJECTED:       { label: "Rejected",       className: "bg-red-500/10 text-red-400 border-red-500/20" },
+};
 
 interface TemplateVersion {
   version: number;
@@ -102,6 +110,7 @@ export default function TemplateEditorPage() {
   const [template, setTemplate] = useState<Template | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("editor");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -175,6 +184,24 @@ export default function TemplateEditorPage() {
       toast.error(err?.response?.data?.message ?? "Failed to save template");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSubmitForReview = async () => {
+    setIsSubmitting(true);
+    try {
+      const { data } = await axios.post(`/templates/${id}/submit`);
+      if (data.status === "APPROVED") {
+        toast.success("Template approved automatically — it's live!");
+      } else {
+        toast.success("Template submitted for review. Our team will check it shortly.");
+      }
+      loadTemplate(); // refresh status badge
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? "Submit failed.";
+      toast.error(typeof msg === "string" ? msg : "Submit failed.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -285,16 +312,39 @@ export default function TemplateEditorPage() {
           <span className="text-xs px-2 py-0.5 rounded bg-teal/10 text-teal border border-teal/20 font-mono shrink-0">
             v{template.version}
           </span>
+          {(() => {
+            const s = STATUS_BADGE[template.status];
+            return s ? (
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border shrink-0 ${s.className}`}>
+                {s.label}
+              </span>
+            ) : null;
+          })()}
           {isDirty && (
             <span className="text-xs px-2 py-0.5 rounded bg-gold/10 text-gold border border-gold/20 shrink-0">
               Unsaved
             </span>
           )}
         </div>
-        <Button onClick={handleSave} isLoading={isSaving} disabled={!isDirty} className="gap-2 shrink-0">
-          <Save className="w-4 h-4" />
-          Save Changes
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          {(template.status === "DRAFT" || template.status === "REJECTED") && (
+            <Button
+              variant="outline"
+              onClick={handleSubmitForReview}
+              isLoading={isSubmitting}
+              disabled={isDirty || isSubmitting}
+              className="gap-2"
+              title={isDirty ? "Save your changes before submitting" : "Run AI review and submit for approval"}
+            >
+              <SendHorizonal className="w-4 h-4" />
+              Submit for Review
+            </Button>
+          )}
+          <Button onClick={handleSave} isLoading={isSaving} disabled={!isDirty} className="gap-2">
+            <Save className="w-4 h-4" />
+            Save Changes
+          </Button>
+        </div>
       </div>
 
       {/* Tab Bar */}
