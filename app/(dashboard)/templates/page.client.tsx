@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { getStarterTemplate } from "@/lib/api/templates";
 import { getBillingStatus } from "@/lib/api/billing";
 import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
+import { sandboxTemplates } from "@/lib/sandbox-data";
+import { useUiStore } from "@/lib/stores/ui.store";
 
 const CodeEditor = dynamic(
   () => import("@/components/ui/CodeEditor").then((m) => ({ default: m.CodeEditor })),
@@ -84,6 +86,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function TemplatesPage() {
   const { axios } = useApi();
   const router = useRouter();
+  const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
 
   const { data: billing } = useQuery({
     queryKey: ["billing-status"],
@@ -131,9 +134,14 @@ export default function TemplatesPage() {
   useEffect(() => {
     loadTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isSandbox]);
 
   const loadTemplates = async () => {
+    if (isSandbox) {
+      setTemplates(sandboxTemplates() as Template[]);
+      setIsLoading(false);
+      return;
+    }
     try {
       const { data } = await axios.get("/templates");
       setTemplates(data.data || []);

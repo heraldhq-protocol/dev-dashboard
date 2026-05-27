@@ -158,6 +158,178 @@ export function sandboxAudienceAnalytics(): AudienceAnalytics {
   };
 }
 
+// ── Templates ─────────────────────────────────────────────────────────────────
+
+interface SandboxTemplate {
+  id: string;
+  name: string;
+  category: string;
+  status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+  subjectTemplate: string;
+  previewText: string;
+  isDefault: boolean;
+  isActive: boolean;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function sandboxTemplates(): SandboxTemplate[] {
+  const now = new Date();
+  const entries: Array<Omit<SandboxTemplate, "id" | "createdAt" | "updatedAt">> = [
+    {
+      name: "Liquidation Risk Alert",
+      category: "defi",
+      status: "APPROVED",
+      subjectTemplate: "{{protocolName}} — Liquidation Risk Alert",
+      previewText: "Your position health factor has dropped below the safe threshold.",
+      isDefault: true,
+      isActive: true,
+      version: 2,
+    },
+    {
+      name: "Governance Vote Reminder",
+      category: "governance",
+      status: "APPROVED",
+      subjectTemplate: "Vote Now: {{subject}}",
+      previewText: "A governance proposal is open for voting. Cast your vote before the deadline.",
+      isDefault: false,
+      isActive: true,
+      version: 1,
+    },
+    {
+      name: "Yield Opportunity",
+      category: "marketing",
+      status: "PENDING_REVIEW",
+      subjectTemplate: "New Yield: {{subject}}",
+      previewText: "A new high-yield opportunity is available in your portfolio.",
+      isDefault: false,
+      isActive: false,
+      version: 1,
+    },
+    {
+      name: "Security Notice",
+      category: "defi",
+      status: "DRAFT",
+      subjectTemplate: "⚠ Security Notice from {{protocolName}}",
+      previewText: "Important security update requiring your attention.",
+      isDefault: false,
+      isActive: false,
+      version: 1,
+    },
+  ];
+
+  return entries.slice(0, ri(2, entries.length)).map((e, i) => ({
+    ...e,
+    id: `sandbox-tpl-${i}`,
+    createdAt: subDays(now, ri(5, 60)).toISOString(),
+    updatedAt: subDays(now, ri(0, 4)).toISOString(),
+  }));
+}
+
+// ── Scheduled notifications ───────────────────────────────────────────────────
+
+interface SandboxScheduled {
+  id: string;
+  protocolId: string;
+  wallet?: string;
+  subject: string;
+  body: string;
+  category: string;
+  scheduleType: "ONE_TIME" | "RECURRING";
+  cronExpr?: string;
+  timezone: string;
+  nextRunAt: string;
+  lastRunAt?: string;
+  status: "PENDING" | "RUNNING" | "COMPLETED" | "CANCELLED" | "FAILED";
+  createdAt: string;
+}
+
+export function sandboxScheduledNotifications(
+  page = 1,
+): { items: SandboxScheduled[]; total: number } {
+  const now = new Date();
+
+  const pool: SandboxScheduled[] = [
+    {
+      id: "sandbox-sched-0",
+      protocolId: "sandbox-protocol",
+      wallet: fakeWallet(),
+      subject: "Weekly Governance Digest",
+      body: "Your weekly summary of active governance proposals.",
+      category: "governance",
+      scheduleType: "RECURRING",
+      cronExpr: "0 9 * * MON",
+      timezone: "UTC",
+      nextRunAt: subDays(now, -2).toISOString(),   // 2 days from now
+      lastRunAt: subDays(now, 5).toISOString(),
+      status: "PENDING",
+      createdAt: subDays(now, 30).toISOString(),
+    },
+    {
+      id: "sandbox-sched-1",
+      protocolId: "sandbox-protocol",
+      wallet: fakeWallet(),
+      subject: "DeFi Position Health Check",
+      body: "Automated health check for open lending positions.",
+      category: "defi",
+      scheduleType: "RECURRING",
+      cronExpr: "0 */6 * * *",
+      timezone: "UTC",
+      nextRunAt: subHours(now, -3).toISOString(),  // 3 hours from now
+      lastRunAt: subHours(now, 3).toISOString(),
+      status: "RUNNING",
+      createdAt: subDays(now, 14).toISOString(),
+    },
+    {
+      id: "sandbox-sched-2",
+      protocolId: "sandbox-protocol",
+      wallet: fakeWallet(),
+      subject: "Token Unlock Reminder",
+      body: "Your vested tokens are scheduled to unlock in 24 hours.",
+      category: "defi",
+      scheduleType: "ONE_TIME",
+      timezone: "UTC",
+      nextRunAt: subDays(now, -1).toISOString(),   // tomorrow
+      status: "PENDING",
+      createdAt: subDays(now, 7).toISOString(),
+    },
+    {
+      id: "sandbox-sched-3",
+      protocolId: "sandbox-protocol",
+      subject: "Monthly Protocol Report",
+      body: "Protocol performance summary for the month.",
+      category: "marketing",
+      scheduleType: "RECURRING",
+      cronExpr: "0 8 1 * *",
+      timezone: "UTC",
+      nextRunAt: subDays(now, -15).toISOString(),
+      lastRunAt: subDays(now, 15).toISOString(),
+      status: "COMPLETED",
+      createdAt: subDays(now, 60).toISOString(),
+    },
+    {
+      id: "sandbox-sched-4",
+      protocolId: "sandbox-protocol",
+      wallet: fakeWallet(),
+      subject: "Security Audit Alert",
+      body: "A security audit is scheduled for your protocol.",
+      category: "defi",
+      scheduleType: "ONE_TIME",
+      timezone: "UTC",
+      nextRunAt: subDays(now, 3).toISOString(),   // 3 days ago
+      status: "FAILED",
+      createdAt: subDays(now, 10).toISOString(),
+    },
+  ];
+
+  const pageSize = 20;
+  const total = pool.length;
+  const items = pool.slice((page - 1) * pageSize, page * pageSize);
+
+  return { items, total };
+}
+
 // ── Notification log ──────────────────────────────────────────────────────────
 
 /** Base58 alphabet — mirrors Solana / wallet address charset */

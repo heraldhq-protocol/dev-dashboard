@@ -16,6 +16,9 @@ import {
   type ScheduledNotification,
 } from "@/lib/api/campaigns";
 import { UpgradeGate } from "@/components/billing/UpgradeGate";
+import { useUiStore } from "@/lib/stores/ui.store";
+import { sandboxScheduledNotifications } from "@/lib/sandbox-data";
+import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -59,13 +62,17 @@ export default function ScheduledNotificationsPage() {
 
 function ScheduledNotificationsContent() {
   const queryClient = useQueryClient();
+  const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["scheduledNotifications", page],
-    queryFn: () => listScheduledNotifications(page),
-    refetchInterval: 30_000,
+    queryKey: ["scheduledNotifications", page, isSandbox],
+    queryFn: isSandbox
+      ? () => Promise.resolve(sandboxScheduledNotifications(page) as { items: ScheduledNotification[]; total: number })
+      : () => listScheduledNotifications(page),
+    refetchInterval: isSandbox ? false : 30_000,
+    staleTime: isSandbox ? 0 : undefined,
   });
 
   const items = data?.items ?? [];
@@ -212,15 +219,17 @@ function ScheduledNotificationsContent() {
                     {/* Actions */}
                     <td className="px-4 py-3 text-right">
                       {(item.status === "PENDING" || item.status === "RUNNING") && (
-                        <Button
-                          size="xs"
-                          variant="destructive"
-                          onClick={() => handleCancel(item.id)}
-                          isLoading={cancellingId === item.id}
-                          disabled={cancellingId === item.id}
-                        >
-                          Cancel
-                        </Button>
+                        <SandboxLockedAction>
+                          <Button
+                            size="xs"
+                            variant="destructive"
+                            onClick={() => handleCancel(item.id)}
+                            isLoading={cancellingId === item.id}
+                            disabled={cancellingId === item.id}
+                          >
+                            Cancel
+                          </Button>
+                        </SandboxLockedAction>
                       )}
                     </td>
                   </tr>
