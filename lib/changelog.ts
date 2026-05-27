@@ -43,7 +43,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
     slug: "2026-05-16-sprint1",
     date: "2026-05-16",
-    title: "Sprint 1 — Code Export, Projected Usage, Webhook Reliability & Changelog",
+    title: "Code Export, Projected Usage, Webhook Reliability & Changelog",
     tag: "Feature",
     body: "Four new features shipped across the dashboard: (1) Export your playground composition as ready-to-run TypeScript, JavaScript, cURL, or Python in one click. (2) Projected end-of-month usage card on the Overview page so you can anticipate overages before they hit. (3) Per-webhook reliability metrics (success rate, P99 latency, health status) surfaced directly in the Webhooks list. (4) This What's New panel — stay on top of Herald platform updates without leaving the dashboard.",
     learnMoreUrl: "https://useherald.xyz/docs",
