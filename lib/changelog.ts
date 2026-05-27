@@ -13,6 +13,34 @@ export interface ChangelogEntry {
 // Add new entries at the TOP of the array.
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    slug: "2026-05-27-sandbox-actions",
+    date: "2026-05-27",
+    title: "Sandbox mode now fully read-only — all mutable actions locked",
+    tag: "Improvement",
+    body: "Every destructive or mutable action across the dashboard (create, delete, revoke, verify, invite, cancel, save, etc.) is now disabled while in Sandbox mode. Attempting any write action shows a clear toast prompt to switch to Live mode. The Playground remains fully interactive in both environments.",
+  },
+  {
+    slug: "2026-05-27-sandbox-data",
+    date: "2026-05-27",
+    title: "Rich sandbox preview data across all dashboard pages",
+    tag: "Feature",
+    body: "Sandbox mode now populates every page with realistic, randomly generated preview data — Notifications log (with status/category/search filtering), Audience analytics, Campaigns, Templates, and Scheduled Notifications. Explore the full dashboard experience without a live API key.",
+  },
+  {
+    slug: "2026-05-27-scheduled-notifications",
+    date: "2026-05-27",
+    title: "Scheduled Notifications — new dashboard page",
+    tag: "Feature",
+    body: "A dedicated Scheduled Notifications page is now available under the Notifications section. View all pending, running, completed, failed, and cancelled scheduled sends with their next-run time, schedule type (one-time vs. recurring with cron expression), target wallet, and subject. Cancel pending/running jobs directly from the table.",
+  },
+  {
+    slug: "2026-05-27-channel-coverage-fix",
+    date: "2026-05-27",
+    title: "Fix: channel coverage percentages now display correctly",
+    tag: "Fix",
+    body: "The Audience page channel breakdown was incorrectly displaying raw subscriber counts as percentages (e.g. \"Email 3347%\"). The donut chart tooltip and the breakdown list now correctly compute each channel's share of total coverage, always summing to 100%.",
+  },
+  {
     slug: "2026-05-16-sprint1",
     date: "2026-05-16",
     title: "Sprint 1 — Code Export, Projected Usage, Webhook Reliability & Changelog",
