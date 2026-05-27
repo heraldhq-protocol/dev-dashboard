@@ -18,7 +18,6 @@ function fireSandboxToast(message: string) {
   toast.info("Actions are disabled in Sandbox mode", {
     id: SANDBOX_TOAST_ID,
     description: message,
-    icon: "🔒",
     duration: 3000,
   });
 }
