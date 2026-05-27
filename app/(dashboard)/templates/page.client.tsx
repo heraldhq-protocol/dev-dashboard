@@ -35,7 +35,6 @@ interface Template {
   status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
   subjectTemplate?: string;
   previewText?: string;
-  heraldFooter: string;
   isDefault: boolean;
   isActive: boolean;
   version: number;
@@ -81,14 +80,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   system: "bg-gold/10 text-gold border-gold/20",
 };
 
-const HERALD_FOOTER_OPTIONS = [
-  { value: "full", label: "Full — privacy note + Herald logo + Unsubscribe + site" },
-  { value: "small", label: "Small — Herald logo + Unsubscribe + site" },
-  { value: "minimal", label: "Minimal — Herald logo + Unsubscribe" },
-  { value: "enterprise", label: "Enterprise — Herald logo + Unsubscribe (no site)" },
-  { value: "none", label: "None — Unsubscribe link only" },
-];
-
 export default function TemplatesPage() {
   const { axios } = useApi();
   const router = useRouter();
@@ -115,7 +106,6 @@ export default function TemplatesPage() {
     category: "defi",
     subjectTemplate: "",
     htmlSource: "",
-    heraldFooter: "full",
     isDefault: false,
   });
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "variables">("editor");
@@ -186,7 +176,7 @@ export default function TemplatesPage() {
       if (data.success) {
         const templateId: string = data.templateId;
         setShowCreateModal(false);
-        setNewTemplate({ name: "", category: "defi", subjectTemplate: "", htmlSource: "", heraldFooter: "full", isDefault: false });
+        setNewTemplate({ name: "", category: "defi", subjectTemplate: "", htmlSource: "", isDefault: false });
         setPreviewHtml(null);
 
         if (andSubmit) {
@@ -236,7 +226,6 @@ export default function TemplatesPage() {
       const { data } = await axios.post("/templates/preview", {
         htmlSource: newTemplate.htmlSource,
         subjectTemplate: newTemplate.subjectTemplate,
-        heraldFooter: newTemplate.heraldFooter,
         variables: previewVars,
       });
       if (data.success) {
@@ -628,41 +617,19 @@ export default function TemplatesPage() {
                     </p>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-text-secondary">Herald Footer</label>
-                      <Select
-                        value={newTemplate.heraldFooter}
-                        onValueChange={(val) => setNewTemplate({ ...newTemplate, heraldFooter: val })}
-                      >
-                        <SelectTrigger className="w-full bg-card-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {HERALD_FOOTER_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-[10px] text-text-dim">Herald always appends an unsubscribe link per CAN-SPAM/GDPR.</p>
-                    </div>
-
-                    <div className="flex items-end pb-1">
-                      <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg w-full">
-                        <input
-                          type="checkbox"
-                          id="isDefault"
-                          checked={newTemplate.isDefault}
-                          onChange={(e) => setNewTemplate({ ...newTemplate, isDefault: e.target.checked })}
-                          className="rounded w-4 h-4"
-                        />
-                        <div>
-                          <label htmlFor="isDefault" className="text-xs font-medium text-text-secondary cursor-pointer block">
-                            Set as default for category
-                          </label>
-                          <p className="text-[10px] text-text-dim">Used when no templateId is passed for this category.</p>
-                        </div>
-                      </div>
+                  <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="isDefault"
+                      checked={newTemplate.isDefault}
+                      onChange={(e) => setNewTemplate({ ...newTemplate, isDefault: e.target.checked })}
+                      className="rounded w-4 h-4"
+                    />
+                    <div>
+                      <label htmlFor="isDefault" className="text-xs font-medium text-text-secondary cursor-pointer block">
+                        Set as default for category
+                      </label>
+                      <p className="text-[10px] text-text-dim">Used when no templateId is passed for this category.</p>
                     </div>
                   </div>
                 </div>

@@ -34,7 +34,6 @@ interface Template {
   subjectTemplate?: string;
   htmlSource?: string;
   previewText?: string;
-  heraldFooter: string;
   isDefault: boolean;
   isActive: boolean;
   version: number;
@@ -74,14 +73,6 @@ const PREVIEW_VARS_DEFAULT = {
   unsubscribeUrl: "https://notify.useherald.xyz/unsubscribe/test123",
 };
 
-const HERALD_FOOTER_OPTIONS = [
-  { value: "full", label: "Full — privacy note + logo + Unsubscribe + site" },
-  { value: "small", label: "Small — logo + Unsubscribe + site" },
-  { value: "minimal", label: "Minimal — logo + Unsubscribe" },
-  { value: "enterprise", label: "Enterprise — logo + Unsubscribe (no site)" },
-  { value: "none", label: "None — Unsubscribe link only" },
-];
-
 // Complete variable + helper reference shown in Usage tab
 const TEMPLATE_VARIABLES = [
   { name: "protocolName", source: "auto", desc: "Your protocol's display name" },
@@ -119,7 +110,6 @@ export default function TemplateEditorPage() {
     category: "defi",
     subjectTemplate: "",
     htmlSource: "",
-    heraldFooter: "full",
     isDefault: false,
   });
 
@@ -154,7 +144,6 @@ export default function TemplateEditorPage() {
         category: tpl.category ?? "defi",
         subjectTemplate: tpl.subjectTemplate ?? "",
         htmlSource: tpl.htmlSource ?? "",
-        heraldFooter: tpl.heraldFooter ?? "full",
         isDefault: tpl.isDefault ?? false,
       });
     } catch (err: any) {
@@ -415,18 +404,6 @@ export default function TemplateEditorPage() {
                     </code>
                   ))}
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-text-muted">Herald Footer</label>
-                <Select value={form.heraldFooter} onValueChange={(val) => handleFormChange("heraldFooter", val)}>
-                  <SelectTrigger className="w-full bg-card-2"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {HERALD_FOOTER_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="flex items-center gap-3 p-3 bg-card-2 border border-border rounded-lg">
