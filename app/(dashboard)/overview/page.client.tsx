@@ -57,7 +57,10 @@ export default function OverviewPage() {
 
   const { data: failedNotifs } = useQuery({
     queryKey: ["recentFailures", isSandbox],
-    queryFn: isSandbox ? () => [] : () => listNotifications(1, 5, "failed"),
+    queryFn: isSandbox
+      ? (): Promise<{ items: never[]; total: number; page: number; limit: number }> =>
+          Promise.resolve({ items: [], total: 0, page: 1, limit: 5 })
+      : () => listNotifications(1, 5, "failed"),
   });
 
   const { data: webhookReliability } = useQuery({
