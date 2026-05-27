@@ -1,5 +1,4 @@
 echo " Running pre-push checks..."
 pnpm lint || exit 1
 pnpm typecheck || exit 1
-pnpm build || exit 1
-echo "✅ All checks passed. Pushing..."
+echo "✅ Pre-push passed (build runs in CI)"
