@@ -108,6 +108,7 @@ export default function TemplatesPage() {
   const canCreateTemplates = !atTemplateLimit;
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<string | null>(null); // templateId being submitted
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
     name: "",
@@ -178,16 +179,23 @@ export default function TemplatesPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (andSubmit = false) => {
     setIsCreating(true);
     try {
       const { data } = await axios.post("/templates", newTemplate);
       if (data.success) {
+        const templateId: string = data.templateId;
         setShowCreateModal(false);
         setNewTemplate({ name: "", category: "defi", subjectTemplate: "", htmlSource: "", heraldFooter: "full", isDefault: false });
         setPreviewHtml(null);
-        loadTemplates();
-        toast.success("Template created successfully.");
+
+        if (andSubmit) {
+          // Fire-and-forget submit — loadTemplates after it resolves
+          await handleSubmitForReview(templateId);
+        } else {
+          toast.success("Template saved as draft.");
+          loadTemplates();
+        }
       }
     } catch (error: any) {
       const msg: string =
@@ -198,6 +206,26 @@ export default function TemplatesPage() {
       toast.error(typeof msg === "string" ? msg : "Failed to create template.");
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleSubmitForReview = async (templateId: string) => {
+    setIsSubmitting(templateId);
+    try {
+      const { data } = await axios.post(`/templates/${templateId}/submit`);
+      loadTemplates();
+      if (data.autoApproved) {
+        toast.success(`Template approved automatically. ${data.summary}`);
+      } else {
+        toast.info(
+          `Template sent for manual review. ${data.summary}${data.flags?.length ? ` Issues: ${data.flags.slice(0, 2).join("; ")}` : ""}`,
+        );
+      }
+    } catch (error: any) {
+      const msg: string = error?.response?.data?.message ?? error?.message ?? "Submit failed.";
+      toast.error(typeof msg === "string" ? msg : "Submit failed.");
+    } finally {
+      setIsSubmitting(null);
     }
   };
 
@@ -393,6 +421,17 @@ export default function TemplatesPage() {
                     Updated {new Date(template.updatedAt).toLocaleDateString()}
                   </span>
                   <div className="flex gap-1">
+                    {(template.status === "DRAFT" || template.status === "REJECTED") && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-amber-400 hover:text-amber-300 gap-1"
+                        disabled={isSubmitting === template.id}
+                        onClick={() => handleSubmitForReview(template.id)}
+                      >
+                        {isSubmitting === template.id ? "Reviewing…" : "Submit"}
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -776,11 +815,19 @@ export default function TemplatesPage() {
             <div className="flex justify-end gap-3 p-4 border-t border-border shrink-0">
               <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
               <Button
+                variant="outline"
                 isLoading={isCreating}
-                onClick={handleCreate}
-                disabled={!newTemplate.name || !newTemplate.htmlSource}
+                onClick={() => handleCreate(false)}
+                disabled={!newTemplate.name || !newTemplate.htmlSource || isCreating}
               >
-                Create Template
+                Save as Draft
+              </Button>
+              <Button
+                isLoading={isCreating}
+                onClick={() => handleCreate(true)}
+                disabled={!newTemplate.name || !newTemplate.htmlSource || isCreating}
+              >
+                Submit for Review
               </Button>
             </div>
           </Card>
