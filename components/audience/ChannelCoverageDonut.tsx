@@ -13,6 +13,7 @@ const CHANNEL_LABELS = ["Email", "Telegram", "SMS"];
 
 export function ChannelCoverageDonut({ email, telegram, sms }: Props) {
   const raw = [email, telegram, sms];
+  const total = raw.reduce((sum, v) => sum + v, 0);
   const data = CHANNEL_LABELS.map((name, i) => ({ name, value: raw[i] })).filter(
     (d) => d.value > 0
   );
@@ -50,7 +51,10 @@ export function ChannelCoverageDonut({ email, telegram, sms }: Props) {
               color: "var(--text-main)",
               fontSize: "12px",
             }}
-            formatter={(value) => [`${value}%`, ""]}
+            formatter={(value: number) => [
+              `${total > 0 ? Math.round((value / total) * 100) : 0}%`,
+              "",
+            ]}
           />
           <Legend
             iconType="circle"

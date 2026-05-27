@@ -105,19 +105,25 @@ export default function AudiencePage() {
           {/* Channel breakdown list */}
           {!isLoading && data && (
             <div className="mt-4 space-y-2 border-t border-border pt-4">
-              {[
-                { label: "Email", value: data.channelCoverage.email, color: "#00C896" },
-                { label: "Telegram", value: data.channelCoverage.telegram, color: "#6366f1" },
-                { label: "SMS", value: data.channelCoverage.sms, color: "#f59e0b" },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                    <span className="text-text-muted">{label}</span>
+              {(() => {
+                const { email, telegram, sms } = data.channelCoverage;
+                const channelTotal = email + telegram + sms;
+                return [
+                  { label: "Email", value: email, color: "#00C896" },
+                  { label: "Telegram", value: telegram, color: "#6366f1" },
+                  { label: "SMS", value: sms, color: "#f59e0b" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                      <span className="text-text-muted">{label}</span>
+                    </div>
+                    <span className="font-semibold text-foreground tabular-nums">
+                      {channelTotal > 0 ? Math.round((value / channelTotal) * 100) : 0}%
+                    </span>
                   </div>
-                  <span className="font-semibold text-foreground tabular-nums">{value}%</span>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           )}
         </DashboardCard>
