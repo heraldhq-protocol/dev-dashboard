@@ -7,6 +7,8 @@ import { DashboardCard } from "@/components/ui/DashboardCard";
 import { getEngagementMetrics } from "@/lib/api/analytics";
 import { format } from "date-fns";
 import { UpgradeGate } from "@/components/billing/UpgradeGate";
+import { useUiStore } from "@/lib/stores/ui.store";
+import { sandboxEngagementMetrics } from "@/lib/sandbox-data";
 
 export default function EngagementAnalyticsPage() {
   return (
@@ -17,10 +19,12 @@ export default function EngagementAnalyticsPage() {
 }
 
 function EngagementContent() {
+  const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
+
   const { data, isLoading } = useQuery({
-    queryKey: ["engagementMetrics"],
-    queryFn: () => getEngagementMetrics(),
-    staleTime: 120_000,
+    queryKey: ["engagementMetrics", isSandbox],
+    queryFn: isSandbox ? sandboxEngagementMetrics : () => getEngagementMetrics(),
+    staleTime: isSandbox ? 0 : 120_000,
   });
 
   const periodStr =

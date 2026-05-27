@@ -32,7 +32,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-center gap-2 px-4 py-1.5 bg-status-warning/8 border-b border-status-warning/20 shrink-0">
             <FlaskConical className="h-3 w-3 text-status-warning shrink-0" />
             <p className="text-[11px] font-semibold text-status-warning">
-              Sandbox mode — data is isolated from production. Switch to{" "}
+              Sandbox mode — analytics show randomly generated demo data. Switch to{" "}
               <button
                 onClick={switchToLive}
                 className="underline underline-offset-2 hover:opacity-80 transition-opacity"

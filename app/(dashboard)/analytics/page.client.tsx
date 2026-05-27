@@ -12,15 +12,20 @@ import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAnalyticsTrends } from "@/lib/api/analytics";
+import { useUiStore } from "@/lib/stores/ui.store";
+import { sandboxAnalyticsTrends } from "@/lib/sandbox-data";
 import { format, subDays } from "date-fns";
 
 export default function AnalyticsPage() {
   const [days, setDays] = useState(7);
   const [chartType, setChartType] = useState<"bar" | "area">("bar");
+  const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["analyticsTrends", days],
-    queryFn: () => getAnalyticsTrends(days),
+    queryKey: ["analyticsTrends", days, isSandbox],
+    queryFn: isSandbox
+      ? () => sandboxAnalyticsTrends(days)
+      : () => getAnalyticsTrends(days),
   });
 
   const totalVolume = data?.totalVolume || 0;

@@ -9,15 +9,18 @@ import { ChannelCoverageDonut } from "@/components/audience/ChannelCoverageDonut
 import { DashboardCard } from "@/components/ui/DashboardCard";
 import { getAudienceAnalytics } from "@/lib/api/analytics";
 import { getProtocol } from "@/lib/api/protocol";
+import { useUiStore } from "@/lib/stores/ui.store";
+import { sandboxAudienceAnalytics } from "@/lib/sandbox-data";
 import { Check, Copy } from "lucide-react";
 
 export default function AudiencePage() {
   const [copied, setCopied] = useState(false);
+  const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["audienceAnalytics"],
-    queryFn: getAudienceAnalytics,
-    staleTime: 120_000,
+    queryKey: ["audienceAnalytics", isSandbox],
+    queryFn: isSandbox ? sandboxAudienceAnalytics : getAudienceAnalytics,
+    staleTime: isSandbox ? 0 : 120_000,
   });
 
   const { data: protocol } = useQuery({

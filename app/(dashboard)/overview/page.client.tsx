@@ -19,6 +19,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats, getAnalyticsTrends } from "@/lib/api/analytics";
 import { listNotifications } from "@/lib/api/notifications";
 import { getWebhookReliability } from "@/lib/api/webhooks";
+import { useUiStore } from "@/lib/stores/ui.store";
+import {
+  sandboxDashboardStats,
+  sandboxAnalyticsTrends,
+  sandboxWebhookReliability,
+} from "@/lib/sandbox-data";
 import Link from "next/link";
 import { BarChart3, ShieldCheck, Webhook } from "lucide-react";
 import { ProjectedUsageCard } from "@/components/billing/ProjectedUsageCard";
@@ -33,28 +39,31 @@ import { toast } from "sonner";
 export default function OverviewPage() {
   const { checklist } = useOnboardingStore();
   const { isNextStepVisible } = useNextStep();
+  const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["dashboardStats"],
-    queryFn: getDashboardStats,
+    queryKey: ["dashboardStats", isSandbox],
+    queryFn: isSandbox ? sandboxDashboardStats : getDashboardStats,
   });
 
   const [timeRange, setTimeRange] = useState<"7d" | "30d">("7d");
 
   const { data: trends, isLoading: trendsLoading } = useQuery({
-    queryKey: ["analyticsTrends", timeRange],
-    queryFn: () => getAnalyticsTrends(timeRange === "7d" ? 7 : 30),
+    queryKey: ["analyticsTrends", timeRange, isSandbox],
+    queryFn: isSandbox
+      ? () => sandboxAnalyticsTrends(timeRange === "7d" ? 7 : 30)
+      : () => getAnalyticsTrends(timeRange === "7d" ? 7 : 30),
   });
 
   const { data: failedNotifs } = useQuery({
-    queryKey: ["recentFailures"],
-    queryFn: () => listNotifications(1, 5, "failed"),
+    queryKey: ["recentFailures", isSandbox],
+    queryFn: isSandbox ? () => [] : () => listNotifications(1, 5, "failed"),
   });
 
   const { data: webhookReliability } = useQuery({
-    queryKey: ["webhooks", "reliability"],
-    queryFn: getWebhookReliability,
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["webhooks", "reliability", isSandbox],
+    queryFn: isSandbox ? sandboxWebhookReliability : getWebhookReliability,
+    staleTime: isSandbox ? 0 : 5 * 60 * 1000,
   });
 
   const { data: protocol } = useQuery({
