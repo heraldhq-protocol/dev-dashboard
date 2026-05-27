@@ -32,6 +32,7 @@ interface Template {
   id: string;
   name: string;
   category: string;
+  status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
   subjectTemplate?: string;
   previewText?: string;
   heraldFooter: string;
@@ -41,6 +42,13 @@ interface Template {
   createdAt: string;
   updatedAt: string;
 }
+
+const TEMPLATE_STATUS_STYLES: Record<string, { label: string; className: string }> = {
+  DRAFT:          { label: "Draft",          className: "bg-border text-text-muted border-border" },
+  PENDING_REVIEW: { label: "Pending Review", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  APPROVED:       { label: "Approved",       className: "bg-teal/10 text-teal border-teal/20" },
+  REJECTED:       { label: "Rejected",       className: "bg-red-500/10 text-red-400 border-red-500/20" },
+};
 
 // All variables available in Herald templates
 const TEMPLATE_VARIABLES = [
@@ -346,6 +354,14 @@ export default function TemplatesPage() {
                       {template.isDefault && (
                         <span className="text-[10px] bg-teal/20 text-teal px-2 py-0.5 rounded border border-teal/20">Default</span>
                       )}
+                      {(() => {
+                        const s = TEMPLATE_STATUS_STYLES[template.status];
+                        return s ? (
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${s.className}`}>
+                            {s.label}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                 </div>
