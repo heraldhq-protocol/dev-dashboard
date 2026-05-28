@@ -9,79 +9,23 @@ import { useApi } from "@/components/providers/QueryProvider";
 import { toast } from "sonner";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { useSession } from "next-auth/react";
-import { Globe } from "lucide-react";
+import { Globe, CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { RippleWaveLoader } from "@/components/ui/pulsating-loader";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { getBillingStatus } from "@/lib/api/billing";
 import { TierGatePage } from "@/components/shared/TierGatePage";
 import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
+import { cn } from "@/lib/utils";
 
-function BimiSection({
-  bimi,
-  isLoading,
-  onSave,
-}: {
-  domainId: string;
-  bimi: { logoUrl?: string; vmcUrl?: string; status?: string } | null;
-  isLoading: boolean;
-  onSave: (logoUrl: string) => void;
-}) {
-  const [logoUrl, setLogoUrl] = useState(bimi?.logoUrl ?? "");
+// ── Types ──────────────────────────────────────────────────────────────────────
 
-  if (isLoading) {
-    return (
-      <div className="mt-4 p-3 bg-muted/30 border border-border rounded-lg text-xs text-text-muted animate-pulse">
-        Loading BIMI config…
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-4 bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-primary">BIMI (Brand Indicators)</p>
-        {bimi?.status && (
-          <span
-            className={`text-xs px-2 py-0.5 rounded font-medium border ${
-              bimi.status === "active"
-                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                : "bg-amber-500/20 text-amber-400 border-amber-500/30"
-            }`}
-          >
-            {bimi.status}
-          </span>
-        )}
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Add a brand logo that appears in supported email clients (Gmail, Yahoo Mail) next to your messages.
-      </p>
-      <div className="space-y-2">
-        <label className="text-xs font-medium text-muted-foreground">Logo URL (SVG, square, publicly accessible)</label>
-        <div className="flex gap-2">
-          <Input
-            value={logoUrl}
-            onChange={(e) => setLogoUrl(e.target.value)}
-            placeholder="https://yourdomain.com/logo.svg"
-            className="flex-1 text-xs"
-          />
-          <SandboxLockedAction>
-            <Button
-              size="sm"
-              onClick={() => onSave(logoUrl)}
-              disabled={!logoUrl}
-            >
-              Save
-            </Button>
-          </SandboxLockedAction>
-        </div>
-      </div>
-      {bimi?.vmcUrl && (
-        <div className="text-xs text-muted-foreground">
-          VMC: <code className="bg-muted px-1 rounded">{bimi.vmcUrl}</code>
-        </div>
-      )}
-    </div>
-  );
+interface DnsRecord {
+  type: string;
+  name: string;
+  value: string;
+  record?: string;
+  ttl?: string;
+  status?: string;
 }
 
 interface Domain {
@@ -89,23 +33,260 @@ interface Domain {
   domain: string;
   selector: string;
   dns_verified: boolean;
+  ses_verified: boolean;
+  resend_verified: boolean;
+  registered: boolean;
   dnsRecordName?: string;
   dnsRecordValue?: string;
-  instructions?: string;
+  ses_cname_records?: DnsRecord[] | null;
+  resend_dns_records?: DnsRecord[] | null;
   created_at: string;
 }
 
 interface BimiConfig {
+  bimi_enabled: boolean;
   logoUrl?: string;
   vmcUrl?: string;
-  status?: "pending" | "active" | "unsupported";
+  dns_record_name?: string;
+  dns_record_value?: string;
 }
 
-interface DomainWithConfig extends Domain {
-  showConfig: boolean;
+interface RegisterResult {
+  domain: string;
+  ses: { success: boolean; cnameRecords: DnsRecord[] | null; error: string | null };
+  resend: { success: boolean; records: DnsRecord[] | null; error: string | null };
+}
+
+interface DomainWithState extends Domain {
+  showSetup: boolean;
   bimiData?: BimiConfig | null;
   bimiLoading?: boolean;
 }
+
+// ── BIMI Section ───────────────────────────────────────────────────────────────
+
+function BimiSection({
+  bimi,
+  isLoading,
+  onSave,
+}: {
+  bimi: BimiConfig | null;
+  isLoading: boolean;
+  onSave: (logoUrl: string) => void;
+}) {
+  const [logoUrl, setLogoUrl] = useState(bimi?.logoUrl ?? "");
+
+  if (isLoading) {
+    return (
+      <div className="mt-4 p-3 rounded-lg border border-border bg-card animate-pulse text-xs text-text-muted">
+        Loading BIMI config…
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border border-teal/20 bg-teal/5 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-teal">BIMI (Brand Indicators)</p>
+        {bimi?.bimi_enabled && (
+          <span className="text-[10px] px-2 py-0.5 rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-semibold uppercase tracking-wider">
+            Active
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-text-muted">
+        Display your brand logo next to emails in Gmail and Yahoo Mail.
+      </p>
+      {bimi?.dns_record_name && (
+        <div className="text-xs space-y-1">
+          <p className="text-text-muted font-medium">DNS TXT record to publish:</p>
+          <div className="flex items-center gap-2">
+            <code className="bg-background px-2 py-1 rounded text-[10px] font-mono break-all flex-1">{bimi.dns_record_name}</code>
+            <CopyButton text={bimi.dns_record_name ?? ""} size="sm" variant="ghost" className="shrink-0" />
+          </div>
+          <div className="flex items-center gap-2">
+            <code className="bg-background px-2 py-1 rounded text-[10px] font-mono break-all flex-1">{bimi.dns_record_value}</code>
+            <CopyButton text={bimi.dns_record_value ?? ""} size="sm" variant="ghost" className="shrink-0" />
+          </div>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <Input
+          value={logoUrl}
+          onChange={(e) => setLogoUrl(e.target.value)}
+          placeholder="https://yourdomain.com/logo.svg"
+          className="flex-1 text-xs"
+        />
+        <SandboxLockedAction>
+          <Button size="sm" onClick={() => onSave(logoUrl)} disabled={!logoUrl}>
+            Save
+          </Button>
+        </SandboxLockedAction>
+      </div>
+      <p className="text-[10px] text-text-dim">SVG format, max 32 KB, square, publicly accessible.</p>
+    </div>
+  );
+}
+
+// ── Provider Status Badge ──────────────────────────────────────────────────────
+
+function ProviderBadge({ label, verified }: { label: string; verified: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+        verified
+          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+          : "bg-border text-text-dim border-border"
+      )}
+    >
+      {verified ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Circle className="w-2.5 h-2.5" />}
+      {label}
+    </span>
+  );
+}
+
+// ── DNS Records Modal ──────────────────────────────────────────────────────────
+
+function RegisterDnsModal({
+  result,
+  onClose,
+}: {
+  result: RegisterResult;
+  onClose: () => void;
+}) {
+  const sesCnames = result.ses.cnameRecords ?? [];
+  const resendRecords = result.resend.records ?? [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <Card className="w-full max-w-2xl border-border max-h-[90vh] overflow-y-auto">
+        <CardHeader className="pb-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-teal/10 border border-teal/20">
+              <Globe className="w-5 h-5 text-teal" />
+            </div>
+            <div>
+              <CardTitle>Add DNS Records — {result.domain}</CardTitle>
+              <CardDescription className="mt-0.5">
+                Add all of the following DNS records to your provider. Herald will route email through whichever provider is healthy.
+              </CardDescription>
+            </div>
+          </div>
+
+          {/* Provider registration status */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            <ProviderBadge label="AWS SES" verified={result.ses.success} />
+            <ProviderBadge label="Resend" verified={result.resend.success} />
+          </div>
+
+          {(result.ses.error || result.resend.error) && (
+            <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400 space-y-1">
+              {result.ses.error && <p><span className="font-semibold">SES:</span> {result.ses.error}</p>}
+              {result.resend.error && <p><span className="font-semibold">Resend:</span> {result.resend.error}</p>}
+            </div>
+          )}
+        </CardHeader>
+
+        <CardContent className="space-y-5">
+
+          {/* SES CNAME records */}
+          {sesCnames.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-foreground uppercase tracking-wider">AWS SES — Easy DKIM</span>
+                <span className="text-[10px] text-text-muted">({sesCnames.length} CNAME records)</span>
+              </div>
+              <p className="text-xs text-text-muted mb-3">Required for SES to sign and deliver your email.</p>
+              <div className="space-y-2">
+                {sesCnames.map((r, i) => (
+                  <DnsRecordRow key={i} record={r} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Resend DNS records */}
+          {resendRecords.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-foreground uppercase tracking-wider">Resend</span>
+                <span className="text-[10px] text-text-muted">({resendRecords.length} records)</span>
+              </div>
+              <p className="text-xs text-text-muted mb-3">Required for Resend to send from your domain.</p>
+              <div className="space-y-2">
+                {resendRecords.map((r, i) => (
+                  <DnsRecordRow key={i} record={r} label={r.record} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sesCnames.length === 0 && resendRecords.length === 0 && (
+            <p className="text-sm text-text-muted text-center py-4">
+              No DNS records were returned. Check the errors above and try again.
+            </p>
+          )}
+
+          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
+            <span className="font-semibold">Note:</span> DNS propagation takes 5–72 hours. You can close this dialog — records are saved and available in your domain card.
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-foreground">Quick reference by provider:</p>
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-text-muted">
+              {[
+                ["Cloudflare", "DNS → Add record"],
+                ["Vercel", "Settings → Domains → DNS Records"],
+                ["GoDaddy", "DNS → Manage → Add Record"],
+                ["Namecheap", "Advanced DNS → Add New Record"],
+              ].map(([name, path]) => (
+                <div key={name} className="bg-card rounded p-2">
+                  <span className="font-semibold text-foreground">{name}:</span> {path}
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+
+        <div className="sticky bottom-0 bg-background border-t border-border p-4">
+          <Button onClick={onClose} className="w-full">Done — I've added the records</Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function DnsRecordRow({ record, label }: { record: DnsRecord; label?: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-3 space-y-2 text-xs">
+      <div className="flex items-center gap-2">
+        {label && (
+          <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted bg-border px-1.5 py-0.5 rounded">
+            {label}
+          </span>
+        )}
+        <span className="text-[10px] font-bold uppercase tracking-wider text-teal bg-teal/10 border border-teal/20 px-1.5 py-0.5 rounded">
+          {record.type}
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-text-muted w-10 shrink-0 font-medium">Name</span>
+          <code className="flex-1 font-mono text-[10px] bg-background px-2 py-1 rounded break-all">{record.name}</code>
+          <CopyButton text={record.name} size="sm" variant="ghost" className="shrink-0" />
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="text-text-muted w-10 shrink-0 font-medium pt-1">Value</span>
+          <code className="flex-1 font-mono text-[10px] bg-background px-2 py-1 rounded break-all">{record.value}</code>
+          <CopyButton text={record.value} size="sm" variant="ghost" className="shrink-0" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function DomainsPage() {
   const { axios } = useApi();
@@ -117,12 +298,14 @@ export default function DomainsPage() {
     staleTime: 60_000,
   });
 
-  const [domains, setDomains] = useState<DomainWithConfig[]>([]);
+  const [domains, setDomains] = useState<DomainWithState[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newDomain, setNewDomain] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [configModalData, setConfigModalData] = useState<Domain | null>(null);
+  const [addedDomainDns, setAddedDomainDns] = useState<Domain | null>(null);
+  const [registerResult, setRegisterResult] = useState<RegisterResult | null>(null);
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
   const [domainToDelete, setDomainToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -131,9 +314,8 @@ export default function DomainsPage() {
     setIsLoading(true);
     try {
       const { data } = await axios.get("/domains");
-      setDomains((data || []).map((d: Domain) => ({ ...d, showConfig: false })));
-    } catch (error) {
-      console.error("Failed to load domains:", error);
+      setDomains((data || []).map((d: Domain) => ({ ...d, showSetup: false })));
+    } catch {
       toast.error("Failed to load domains");
     } finally {
       setIsLoading(false);
@@ -155,14 +337,12 @@ export default function DomainsPage() {
     if (!newDomain) return;
     setIsCreating(true);
     try {
-      const { data } = await axios.post("/domains", {
-        domain: newDomain,
-      });
+      const { data } = await axios.post("/domains", { domain: newDomain });
       if (data) {
-        toast.success("Domain added successfully");
+        toast.success("Domain added. Add the DNS record below to verify ownership.");
         setShowAddModal(false);
         setNewDomain("");
-        setConfigModalData(data);
+        setAddedDomainDns(data);
         loadDomains();
       }
     } catch (error: any) {
@@ -175,10 +355,10 @@ export default function DomainsPage() {
   const handleVerify = async (domainId: string) => {
     try {
       const { data } = await axios.post(`/domains/${domainId}/verify`);
-      if (data.dns_verified) {
-        toast.success("Domain verified successfully");
+      if (data.dnsVerified) {
+        toast.success("Domain DKIM record verified ✓");
       } else {
-        toast.warning("DNS records not found yet. Please check your DNS configuration.");
+        toast.warning(data.message || "DNS record not found yet — wait for propagation and try again.");
       }
       loadDomains();
     } catch (error: any) {
@@ -186,18 +366,57 @@ export default function DomainsPage() {
     }
   };
 
-  const handleSesRegister = async (domainId: string) => {
+  const handleRegister = async (domainId: string) => {
+    setRegisteringId(domainId);
     try {
-      await axios.post(`/domains/${domainId}/ses-register`);
-      toast.success("Domain registered with SES");
+      const { data } = await axios.post(`/domains/${domainId}/register`);
+      setRegisterResult(data);
+      if (data.ses.success || data.resend.success) {
+        toast.success(
+          data.ses.success && data.resend.success
+            ? "Domain registered with SES and Resend."
+            : `Partial registration — ${data.ses.success ? "SES ✓" : "SES ✗"} ${data.resend.success ? "Resend ✓" : "Resend ✗"}`
+        );
+      } else {
+        toast.error("Registration failed for both providers. Check the DNS modal for details.");
+      }
       loadDomains();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to register with SES");
+      toast.error(error?.response?.data?.message || "Failed to register domain");
+    } finally {
+      setRegisteringId(null);
     }
   };
 
-  const handleDelete = (domainId: string) => {
-    setDomainToDelete(domainId);
+  const handleShowSavedRecords = (domain: DomainWithState) => {
+    // Re-open the DNS modal using persisted records from the domain record
+    if (domain.ses_cname_records || domain.resend_dns_records) {
+      setRegisterResult({
+        domain: domain.domain,
+        ses: { success: domain.ses_verified, cnameRecords: domain.ses_cname_records ?? null, error: null },
+        resend: { success: domain.resend_verified, records: domain.resend_dns_records ?? null, error: null },
+      });
+    }
+  };
+
+  const handleLoadBimi = async (domainId: string) => {
+    setDomains((prev) => prev.map((d) => d.id === domainId ? { ...d, bimiLoading: true } : d));
+    try {
+      const { data } = await axios.get(`/domains/${domainId}/bimi`);
+      setDomains((prev) => prev.map((d) => d.id === domainId ? { ...d, bimiData: data, bimiLoading: false } : d));
+    } catch {
+      setDomains((prev) => prev.map((d) => d.id === domainId ? { ...d, bimiData: null, bimiLoading: false } : d));
+    }
+  };
+
+  const handleSetBimi = async (domainId: string, logoUrl: string) => {
+    try {
+      await axios.post(`/domains/${domainId}/bimi`, { logoUrl });
+      toast.success("BIMI logo saved. Add the DNS TXT record shown below.");
+      handleLoadBimi(domainId);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to save BIMI config");
+    }
   };
 
   const confirmDelete = async () => {
@@ -215,38 +434,6 @@ export default function DomainsPage() {
     }
   };
 
-  const handleLoadBimi = async (domainId: string) => {
-    setDomains((prev) =>
-      prev.map((d) => (d.id === domainId ? { ...d, bimiLoading: true } : d))
-    );
-    try {
-      const { data } = await axios.get(`/domains/${domainId}/bimi`);
-      setDomains((prev) =>
-        prev.map((d) => (d.id === domainId ? { ...d, bimiData: data, bimiLoading: false } : d))
-      );
-    } catch {
-      setDomains((prev) =>
-        prev.map((d) => (d.id === domainId ? { ...d, bimiData: null, bimiLoading: false } : d))
-      );
-    }
-  };
-
-  const handleSetBimi = async (domainId: string, logoUrl: string) => {
-    try {
-      await axios.post(`/domains/${domainId}/bimi`, { logoUrl });
-      toast.success("BIMI logo URL saved");
-      handleLoadBimi(domainId);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to save BIMI config");
-    }
-  };
-
-  const toggleConfig = (domainId: string) => {
-    setDomains(domains.map(d => 
-      d.id === domainId ? { ...d, showConfig: !d.showConfig } : d
-    ));
-  };
-
   if (billing && billing.tier < 1) {
     return (
       <TierGatePage
@@ -259,47 +446,39 @@ export default function DomainsPage() {
   }
 
   if (isLoading || status === "loading") {
-    return (
-      <div className="flex items-center justify-center h-[400px]">
-        <RippleWaveLoader />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-[400px]"><RippleWaveLoader /></div>;
   }
 
   if (status === "unauthenticated") {
-    return (
-      <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-        <p className="text-muted-foreground">Please sign in to view your domains.</p>
-      </div>
-    );
+    return <div className="flex items-center justify-center h-[400px]"><p className="text-text-muted">Please sign in to view your domains.</p></div>;
   }
 
   return (
     <div className="space-y-6">
-      <div id="domains-header" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Email Domains</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage custom domains for sending emails with DKIM authentication.
+          <p className="text-sm text-text-muted mt-1">
+            Custom sending domains with DKIM, SES, and Resend registration.
           </p>
         </div>
         <SandboxLockedAction>
-          <Button id="domains-add-btn" onClick={() => setShowAddModal(true)} className="shrink-0">
+          <Button onClick={() => setShowAddModal(true)} className="shrink-0">
             Add Domain
           </Button>
         </SandboxLockedAction>
       </div>
 
-      <div id="domains-list">
+      {/* Domain list */}
       {domains.length === 0 ? (
         <Card className="border-border">
           <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
-            <Globe className="w-12 h-12 text-muted-foreground" />
-            <p className="text-muted-foreground">No custom domains yet. Add one to get started.</p>
+            <Globe className="w-12 h-12 text-text-dim" />
+            <p className="text-text-muted">No custom domains yet.</p>
             <SandboxLockedAction>
-              <Button onClick={() => setShowAddModal(true)}>
-                Add Domain
-              </Button>
+              <Button onClick={() => setShowAddModal(true)}>Add Domain</Button>
             </SandboxLockedAction>
           </CardContent>
         </Card>
@@ -311,146 +490,127 @@ export default function DomainsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-base truncate">{domain.domain}</CardTitle>
-                    <CardDescription className="text-xs mt-1 flex items-center gap-2">
-                      <code className="bg-muted px-1.5 py-0.5 rounded text-[10px]">{domain.selector}</code>
-                    </CardDescription>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      <ProviderBadge label="DKIM" verified={domain.dns_verified} />
+                      <ProviderBadge label="SES" verified={domain.ses_verified} />
+                      <ProviderBadge label="Resend" verified={domain.resend_verified} />
+                    </div>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded shrink-0 font-medium ${
-                    domain.dns_verified 
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
-                      : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                  }`}>
-                    {domain.dns_verified ? "✓ Verified" : "Pending"}
+                  <span className={cn(
+                    "text-[10px] px-2 py-1 rounded border shrink-0 font-semibold uppercase tracking-wider",
+                    domain.dns_verified ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                  )}>
+                    {domain.dns_verified ? "✓ Verified" : "Pending DNS"}
                   </span>
                 </div>
               </CardHeader>
+
               <CardContent className="space-y-4">
+
+                {/* DKIM TXT record (shown until verified) */}
                 {!domain.dns_verified && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-primary mb-2">
-                      DNS Configuration Required
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Add a TXT record to your DNS provider to verify ownership.
-                    </p>
-                    
-                    <div className="space-y-3">
+                  <div className="rounded-lg border border-border bg-card-2 p-4 space-y-3">
+                    <p className="text-xs font-semibold text-foreground">Step 1 — Add DKIM TXT record</p>
+                    <p className="text-xs text-text-muted">Add this to your DNS to verify domain ownership.</p>
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-12 shrink-0 font-medium">Host</span>
-                        <code className="text-xs bg-background px-2 py-1.5 rounded flex-1 break-all font-mono">
+                        <span className="text-[10px] text-text-muted w-10 shrink-0 font-medium">Host</span>
+                        <code className="text-[10px] bg-background px-2 py-1.5 rounded flex-1 break-all font-mono">
                           {domain.selector}._domainkey.{domain.domain}
                         </code>
-                        <CopyButton 
-                          text={`${domain.selector}._domainkey.${domain.domain}`}
-                          size="sm"
-                          variant="ghost"
-                          className="shrink-0"
-                        />
+                        <CopyButton text={`${domain.selector}._domainkey.${domain.domain}`} size="sm" variant="ghost" className="shrink-0" />
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-12 shrink-0 font-medium">Type</span>
+                        <span className="text-[10px] text-text-muted w-10 shrink-0 font-medium">Type</span>
                         <span className="text-xs font-medium">TXT</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <span className="text-xs text-muted-foreground w-12 shrink-0 font-medium">Value</span>
-                        <code className="text-xs bg-background px-2 py-1.5 rounded flex-1 break-all font-mono max-h-24 overflow-y-auto">
-                          {domain.dnsRecordValue || 'Loading...'}
+                        <span className="text-[10px] text-text-muted w-10 shrink-0 font-medium">Value</span>
+                        <code className="text-[10px] bg-background px-2 py-1.5 rounded flex-1 break-all font-mono max-h-20 overflow-y-auto">
+                          {domain.dnsRecordValue ?? "—"}
                         </code>
-                        <CopyButton 
-                          text={domain.dnsRecordValue || ''}
-                          size="sm"
-                          variant="ghost"
-                          className="shrink-0"
-                        />
+                        <CopyButton text={domain.dnsRecordValue ?? ""} size="sm" variant="ghost" className="shrink-0" />
                       </div>
                     </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4 w-full"
-                      onClick={() => toggleConfig(domain.id)}
-                    >
-                      {domain.showConfig ? "Hide" : "View"} Setup Guide
+                  </div>
+                )}
+
+                {/* Step 2 — Register with providers */}
+                {domain.dns_verified && !domain.registered && (
+                  <div className="rounded-lg border border-teal/20 bg-teal/5 p-4 space-y-2">
+                    <p className="text-xs font-semibold text-teal">Step 2 — Register with SES & Resend</p>
+                    <p className="text-xs text-text-muted">
+                      Register your domain with both email providers in one click. You&apos;ll receive the DNS records to add.
+                    </p>
+                  </div>
+                )}
+
+                {/* View saved provider records */}
+                {domain.registered && (domain.ses_cname_records || domain.resend_dns_records) && (
+                  <div className="rounded-lg border border-border bg-card-2 p-3 flex items-center justify-between gap-3">
+                    <p className="text-xs text-text-muted">Provider DNS records saved.</p>
+                    <Button variant="outline" size="xs" onClick={() => handleShowSavedRecords(domain)}>
+                      View Records
                     </Button>
                   </div>
                 )}
 
-                {domain.showConfig && !domain.dns_verified && (
-                  <div className="bg-muted/50 rounded-lg p-4 text-sm">
-                    <p className="font-semibold mb-3">Setup Instructions</p>
-                    <ol className="space-y-2 text-muted-foreground list-decimal list-inside">
-                      <li>Sign in to your DNS provider</li>
-                      <li>Go to DNS settings for your domain</li>
-                      <li>Add a new TXT record:
-                        <ul className="ml-4 mt-2 space-y-1 text-xs">
-                          <li><span className="font-medium">Host:</span> <code className="bg-background px-1 rounded">{domain.selector}._domainkey</code> (or full name)</li>
-                          <li><span className="font-medium">Type:</span> TXT</li>
-                          <li><span className="font-medium">Value:</span> <code className="bg-background px-1 rounded break-all">{domain.dnsRecordValue}</code></li>
-                        </ul>
-                      </li>
-                      <li>Wait 5-30 minutes for propagation</li>
-                      <li>Click Verify below</li>
-                    </ol>
-                    <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                      <p className="text-xs text-amber-400">
-                        <span className="font-semibold">Tip:</span> Some providers auto-append your domain. Try just <code className="bg-background px-1 rounded">{domain.selector}._domainkey</code> as the host.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
+                {/* Action buttons */}
                 <div className="flex flex-wrap gap-2">
                   <SandboxLockedAction>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleVerify(domain.id)}
-                    >
-                      Verify
+                    <Button variant="outline" size="sm" onClick={() => handleVerify(domain.id)}>
+                      Verify DNS
                     </Button>
                   </SandboxLockedAction>
+
                   <SandboxLockedAction>
                     <Button
-                      variant="outline"
+                      variant={domain.registered ? "outline" : "default"}
                       size="sm"
-                      onClick={() => handleSesRegister(domain.id)}
-                      disabled={!domain.dns_verified}
+                      disabled={!domain.dns_verified || registeringId === domain.id}
+                      onClick={() => handleRegister(domain.id)}
                     >
-                      Register SES
+                      {registeringId === domain.id ? (
+                        <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> Registering…</>
+                      ) : domain.registered ? (
+                        "Re-register"
+                      ) : (
+                        "Register Domain"
+                      )}
                     </Button>
                   </SandboxLockedAction>
+
                   {domain.dns_verified && (
                     <SandboxLockedAction>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          if (domain.bimiData === undefined) handleLoadBimi(domain.id);
-                          else handleLoadBimi(domain.id);
+                          handleLoadBimi(domain.id);
+                          setDomains((prev) => prev.map((d) => d.id === domain.id ? { ...d, bimiData: d.bimiData ?? undefined } : d));
                         }}
                       >
                         {domain.bimiLoading ? "Loading…" : "BIMI Config"}
                       </Button>
                     </SandboxLockedAction>
                   )}
+
                   <SandboxLockedAction>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(domain.id)}
+                      onClick={() => setDomainToDelete(domain.id)}
                     >
                       Remove
                     </Button>
                   </SandboxLockedAction>
                 </div>
 
-                {/* BIMI Section */}
+                {/* BIMI */}
                 {domain.dns_verified && domain.bimiData !== undefined && (
                   <BimiSection
-                    domainId={domain.id}
-                    bimi={domain.bimiData}
+                    bimi={domain.bimiData ?? null}
                     isLoading={domain.bimiLoading ?? false}
                     onSave={(logoUrl) => handleSetBimi(domain.id, logoUrl)}
                   />
@@ -460,15 +620,15 @@ export default function DomainsPage() {
           ))}
         </div>
       )}
-      </div>
 
+      {/* Add Domain modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <Card className="w-full max-w-md border-border">
             <CardHeader>
               <CardTitle>Add Custom Domain</CardTitle>
               <CardDescription>
-                Enter your domain to generate DKIM configuration.
+                Enter your sending domain. Herald will generate a DKIM key and give you a DNS record to publish.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -477,25 +637,24 @@ export default function DomainsPage() {
                 <Input
                   value={newDomain}
                   onChange={(e) => setNewDomain(e.target.value)}
-                  placeholder="e.g., alerts.myprotocol.com"
+                  placeholder="alerts.myprotocol.com"
+                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
                 />
               </div>
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground">
-                  After adding your domain, you&apos;ll receive instructions to configure DNS TXT records.
-                </p>
+              <div className="rounded-lg border border-border bg-card-2 p-3 text-xs text-text-muted space-y-1">
+                <p className="font-medium text-foreground">What happens next:</p>
+                <ol className="list-decimal list-inside space-y-0.5">
+                  <li>You&apos;ll get a DNS TXT record to publish (DKIM verification)</li>
+                  <li>Click Verify DNS once it&apos;s live</li>
+                  <li>Click Register Domain — Herald registers with SES &amp; Resend in one go</li>
+                  <li>Add the provider DNS records shown</li>
+                </ol>
               </div>
             </CardContent>
-            <div className="flex flex-col sm:flex-row justify-end gap-3 p-4 border-t border-border">
-              <Button variant="outline" onClick={() => setShowAddModal(false)}>
-                Cancel
-              </Button>
+            <div className="flex justify-end gap-3 p-4 border-t border-border">
+              <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
               <SandboxLockedAction>
-                <Button
-                  isLoading={isCreating}
-                  onClick={handleCreate}
-                  disabled={!newDomain}
-                >
+                <Button isLoading={isCreating} onClick={handleCreate} disabled={!newDomain}>
                   Add Domain
                 </Button>
               </SandboxLockedAction>
@@ -504,87 +663,64 @@ export default function DomainsPage() {
         </div>
       )}
 
-      {configModalData && (
+      {/* Post-add DKIM record modal */}
+      {addedDomainDns && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <Card className="w-full max-w-lg border-border max-h-[85vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                <div className="w-10 h-10 bg-teal/10 border border-teal/20 rounded-xl flex items-center justify-center shrink-0">
+                  <Globe className="w-5 h-5 text-teal" />
                 </div>
                 <div>
-                  <CardTitle>Domain Added!</CardTitle>
-                  <CardDescription>{configModalData.domain}</CardDescription>
+                  <CardTitle>Domain Added — Verify Ownership</CardTitle>
+                  <CardDescription>{addedDomainDns.domain}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Add the following TXT record to your DNS provider to verify ownership:
+              <p className="text-sm text-text-muted">
+                Add this TXT record to your DNS provider, then click <strong>Verify DNS</strong> on the domain card.
               </p>
-
-              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground w-14 shrink-0 font-medium">Host</span>
-                  <code className="bg-background px-2 py-1.5 rounded flex-1 break-all font-mono text-xs">
-                    {configModalData.selector}._domainkey.{configModalData.domain}
-                  </code>
-                  <CopyButton text={`${configModalData.selector}._domainkey.${configModalData.domain}`} size="sm" variant="ghost" className="shrink-0" />
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground w-14 shrink-0 font-medium">Type</span>
-                  <span className="font-medium">TXT</span>
-                </div>
-                <div className="flex items-start gap-2 text-sm">
-                  <span className="text-muted-foreground w-14 shrink-0 font-medium">Value</span>
-                  <code className="bg-background px-2 py-1.5 rounded flex-1 break-all font-mono text-xs max-h-32 overflow-y-auto">
-                    {configModalData.dnsRecordValue || configModalData.instructions?.split('Value: ')[1]}
-                  </code>
-                  <CopyButton text={configModalData.dnsRecordValue || configModalData.instructions?.split('Value: ')[1] || ''} size="sm" variant="ghost" className="shrink-0" />
-                </div>
+              <div className="rounded-lg border border-border bg-card-2 p-4 space-y-3">
+                {[
+                  { label: "Host", value: `${addedDomainDns.selector}._domainkey.${addedDomainDns.domain}` },
+                  { label: "Type", value: "TXT" },
+                  { label: "Value", value: addedDomainDns.dnsRecordValue ?? "" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex items-start gap-2">
+                    <span className="text-xs text-text-muted w-10 shrink-0 font-medium">{label}</span>
+                    <code className="text-[10px] bg-background px-2 py-1.5 rounded flex-1 break-all font-mono">{value}</code>
+                    {label !== "Type" && <CopyButton text={value} size="sm" variant="ghost" className="shrink-0" />}
+                  </div>
+                ))}
               </div>
-
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                <p className="text-xs text-amber-400">
-                  <span className="font-semibold">Note:</span> DNS changes may take 5-30 minutes to propagate. Click Verify after adding the record.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Quick Guide:</p>
-                <div className="grid gap-2 text-xs text-muted-foreground">
-                  <div className="bg-muted/50 rounded p-2">
-                    <span className="font-medium">Vercel:</span> Settings → Domains → DNS Records
-                  </div>
-                  <div className="bg-muted/50 rounded p-2">
-                    <span className="font-medium">Render:</span> Domains → Configure DNS
-                  </div>
-                  <div className="bg-muted/50 rounded p-2">
-                    <span className="font-medium">Cloudflare:</span> DNS → Add Record
-                  </div>
-                  <div className="bg-muted/50 rounded p-2">
-                    <span className="font-medium">GoDaddy:</span> DNS → Manage → Add Record
-                  </div>
-                </div>
-              </div>
+              <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                DNS changes take 5–30 minutes to propagate. Some providers auto-append your root domain — if so, use just <code className="bg-background px-1 rounded">{addedDomainDns.selector}._domainkey</code> as the host.
+              </p>
             </CardContent>
             <div className="sticky bottom-0 bg-background border-t border-border p-4">
-              <Button onClick={() => setConfigModalData(null)} className="w-full">
-                Got it!
-              </Button>
+              <Button onClick={() => setAddedDomainDns(null)} className="w-full">Got it</Button>
             </div>
           </Card>
         </div>
       )}
 
+      {/* Register result — combined DNS modal */}
+      {registerResult && (
+        <RegisterDnsModal
+          result={registerResult}
+          onClose={() => setRegisterResult(null)}
+        />
+      )}
+
+      {/* Delete confirmation */}
       <ConfirmModal
         isOpen={!!domainToDelete}
         onClose={() => setDomainToDelete(null)}
         onConfirm={confirmDelete}
         title="Remove Domain"
-        description="Are you sure you want to remove this domain? Emails sent from this domain will no longer be authenticated with DKIM, which may affect deliverability."
+        description="This will remove the domain from Herald, AWS SES, and Resend. Emails sent from this domain may fail until you reconfigure your sending setup."
         confirmText="Remove Domain"
         isLoading={isDeleting}
       />
