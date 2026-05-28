@@ -122,7 +122,7 @@ function StepIndicator({ step, total }: { step: Step; total: number }) {
 interface EditAudienceModalProps {
   audience: Audience;
   onClose: () => void;
-  onSaved: (updated: Audience) => void;
+  onSaved: () => void;
 }
 
 function EditAudienceModal({ audience, onClose, onSaved }: EditAudienceModalProps) {
@@ -139,9 +139,9 @@ function EditAudienceModal({ audience, onClose, onSaved }: EditAudienceModalProp
     try {
       const payload: { name: string; wallets?: string[] } = { name: name.trim() };
       if (wallets.length > 0) payload.wallets = wallets;
-      const updated = await updateAudience(audience.id, payload);
+      await updateAudience(audience.id, payload);
       toast.success("Audience updated.");
-      onSaved(updated);
+      onSaved();
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to update audience.");
     } finally {
@@ -334,7 +334,7 @@ export default function NewCampaignPage() {
       <EditAudienceModal
         audience={editingAudience}
         onClose={() => setEditingAudience(null)}
-        onSaved={(updated) => {
+        onSaved={() => {
           setEditingAudience(null);
           queryClient.invalidateQueries({ queryKey: ["audiences"] });
         }}
