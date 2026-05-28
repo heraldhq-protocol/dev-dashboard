@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -22,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { listAudiences, createAudience, type Audience } from "@/lib/api/audiences";
+import { listAudiences, createAudience, updateAudience, type Audience } from "@/lib/api/audiences";
 import { createCampaign, launchCampaign } from "@/lib/api/campaigns";
 import { listTemplates, type ProtocolTemplate } from "@/lib/api/templates";
 
@@ -116,15 +117,108 @@ function StepIndicator({ step, total }: { step: Step; total: number }) {
   );
 }
 
+// ─── Edit Audience Modal ──────────────────────────────────────
+
+interface EditAudienceModalProps {
+  audience: Audience;
+  onClose: () => void;
+  onSaved: (updated: Audience) => void;
+}
+
+function EditAudienceModal({ audience, onClose, onSaved }: EditAudienceModalProps) {
+  const [name, setName] = useState(audience.name);
+  const [wallets, setWallets] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error("Audience name is required.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const payload: { name: string; wallets?: string[] } = { name: name.trim() };
+      if (wallets.length > 0) payload.wallets = wallets;
+      const updated = await updateAudience(audience.id, payload);
+      toast.success("Audience updated.");
+      onSaved(updated);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to update audience.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+          <h2 className="text-sm font-semibold text-foreground">Edit Audience</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-text-muted hover:text-foreground hover:bg-card-2 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+          {/* Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-text-secondary">Audience Name</label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., SOL Stakers Q2"
+              className="bg-card-2"
+            />
+          </div>
+
+          {/* Wallet list */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-text-secondary">
+                Replace Wallet List
+              </label>
+              <span className="text-[10px] text-text-dim">
+                Current: {audience.walletCount.toLocaleString()} wallets
+              </span>
+            </div>
+            <p className="text-[10px] text-text-muted">
+              Leave empty to keep the existing wallets. Paste a new list to fully replace them.
+            </p>
+            <AudienceUploader onWallets={setWallets} value={[]} />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border shrink-0">
+          <Button variant="secondary" size="sm" onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleSave} isLoading={isSaving}>
+            Save Changes
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────
 
 export default function NewCampaignPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const isSandbox = useUiStore((s) => s.activeEnvironment === "sandbox");
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [isBusy, setIsBusy] = useState(false);
   const [resolvedAudience, setResolvedAudience] = useState<Audience | null>(null);
+  const [editingAudience, setEditingAudience] = useState<Audience | null>(null);
 
   const { data: audiences = [], isLoading: audiencesLoading } = useQuery({
     queryKey: ["audiences", isSandbox],
@@ -235,6 +329,17 @@ export default function NewCampaignPage() {
   };
 
   return (
+    <>
+    {editingAudience && (
+      <EditAudienceModal
+        audience={editingAudience}
+        onClose={() => setEditingAudience(null)}
+        onSaved={(updated) => {
+          setEditingAudience(null);
+          queryClient.invalidateQueries({ queryKey: ["audiences"] });
+        }}
+      />
+    )}
     <div className="space-y-6 max-w-2xl mx-auto">
       <PageHeader
         title="New Campaign"
@@ -291,24 +396,49 @@ export default function NewCampaignPage() {
                     </button>
                   </p>
                 ) : (
-                  <Select
-                    value={form.audienceId}
-                    onValueChange={(val) => setForm((f) => ({ ...f, audienceId: val }))}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select an audience…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {audiences.map((aud) => (
-                        <SelectItem key={aud.id} value={aud.id}>
-                          {aud.name}{" "}
-                          <span className="text-text-dim ml-1">
-                            ({aud.walletCount.toLocaleString()} wallets)
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select
+                      value={form.audienceId}
+                      onValueChange={(val) => setForm((f) => ({ ...f, audienceId: val }))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select an audience…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {audiences.map((aud) => (
+                          <SelectItem key={aud.id} value={aud.id}>
+                            {aud.name}{" "}
+                            <span className="text-text-dim ml-1">
+                              ({aud.walletCount.toLocaleString()} wallets)
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Edit selected audience */}
+                    {form.audienceId && (() => {
+                      const sel = audiences.find((a) => a.id === form.audienceId);
+                      return sel ? (
+                        <div className="flex items-center justify-between rounded-lg border border-border bg-card-2 px-3 py-2">
+                          <div>
+                            <p className="text-xs font-semibold text-foreground">{sel.name}</p>
+                            <p className="text-[10px] text-text-muted">
+                              {sel.walletCount.toLocaleString()} wallets
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditingAudience(sel)}
+                            className="flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-teal transition-colors border border-border rounded px-2 py-1"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            Edit
+                          </button>
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
                 )}
               </div>
             ) : (
@@ -582,5 +712,6 @@ export default function NewCampaignPage() {
         </Card>
       )}
     </div>
+    </>
   );
 }

@@ -25,6 +25,14 @@ export async function createAudience(data: {
   return result;
 }
 
+export async function updateAudience(
+  id: string,
+  data: { name?: string; description?: string; wallets?: string[] },
+): Promise<Audience> {
+  const { data: result } = await apiClient.patch<Audience>(`${BASE}/${id}`, data);
+  return result;
+}
+
 export async function deleteAudience(id: string): Promise<void> {
   await apiClient.delete(`${BASE}/${id}`);
 }
