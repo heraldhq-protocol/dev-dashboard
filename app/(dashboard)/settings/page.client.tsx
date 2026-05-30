@@ -775,6 +775,53 @@ export default function SettingsPage() {
       {activeTab === "telegram" && (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
+        {/* ── Tier gate — full tab ──────────────────────────────────────────── */}
+        {(profile?.tier ?? 0) < 1 ? (
+          <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 via-card to-card p-10 flex flex-col items-center text-center gap-5">
+            <div className="relative">
+              <div className="h-16 w-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                <svg className="h-8 w-8 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                </svg>
+              </div>
+              <div className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-card border-2 border-border flex items-center justify-center">
+                <svg className="h-3 w-3 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+            </div>
+            <div className="space-y-2 max-w-sm">
+              <h3 className="text-xl font-bold text-foreground">Telegram delivery is a paid feature</h3>
+              <p className="text-sm text-text-muted leading-relaxed">
+                Send Telegram notifications to your subscribers, use a custom branded bot, set up group chat broadcasts, and track delivery rates. Available on Growth and above.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg text-left">
+              {[
+                { icon: "🤖", label: "Custom bot token", desc: "Brand your notifications with your own bot" },
+                { icon: "📢", label: "Group broadcasts", desc: "Send to a Telegram group or channel" },
+                { icon: "📊", label: "Delivery analytics", desc: "Track sent, delivered, and click rates" },
+              ].map(({ icon, label, desc }) => (
+                <div key={label} className="rounded-xl bg-card-2 border border-border p-3.5 space-y-1">
+                  <div className="text-lg">{icon}</div>
+                  <p className="text-xs font-semibold text-foreground">{label}</p>
+                  <p className="text-[11px] text-text-muted leading-snug">{desc}</p>
+                </div>
+              ))}
+            </div>
+            <a
+              href="/billing"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold transition-colors"
+            >
+              Upgrade to Growth
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </a>
+            <p className="text-[11px] text-text-muted">Starting at $99/mo · Cancel anytime</p>
+          </div>
+        ) : (<>
+
         {/* ── Custom Bot Token ─────────────────────────────────────────────── */}
         <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
           <div className="flex items-start gap-3 mb-6">
@@ -786,7 +833,7 @@ export default function SettingsPage() {
             <div>
               <h2 className="text-lg font-bold text-foreground">Custom Bot Token</h2>
               <p className="text-sm text-text-muted mt-0.5">
-                Use your own Telegram bot for branded delivery (Growth+ / Tier 2+). Messages will come from your bot instead of @useheraldbot.
+                Use your own Telegram bot for branded delivery. Messages will come from your bot instead of @useheraldbot.
               </p>
             </div>
             {botTokenStatus?.configured && (
@@ -1048,6 +1095,8 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        </>)}
 
       </div>
       )}
