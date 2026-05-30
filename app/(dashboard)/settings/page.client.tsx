@@ -11,6 +11,16 @@ import { getProtocol, updateProtocol, deactivateProtocol, getSandboxSettings, up
 import { RetryPolicyForm } from "@/components/settings/RetryPolicyForm";
 import { apiClient } from "@/lib/api-client";
 import { getTwitterAuthUrl, getTwitterStatus, disconnectTwitter } from "@/lib/api/twitter";
+import {
+  getBotTokenStatus,
+  saveBotToken,
+  removeBotToken,
+  getGroupChatId,
+  saveGroupChatId,
+  removeGroupChatId,
+  getThreadIds,
+  saveThreadIds,
+} from "@/lib/api/telegram";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 import { useTourControls } from "@/components/onboarding/TourInitializer";
 import { SandboxLockedAction } from "@/components/shared/SandboxLockedAction";
@@ -266,6 +276,96 @@ export default function SettingsPage() {
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Failed to update Telegram button limit");
     },
+  });
+
+  // ── Telegram bot token ────────────────────────────────────────────────────
+  const [botTokenInput, setBotTokenInput] = useState("");
+  const [showBotToken, setShowBotToken] = useState(false);
+
+  const { data: botTokenStatus, refetch: refetchBotToken } = useQuery({
+    queryKey: ["telegram", "bot-token"],
+    queryFn: getBotTokenStatus,
+    enabled: activeTab === "telegram",
+  });
+
+  const saveBotTokenMutation = useMutation({
+    mutationFn: (token: string) => saveBotToken(token),
+    onSuccess: (data) => {
+      toast.success(`Bot token saved — @${data.username}`);
+      setBotTokenInput("");
+      refetchBotToken();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Invalid bot token");
+    },
+  });
+
+  const removeBotTokenMutation = useMutation({
+    mutationFn: removeBotToken,
+    onSuccess: () => {
+      toast.success("Bot token removed");
+      refetchBotToken();
+    },
+  });
+
+  // ── Group chat ────────────────────────────────────────────────────────────
+  const [groupChatInput, setGroupChatInput] = useState("");
+
+  const { data: groupChatData, refetch: refetchGroupChat } = useQuery({
+    queryKey: ["telegram", "group-chat"],
+    queryFn: getGroupChatId,
+    enabled: activeTab === "telegram",
+  });
+
+  const saveGroupChatMutation = useMutation({
+    mutationFn: (id: string) => saveGroupChatId(id),
+    onSuccess: () => {
+      toast.success("Group chat ID saved");
+      setGroupChatInput("");
+      refetchGroupChat();
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to save group chat ID");
+    },
+  });
+
+  const removeGroupChatMutation = useMutation({
+    mutationFn: removeGroupChatId,
+    onSuccess: () => {
+      toast.success("Group chat ID removed");
+      refetchGroupChat();
+    },
+  });
+
+  // ── Thread IDs ────────────────────────────────────────────────────────────
+  const THREAD_CATEGORIES = ["defi", "governance", "system", "marketing"];
+  const [threadInputs, setThreadInputs] = useState<Record<string, string>>({
+    defi: "", governance: "", system: "", marketing: "",
+  });
+
+  const { data: threadIdsData, refetch: refetchThreadIds } = useQuery({
+    queryKey: ["telegram", "threads"],
+    queryFn: getThreadIds,
+    enabled: activeTab === "telegram",
+    onSuccess: (data: { threads: Record<string, string> | null }) => {
+      if (data?.threads) {
+        setThreadInputs((prev) => ({ ...prev, ...data.threads }));
+      }
+    },
+  } as any);
+
+  const saveThreadIdsMutation = useMutation({
+    mutationFn: () => {
+      const nonEmpty = Object.fromEntries(
+        Object.entries(threadInputs).filter(([, v]) => v.trim() !== "")
+      );
+      return saveThreadIds(nonEmpty);
+    },
+    onSuccess: () => {
+      toast.success("Thread IDs saved");
+      refetchThreadIds();
+    },
+    onError: () => toast.error("Failed to save thread IDs"),
   });
 
   const handleAddAsset = (e: React.FormEvent) => {
@@ -673,56 +773,210 @@ export default function SettingsPage() {
       )}
 
       {activeTab === "telegram" && (
-      <div className="bg-card border border-border rounded-xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div className="flex items-start gap-3 mb-6">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+        {/* ── Custom Bot Token ─────────────────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          <div className="flex items-start gap-3 mb-6">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Custom Bot Token</h2>
+              <p className="text-sm text-text-muted mt-0.5">
+                Use your own Telegram bot for branded delivery (Growth+ / Tier 2+). Messages will come from your bot instead of @useheraldbot.
+              </p>
+            </div>
+            {botTokenStatus?.configured && (
+              <span className="ml-auto shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal">
+                Active
+              </span>
+            )}
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">Telegram Inline Buttons</h2>
-            <p className="text-sm text-text-muted mt-0.5">
-              Limit the number of inline action buttons that appear on Telegram notifications from your protocol.
-            </p>
-          </div>
+
+          {botTokenStatus?.configured ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-card-2 border border-border">
+                <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">@{botTokenStatus.username}</p>
+                  <p className="text-xs text-text-muted">Custom bot active</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                className="text-red-400 hover:text-red-300 text-sm"
+                isLoading={removeBotTokenMutation.isPending}
+                onClick={() => removeBotTokenMutation.mutate()}
+              >
+                Remove Bot Token
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-1.5 max-w-md">
+                <label className="text-sm font-medium text-text-secondary">Bot Token</label>
+                <div className="relative">
+                  <Input
+                    type={showBotToken ? "text" : "password"}
+                    value={botTokenInput}
+                    onChange={(e) => setBotTokenInput(e.target.value)}
+                    placeholder="1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                    className="w-full font-mono text-xs pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowBotToken((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground"
+                  >
+                    {showBotToken ? (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-text-muted">
+                  Create a bot via <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">@BotFather</a> and paste the token here. It will be validated and stored encrypted.
+                </p>
+              </div>
+              <SandboxLockedAction>
+                <Button
+                  variant="default"
+                  isLoading={saveBotTokenMutation.isPending}
+                  disabled={!botTokenInput.trim()}
+                  onClick={() => saveBotTokenMutation.mutate(botTokenInput.trim())}
+                >
+                  Save Bot Token
+                </Button>
+              </SandboxLockedAction>
+            </div>
+          )}
         </div>
 
-        <div className="space-y-5">
-          <div className="space-y-1.5 max-w-sm">
-            <label className="text-sm font-medium text-text-secondary">
-              Max Inline Buttons
-            </label>
-            <Input
-              type="number"
-              min={0}
-              max={20}
-              id="telegram-max-buttons"
-              value={telegramButtonsValue}
-              onChange={(e) => setTelegramButtonsValue(e.target.value)}
-              placeholder="e.g., 3 (leave blank to use global default)"
-              className="w-full"
-            />
-            <p className="text-xs text-text-muted">
-              Leave blank to reset to the global platform default. Useful if recipients report cluttered messages.
-            </p>
+        {/* ── Group Chat / Channel ─────────────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          <div className="flex items-start gap-3 mb-6">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Group Chat / Channel</h2>
+              <p className="text-sm text-text-muted mt-0.5">
+                Broadcast every notification to a Telegram group or channel. The bot must be an admin in the group. Each notification is sent once regardless of subscriber count.
+              </p>
+            </div>
+            {groupChatData?.groupChatId && (
+              <span className="ml-auto shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                Configured
+              </span>
+            )}
           </div>
 
-          <div className="pt-4 flex items-center gap-4 border-t border-border">
+          {groupChatData?.groupChatId ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-card-2 border border-border">
+                <code className="text-xs font-mono text-foreground">{groupChatData.groupChatId}</code>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  className="text-red-400 hover:text-red-300 text-sm"
+                  isLoading={removeGroupChatMutation.isPending}
+                  onClick={() => removeGroupChatMutation.mutate()}
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-1.5 max-w-sm">
+                <label className="text-sm font-medium text-text-secondary">Chat ID</label>
+                <Input
+                  type="text"
+                  value={groupChatInput}
+                  onChange={(e) => setGroupChatInput(e.target.value)}
+                  placeholder="-1001234567890"
+                  className="w-full font-mono text-sm"
+                />
+                <p className="text-xs text-text-muted">
+                  Add @useheraldbot (or your custom bot) to the group as admin, then send a message and check the chat ID via <code className="bg-card-2 px-1 rounded">getUpdates</code>.
+                </p>
+              </div>
+              <SandboxLockedAction>
+                <Button
+                  variant="default"
+                  isLoading={saveGroupChatMutation.isPending}
+                  disabled={!groupChatInput.trim()}
+                  onClick={() => saveGroupChatMutation.mutate(groupChatInput.trim())}
+                >
+                  Save Group Chat ID
+                </Button>
+              </SandboxLockedAction>
+            </div>
+          )}
+        </div>
+
+        {/* ── Topic Thread Routing ─────────────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          <div className="flex items-start gap-3 mb-6">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold/10 text-gold">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Topic Thread Routing</h2>
+              <p className="text-sm text-text-muted mt-0.5">
+                Route each notification category into a dedicated topic thread inside a Telegram forum supergroup. Requires a Group Chat ID above.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 max-w-md">
+            {THREAD_CATEGORIES.map((cat) => {
+              const emoji: Record<string, string> = {
+                defi: "💰", governance: "🗳️", system: "⚙️", marketing: "📢",
+              };
+              return (
+                <div key={cat} className="flex items-center gap-3">
+                  <span className="w-28 text-sm text-text-secondary shrink-0">
+                    {emoji[cat]} {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </span>
+                  <Input
+                    type="text"
+                    value={threadInputs[cat] ?? ""}
+                    onChange={(e) =>
+                      setThreadInputs((prev) => ({ ...prev, [cat]: e.target.value }))
+                    }
+                    placeholder="Thread ID (optional)"
+                    className="font-mono text-xs flex-1"
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="pt-5 flex items-center gap-4 border-t border-border mt-5">
             <SandboxLockedAction>
               <Button
                 variant="default"
-                isLoading={telegramButtonsMutation.isPending}
-                onClick={() =>
-                  telegramButtonsMutation.mutate(
-                    telegramButtonsValue.trim() ? telegramButtonsValue.trim() : null
-                  )
-                }
+                isLoading={saveThreadIdsMutation.isPending}
+                onClick={() => saveThreadIdsMutation.mutate()}
               >
-                Save Limit
+                Save Thread IDs
               </Button>
             </SandboxLockedAction>
-            {telegramButtonsMutation.isSuccess && (
+            {saveThreadIdsMutation.isSuccess && (
               <span className="text-sm text-green flex items-center gap-1.5 animate-in fade-in duration-300">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -732,6 +986,69 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
+
+        {/* ── Inline Buttons Limit ─────────────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          <div className="flex items-start gap-3 mb-6">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Telegram Inline Buttons</h2>
+              <p className="text-sm text-text-muted mt-0.5">
+                Limit the number of inline action buttons that appear on Telegram notifications from your protocol.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div className="space-y-1.5 max-w-sm">
+              <label className="text-sm font-medium text-text-secondary">
+                Max Inline Buttons
+              </label>
+              <Input
+                type="number"
+                min={0}
+                max={20}
+                id="telegram-max-buttons"
+                value={telegramButtonsValue}
+                onChange={(e) => setTelegramButtonsValue(e.target.value)}
+                placeholder="e.g., 3 (leave blank to use global default)"
+                className="w-full"
+              />
+              <p className="text-xs text-text-muted">
+                Leave blank to reset to the global platform default. Useful if recipients report cluttered messages.
+              </p>
+            </div>
+
+            <div className="pt-4 flex items-center gap-4 border-t border-border">
+              <SandboxLockedAction>
+                <Button
+                  variant="default"
+                  isLoading={telegramButtonsMutation.isPending}
+                  onClick={() =>
+                    telegramButtonsMutation.mutate(
+                      telegramButtonsValue.trim() ? telegramButtonsValue.trim() : null
+                    )
+                  }
+                >
+                  Save Limit
+                </Button>
+              </SandboxLockedAction>
+              {telegramButtonsMutation.isSuccess && (
+                <span className="text-sm text-green flex items-center gap-1.5 animate-in fade-in duration-300">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Saved
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
       )}
 
