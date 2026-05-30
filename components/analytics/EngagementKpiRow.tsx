@@ -6,11 +6,14 @@ import type { EngagementMetrics } from "@/lib/api/analytics";
 interface Props {
   data: EngagementMetrics | undefined;
   isLoading: boolean;
+  tgClicks?: number;
 }
 
-export function EngagementKpiRow({ data, isLoading }: Props) {
+export function EngagementKpiRow({ data, isLoading, tgClicks = 0 }: Props) {
   const fmt = (n: number) => n.toLocaleString();
   const pct = (n: number) => `${n.toFixed(1)}%`;
+
+  const totalClicks = (data?.clicks ?? 0) + tgClicks;
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -28,10 +31,10 @@ export function EngagementKpiRow({ data, isLoading }: Props) {
         isLoading={isLoading}
       />
       <StatCard
-        label="Click Rate"
-        value={isLoading ? "—" : pct(data?.clickRate ?? 0)}
-        detail={isLoading ? "" : `${fmt(data?.clicks ?? 0)} clicks`}
-        deltaType={(data?.clickRate ?? 0) >= 5 ? "positive" : "neutral"}
+        label="Total Clicks"
+        value={isLoading ? "—" : fmt(totalClicks)}
+        detail={tgClicks > 0 ? `email + telegram` : `${fmt(data?.clicks ?? 0)} email`}
+        deltaType={totalClicks > 0 ? "positive" : "neutral"}
         isLoading={isLoading}
       />
       <StatCard
