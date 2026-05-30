@@ -415,7 +415,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="space-y-8">
       <PageHeader 
         title="Project Settings" 
         description="Configure your protocol identity and sender preferences." 
