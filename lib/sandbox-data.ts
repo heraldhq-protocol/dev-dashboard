@@ -80,7 +80,16 @@ export function sandboxAnalyticsTrends(days: number): AnalyticsTrends {
     return { category, _count: { id: share } };
   });
 
-  return { statusBreakdown, categoryBreakdown, timeframeDays: days, totalVolume, dailyVolume };
+  // Per-channel daily volume: email carries the bulk, telegram moderate, sms sparse
+  const dailyVolumeByChannel = dailyVolume.map((d) => {
+    const total = d.volume;
+    const email    = Math.floor(total * rf(0.50, 0.65, 3));
+    const telegram = Math.floor(total * rf(0.25, 0.38, 3));
+    const sms      = Math.max(0, total - email - telegram);
+    return { date: d.date, email, telegram, sms };
+  });
+
+  return { statusBreakdown, categoryBreakdown, timeframeDays: days, totalVolume, dailyVolume, dailyVolumeByChannel };
 }
 
 // ── Engagement metrics ────────────────────────────────────────────────────────

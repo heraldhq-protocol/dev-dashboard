@@ -17,6 +17,7 @@ export interface AnalyticsTrends {
   timeframeDays: number;
   totalVolume: number;
   dailyVolume: { date: string; volume: number }[];
+  dailyVolumeByChannel?: { date: string; email: number; telegram: number; sms: number }[];
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {

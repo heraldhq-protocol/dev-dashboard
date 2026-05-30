@@ -147,7 +147,11 @@ export default function AnalyticsPage() {
 
           {!isLoading && data ? (
             totalVolume > 0 ? (
-              <SendsBarChart data={data.dailyVolume || []} type={chartType} />
+              <SendsBarChart
+                data={data.dailyVolume || []}
+                channelData={data.dailyVolumeByChannel}
+                type={chartType}
+              />
             ) : (
               <div className="h-[250px] w-full flex flex-col items-center justify-center gap-3">
                 <div className="h-12 w-12 rounded-xl bg-card-2 flex items-center justify-center">
