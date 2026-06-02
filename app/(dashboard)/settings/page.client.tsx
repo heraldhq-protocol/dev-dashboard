@@ -20,6 +20,11 @@ import {
   removeGroupChatId,
   getThreadIds,
   saveThreadIds,
+  getGroupPreferences,
+  saveGroupPreferences,
+  syncBotProfile,
+  createForumTopics,
+  type GroupPreferences,
 } from "@/lib/api/telegram";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
 import { useTourControls } from "@/components/onboarding/TourInitializer";
@@ -366,6 +371,55 @@ export default function SettingsPage() {
       refetchThreadIds();
     },
     onError: () => toast.error("Failed to save thread IDs"),
+  });
+
+  // ── Group preferences (auto-pin, welcome message, member count) ─────────────
+  const [welcomeInput, setWelcomeInput] = useState("");
+
+  const { data: groupPrefs, refetch: refetchGroupPrefs } = useQuery<GroupPreferences>({
+    queryKey: ["telegram", "preferences"],
+    queryFn: getGroupPreferences,
+    enabled: activeTab === "telegram",
+    onSuccess: (data: GroupPreferences) => {
+      if (data?.welcomeMessage != null) setWelcomeInput(data.welcomeMessage);
+    },
+  } as any);
+
+  const savePrefsMutation = useMutation({
+    mutationFn: (prefs: { autoPinEnabled?: boolean; welcomeMessage?: string | null }) =>
+      saveGroupPreferences(prefs),
+    onSuccess: () => {
+      toast.success("Preferences saved");
+      refetchGroupPrefs();
+    },
+    onError: () => toast.error("Failed to save preferences"),
+  });
+
+  // ── Custom bot profile sync ─────────────────────────────────────────────────
+  const [profileName, setProfileName] = useState("");
+  const [profileDesc, setProfileDesc] = useState("");
+
+  const syncProfileMutation = useMutation({
+    mutationFn: () =>
+      syncBotProfile({
+        name: profileName.trim() || undefined,
+        description: profileDesc.trim() || undefined,
+      }),
+    onSuccess: () => toast.success("Bot profile updated on Telegram"),
+    onError: (error: any) =>
+      toast.error(error?.response?.data?.message || "Failed to sync bot profile"),
+  });
+
+  // ── Auto-create forum topics ────────────────────────────────────────────────
+  const createTopicsMutation = useMutation({
+    mutationFn: () => createForumTopics(THREAD_CATEGORIES),
+    onSuccess: (data: { threads: Record<string, string> }) => {
+      toast.success("Forum topics created");
+      setThreadInputs((prev) => ({ ...prev, ...data.threads }));
+      refetchThreadIds();
+    },
+    onError: (error: any) =>
+      toast.error(error?.response?.data?.message || "Failed to create topics"),
   });
 
   const handleAddAsset = (e: React.FormEvent) => {
@@ -1013,7 +1067,7 @@ export default function SettingsPage() {
             })}
           </div>
 
-          <div className="pt-5 flex items-center gap-4 border-t border-border mt-5">
+          <div className="pt-5 flex flex-wrap items-center gap-4 border-t border-border mt-5">
             <SandboxLockedAction>
               <Button
                 variant="default"
@@ -1021,6 +1075,15 @@ export default function SettingsPage() {
                 onClick={() => saveThreadIdsMutation.mutate()}
               >
                 Save Thread IDs
+              </Button>
+            </SandboxLockedAction>
+            <SandboxLockedAction>
+              <Button
+                variant="secondary"
+                isLoading={createTopicsMutation.isPending}
+                onClick={() => createTopicsMutation.mutate()}
+              >
+                ✨ Auto-create topics
               </Button>
             </SandboxLockedAction>
             {saveThreadIdsMutation.isSuccess && (
@@ -1031,6 +1094,143 @@ export default function SettingsPage() {
                 Saved
               </span>
             )}
+          </div>
+          <p className="text-xs text-text-muted mt-3">
+            <strong>Auto-create</strong> makes a forum topic for each category in your group (the bot must be admin with &ldquo;Manage Topics&rdquo;) and fills the thread IDs above automatically.
+          </p>
+        </div>
+
+        {/* ── Group Engagement (auto-pin, welcome, member count) ──────────────── */}
+        <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          <div className="flex items-start gap-3 mb-6">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal/10 text-teal">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-foreground">Group Engagement</h2>
+              <p className="text-sm text-text-muted mt-0.5">
+                Pin important alerts, greet new members, and track your group size.
+              </p>
+            </div>
+            {groupPrefs?.groupMemberCount != null && (
+              <span className="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal">
+                {groupPrefs.groupMemberCount.toLocaleString()} members
+              </span>
+            )}
+          </div>
+
+          {/* Auto-pin toggle */}
+          <div className="flex items-center justify-between py-3 border-b border-border/50">
+            <div>
+              <p className="text-sm font-medium text-foreground">Auto-pin critical alerts</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                Pin security &amp; critical-priority notifications in the group automatically.
+              </p>
+            </div>
+            <SandboxLockedAction>
+              <button
+                role="switch"
+                aria-checked={!!groupPrefs?.autoPinEnabled}
+                onClick={() =>
+                  savePrefsMutation.mutate({ autoPinEnabled: !groupPrefs?.autoPinEnabled })
+                }
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                  groupPrefs?.autoPinEnabled ? "bg-teal" : "bg-card-2 border border-border"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    groupPrefs?.autoPinEnabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </SandboxLockedAction>
+          </div>
+
+          {/* Welcome message */}
+          <div className="space-y-2 pt-4 max-w-xl">
+            <label className="text-sm font-medium text-text-secondary">
+              Welcome message for new members
+            </label>
+            <textarea
+              value={welcomeInput}
+              onChange={(e) => setWelcomeInput(e.target.value)}
+              maxLength={500}
+              rows={3}
+              placeholder="Welcome {{name}}! 👋 You'll get real-time alerts here. Use /categories to manage what you receive."
+              className="w-full bg-card-2 border border-border rounded-lg px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-teal"
+            />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-text-muted">
+                Use <code className="text-teal">{"{{name}}"}</code> to insert the member&rsquo;s name. Leave empty to disable.
+              </p>
+              <span className="text-[10px] text-text-muted tabular-nums">{welcomeInput.length}/500</span>
+            </div>
+            <SandboxLockedAction>
+              <Button
+                variant="default"
+                isLoading={savePrefsMutation.isPending}
+                onClick={() =>
+                  savePrefsMutation.mutate({ welcomeMessage: welcomeInput.trim() || null })
+                }
+              >
+                Save Welcome Message
+              </Button>
+            </SandboxLockedAction>
+          </div>
+        </div>
+
+        {/* ── Custom Bot Profile ──────────────────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          <div className="flex items-start gap-3 mb-6">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet/10 text-violet">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Custom Bot Profile</h2>
+              <p className="text-sm text-text-muted mt-0.5">
+                Update your custom bot&rsquo;s display name and description on Telegram. Requires a custom bot token configured above.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4 max-w-xl">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-secondary">Bot Name</label>
+              <Input
+                type="text"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                maxLength={64}
+                placeholder="Vertex Alerts"
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-secondary">Bot Description</label>
+              <textarea
+                value={profileDesc}
+                onChange={(e) => setProfileDesc(e.target.value)}
+                maxLength={512}
+                rows={2}
+                placeholder="Official notification bot for Vertex Protocol. Real-time DeFi alerts powered by Herald."
+                className="w-full bg-card-2 border border-border rounded-lg px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-violet"
+              />
+            </div>
+            <SandboxLockedAction>
+              <Button
+                variant="default"
+                isLoading={syncProfileMutation.isPending}
+                disabled={!profileName.trim() && !profileDesc.trim()}
+                onClick={() => syncProfileMutation.mutate()}
+              >
+                Push to Telegram
+              </Button>
+            </SandboxLockedAction>
           </div>
         </div>
 

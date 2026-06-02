@@ -88,6 +88,58 @@ export async function sendTestMessage(
   return data;
 }
 
+// ── Group preferences (auto-pin, welcome message, member count) ──────────────
+
+export interface GroupPreferences {
+  autoPinEnabled: boolean;
+  welcomeMessage: string | null;
+  groupMemberCount: number | null;
+  memberCountAt: string | null;
+}
+
+export async function getGroupPreferences(): Promise<GroupPreferences> {
+  const { data } = await apiClient.get<GroupPreferences>(
+    "/portal/channels/telegram/preferences"
+  );
+  return data;
+}
+
+export async function saveGroupPreferences(prefs: {
+  autoPinEnabled?: boolean;
+  welcomeMessage?: string | null;
+}): Promise<{ saved: boolean }> {
+  const { data } = await apiClient.put<{ saved: boolean }>(
+    "/portal/channels/telegram/preferences",
+    prefs
+  );
+  return data;
+}
+
+// ── Custom bot profile sync ──────────────────────────────────────────────────
+
+export async function syncBotProfile(profile: {
+  name?: string;
+  description?: string;
+}): Promise<{ synced: boolean }> {
+  const { data } = await apiClient.post<{ synced: boolean }>(
+    "/portal/channels/telegram/sync-profile",
+    profile
+  );
+  return data;
+}
+
+// ── Forum topic auto-creation ────────────────────────────────────────────────
+
+export async function createForumTopics(
+  categories: string[]
+): Promise<{ threads: Record<string, string> }> {
+  const { data } = await apiClient.post<{ threads: Record<string, string> }>(
+    "/portal/channels/telegram/create-topics",
+    { categories }
+  );
+  return data;
+}
+
 // ── Analytics ────────────────────────────────────────────────────────────────
 
 export interface TelegramAnalytics {
