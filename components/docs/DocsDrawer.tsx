@@ -189,6 +189,29 @@ function verifyWebhook(payload: string, header: string, secret: string) {
     ),
   },
   {
+    id: "embedded-wallets",
+    title: "Embedded Wallets",
+    content: (
+      <div>
+        <Prose>
+          If your dApp uses embedded wallets like Privy or Dynamic, you can embed the Herald User Portal via iframe and delegate connections & signatures to your host application.
+        </Prose>
+
+        <H3>1. Render the iframe</H3>
+        <Prose>
+          Load the portal with the <code className="text-teal text-xs">?embed=true</code> parameter to hide layout headers and activate postMessage mode.
+        </Prose>
+        <CodeBlock code={`<iframe\n  src="https://notify.useherald.xyz/register?embed=true&protocolId=YOUR_PROTOCOL_ID"\n  style={{ width: "100%", height: "600px", border: "none" }}\n/>`} />
+
+        <H3>2. Privy wallet listener example</H3>
+        <Prose>
+          Listen for requests from the iframe and route connections, transaction signing, and message signing through your Privy provider.
+        </Prose>
+        <CodeBlock code={`window.addEventListener("message", async (event) => {\n  if (event.data?.source !== "HERALD_PORTAL_IFRAME") return;\n  const { action, params, requestId } = event.data;\n\n  const reply = (result = null, error = null) => {\n    event.source.postMessage({ target: "HERALD_PORTAL_IFRAME", requestId, result, error }, "*");\n  };\n\n  try {\n    if (action === "connect") {\n      reply(wallet.address);\n    } else if (action === "signTransaction") {\n      const txBytes = bs58.decode(params.transaction);\n      const signedBytes = await wallet.signTransaction(txBytes);\n      reply({ signedTransaction: bs58.encode(signedBytes) });\n    } else if (action === "signMessage") {\n      const msgBytes = bs58.decode(params.message);\n      const sigBytes = await wallet.signMessage(msgBytes);\n      reply({ signature: bs58.encode(sigBytes) });\n    } else if (action === "onRegistrationComplete") {\n      console.log("Subscription complete. Tx:", params.txSignature);\n      // Close modal / refresh state\n    }\n  } catch (err) {\n    reply(null, err.message);\n  }\n});`} />
+      </div>
+    ),
+  },
+  {
     id: "error-codes",
     title: "Error Codes",
     content: (
