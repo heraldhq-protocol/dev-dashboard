@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
@@ -8,6 +8,7 @@ import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { SolanaCluster } from "@herald-protocol/sdk";
+import { init, initClickTracking, initPageTracking, initLocationTracking } from "@adtivity/adtivity-sdk";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -29,7 +30,34 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { OnboardingTourProvider } from "@/components/providers/OnboardingTourProvider";
 import { PrivyProvider } from "@/components/providers/PrivyProvider";
 
+declare global {
+  interface Window {
+    __ADTIVITY_BOOTSTRAPPED__?: boolean;
+  }
+}
+
 export function ClientProviders({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.__ADTIVITY_BOOTSTRAPPED__) return;
+    window.__ADTIVITY_BOOTSTRAPPED__ = true;
+
+    const API_KEY = process.env.NEXT_PUBLIC_ADTIVITY_API_KEY;
+    if (!API_KEY) {
+      console.error("Adtivity SDK: API key is not configured");
+      return;
+    }
+
+    init({
+      apiKey: API_KEY,
+      debug: false,
+    });
+
+    initPageTracking();
+    initClickTracking();
+    initLocationTracking();
+  }, []);
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -55,26 +83,26 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
                       {children}
                     </OnboardingTourProvider>
                   </TooltipProvider>
-                <Toaster
-                  position="bottom-right"
-                  toastOptions={{
-                    style: {
-                      background: "#112240",
-                      border: "1px solid #1A3A52",
-                      color: "#ffffff",
-                    },
-                    classNames: {
-                      description: "text-text-muted text-sm mt-1",
-                      actionButton: "bg-teal text-navy hover:bg-teal/90 font-medium px-4 py-2 rounded-md transition-colors",
-                    }
-                  }}
-                />
-              </WalletModalProvider>
-            </WalletProvider>
-          </ConnectionProvider>
-        </QueryClientProvider>
-      </SessionProvider>
-    </ThemeProvider>
-  </PrivyProvider>
+                  <Toaster
+                    position="bottom-right"
+                    toastOptions={{
+                      style: {
+                        background: "#112240",
+                        border: "1px solid #1A3A52",
+                        color: "#ffffff",
+                      },
+                      classNames: {
+                        description: "text-text-muted text-sm mt-1",
+                        actionButton: "bg-teal text-navy hover:bg-teal/90 font-medium px-4 py-2 rounded-md transition-colors",
+                      }
+                    }}
+                  />
+                </WalletModalProvider>
+              </WalletProvider>
+            </ConnectionProvider>
+          </QueryClientProvider>
+        </SessionProvider>
+      </ThemeProvider>
+    </PrivyProvider>
   );
 }

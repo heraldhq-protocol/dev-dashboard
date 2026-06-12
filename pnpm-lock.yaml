@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@adtivity/adtivity-sdk':
+        specifier: ^1.0.0
+        version: 1.0.2(@react-native-async-storage/async-storage@1.24.0(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6)))
       '@herald-protocol/sdk':
         specifier: ^1.4.0
         version: 1.4.0(@babel/core@7.29.0)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(babel-jest@28.1.3(@babel/core@7.29.0))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(jest@28.1.3(@types/node@20.19.39))(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -257,6 +260,14 @@ packages:
 
   '@adraffy/ens-normalize@1.11.1':
     resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
+
+  '@adtivity/adtivity-sdk@1.0.2':
+    resolution: {integrity: sha512-0VabSQWT4s6+zg7NDe5eBpSCjrCTmFZ0Qnq2Pa6aF8R++BCUo7dFKaLL/jsPYQP0KSzwyVXA2osXVC4DKMUe3A==}
+    peerDependencies:
+      '@react-native-async-storage/async-storage': '>=1.17.0'
+    peerDependenciesMeta:
+      '@react-native-async-storage/async-storage':
+        optional: true
 
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
@@ -10624,6 +10635,10 @@ snapshots:
   '@adraffy/ens-normalize@1.10.1': {}
 
   '@adraffy/ens-normalize@1.11.1': {}
+
+  '@adtivity/adtivity-sdk@1.0.2(@react-native-async-storage/async-storage@1.24.0(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6)))':
+    optionalDependencies:
+      '@react-native-async-storage/async-storage': 1.24.0(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6))
 
   '@alloc/quick-lru@5.2.0': {}
 

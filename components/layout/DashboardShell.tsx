@@ -6,8 +6,26 @@ import { useUiStore } from "@/lib/stores/ui.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { NextStepViewport } from "nextstepjs";
 import { FlaskConical } from "lucide-react";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { identify } from "@adtivity/adtivity-sdk";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (session?.user?.id && process.env.NEXT_PUBLIC_ADTIVITY_API_KEY) {
+      try {
+        identify(session.user.id, {
+          email: session.user.email ?? undefined,
+          name: session.user.name ?? undefined,
+          walletAddress: session.user.walletAddress ?? undefined,
+        });
+      } catch (err) {
+        console.warn("Adtivity identify failed", err);
+      }
+    }
+  }, [session?.user]);
   const { activeEnvironment, setEnvironment } = useUiStore();
   const queryClient = useQueryClient();
   const isSandbox = activeEnvironment === "sandbox";
