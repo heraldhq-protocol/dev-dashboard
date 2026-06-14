@@ -53,6 +53,29 @@ export async function removeGroupChatId(): Promise<void> {
   await apiClient.delete("/portal/channels/telegram/group-chat");
 }
 
+export interface GroupConnectResponse {
+  nonce: string;
+  connectUrl: string;
+  expiresIn: number;
+}
+
+export async function getGroupConnectLink(): Promise<GroupConnectResponse> {
+  const { data } = await apiClient.get<GroupConnectResponse>(
+    "/portal/channels/telegram/group-connect"
+  );
+  return data;
+}
+
+export async function pollGroupConnectStatus(
+  nonce: string
+): Promise<{ status: "pending" | "completed" | "expired"; chatId?: string }> {
+  const { data } = await apiClient.get<{
+    status: "pending" | "completed" | "expired";
+    chatId?: string;
+  }>("/portal/channels/telegram/group-poll", { params: { nonce } });
+  return data;
+}
+
 // ── Topic thread routing ─────────────────────────────────────────────────────
 
 export interface ThreadIds {

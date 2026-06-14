@@ -24,6 +24,8 @@ import {
   saveGroupPreferences,
   syncBotProfile,
   createForumTopics,
+  getGroupConnectLink,
+  pollGroupConnectStatus,
   type GroupPreferences,
 } from "@/lib/api/telegram";
 import { useOnboardingStore } from "@/lib/stores/onboarding.store";
@@ -316,6 +318,47 @@ export default function SettingsPage() {
 
   // ── Group chat ────────────────────────────────────────────────────────────
   const [groupChatInput, setGroupChatInput] = useState("");
+  const [groupLinking, setGroupLinking] = useState(false);
+  const [groupLinkUrl, setGroupLinkUrl] = useState("");
+
+  const handleLinkGroup = async () => {
+    setGroupLinking(true);
+    try {
+      const { nonce, connectUrl } = await getGroupConnectLink();
+      setGroupLinkUrl(connectUrl);
+      window.open(connectUrl, "_blank");
+
+      const interval = setInterval(async () => {
+        try {
+          const res = await pollGroupConnectStatus(nonce);
+          if (res.status === "completed") {
+            clearInterval(interval);
+            setGroupLinking(false);
+            setGroupLinkUrl("");
+            toast.success("Telegram group linked successfully!");
+            refetchGroupChat();
+          } else if (res.status === "expired") {
+            clearInterval(interval);
+            setGroupLinking(false);
+            setGroupLinkUrl("");
+            toast.error("Group setup link expired. Please try again.");
+          }
+        } catch {
+          // Retry on temporary polling failures
+        }
+      }, 3000);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        setGroupLinking(false);
+        setGroupLinkUrl("");
+      }, 10 * 60 * 1000);
+
+    } catch (err: any) {
+      setGroupLinking(false);
+      toast.error(err?.message || "Failed to generate group link");
+    }
+  };
 
   const { data: groupChatData, refetch: refetchGroupChat } = useQuery({
     queryKey: ["telegram", "group-chat"],
@@ -1001,30 +1044,86 @@ export default function SettingsPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="space-y-1.5 max-w-sm">
-                <label className="text-sm font-medium text-text-secondary">Chat ID</label>
-                <Input
-                  type="text"
-                  value={groupChatInput}
-                  onChange={(e) => setGroupChatInput(e.target.value)}
-                  placeholder="-1001234567890"
-                  className="w-full font-mono text-sm"
-                />
-                <p className="text-xs text-text-muted">
-                  Add @useheraldbot (or your custom bot) to the group as admin, then send a message and check the chat ID via <code className="bg-card-2 px-1 rounded">getUpdates</code>.
-                </p>
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 rounded-xl bg-purple-500/5 border border-purple-500/10 max-w-2xl">
+                <div className="space-y-1 flex-1">
+                  <h4 className="text-sm font-bold text-foreground">Secure Auto-Link (Recommended)</h4>
+                  <p className="text-xs text-text-muted leading-relaxed">
+                    Generate a secure link to add the bot to your group. Herald will automatically verify administrator rights, extract the chat ID, and connect it to this protocol without manual copy-pasting.
+                  </p>
+                </div>
+                <SandboxLockedAction>
+                  <Button
+                    variant="default"
+                    className="bg-purple-600 hover:bg-purple-500 text-white shrink-0"
+                    isLoading={groupLinking}
+                    onClick={handleLinkGroup}
+                  >
+                    {groupLinking ? "Polling Connection..." : "Link Group / Channel"}
+                  </Button>
+                </SandboxLockedAction>
               </div>
-              <SandboxLockedAction>
-                <Button
-                  variant="default"
-                  isLoading={saveGroupChatMutation.isPending}
-                  disabled={!groupChatInput.trim()}
-                  onClick={() => saveGroupChatMutation.mutate(groupChatInput.trim())}
-                >
-                  Save Group Chat ID
-                </Button>
-              </SandboxLockedAction>
+
+              {groupLinking && (
+                <div className="p-4 rounded-xl bg-card-2 border border-border max-w-2xl space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                    <span className="text-xs font-semibold text-purple-400">Waiting for bot setup command in Telegram...</span>
+                  </div>
+                  <p className="text-xs text-text-muted">
+                    Please add the bot to your group using the opened tab. If the window did not open, click the button below:
+                  </p>
+                  {groupLinkUrl && (
+                    <a
+                      href={groupLinkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:underline"
+                    >
+                      <span>Open Telegram Connect Link</span>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              )}
+
+              <div className="border-t border-border/60 my-4 pt-4 max-w-2xl">
+                <details className="group">
+                  <summary className="list-none flex items-center gap-2 cursor-pointer text-xs font-semibold text-text-muted hover:text-foreground select-none">
+                    <svg className="w-3.5 h-3.5 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span>Or configure manually (Advanced)</span>
+                  </summary>
+                  <div className="mt-4 space-y-4 max-w-sm pl-5">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-text-secondary">Chat ID</label>
+                      <Input
+                        type="text"
+                        value={groupChatInput}
+                        onChange={(e) => setGroupChatInput(e.target.value)}
+                        placeholder="-1001234567890"
+                        className="w-full font-mono text-sm"
+                      />
+                      <p className="text-xs text-text-muted">
+                        Add the bot to the group as admin, send a message, and check the chat ID via <code className="bg-card-2 px-1 rounded font-mono">getUpdates</code>.
+                      </p>
+                    </div>
+                    <SandboxLockedAction>
+                      <Button
+                        variant="default"
+                        isLoading={saveGroupChatMutation.isPending}
+                        disabled={!groupChatInput.trim()}
+                        onClick={() => saveGroupChatMutation.mutate(groupChatInput.trim())}
+                      >
+                        Save Group Chat ID
+                      </Button>
+                    </SandboxLockedAction>
+                  </div>
+                </details>
+              </div>
             </div>
           )}
         </div>
