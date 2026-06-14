@@ -13,6 +13,14 @@ export interface ChangelogEntry {
 // Add new entries at the TOP of the array.
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    slug: "2026-06-14-herald-cli",
+    date: "2026-06-14",
+    title: "Herald CLI — send notifications from the terminal",
+    tag: "Feature",
+    body: "The official Herald CLI (@herald-protocol/cli) is now available on npm. Install it globally with: npm install -g @herald-protocol/cli. Run herald auth login to authenticate, then herald doctor to verify your setup in one command. Supports every operation available in the dashboard — single sends, batch, broadcast, delivery status, templates, webhooks, campaigns, and scheduling. Built for CI/CD and AI agents: --json for machine-readable output, --wait to block until delivery, --from-stdin to pipe payloads from other tools, --idempotency-key for safe retries. Granular exit codes (auth, rate-limit, network) let scripts branch without parsing output.",
+    learnMoreUrl: "https://docs.useherald.xyz/docs/cli",
+  },
+  {
     slug: "2026-05-27-sandbox-locked-actions",
     date: "2026-05-27",
     title: "Sandbox mode is now fully read-only",

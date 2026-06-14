@@ -13,6 +13,8 @@ export const HERALD_TOUR_STEP_COUNT = 36;
 export interface ChecklistState {
   /** User clicked "Mark done" on the playground step */
   playgroundUsed: boolean;
+  /** User clicked "Mark done" on the CLI step */
+  cliUsed: boolean;
   /** User clicked "Mark done" on the docs step */
   docsRead: boolean;
   /** User explicitly dismissed the checklist card */
@@ -57,6 +59,7 @@ export const useOnboardingStore = create<OnboardingState>()(
 
       checklist: {
         playgroundUsed: false,
+        cliUsed: false,
         docsRead: false,
         checklistDismissed: false,
       },

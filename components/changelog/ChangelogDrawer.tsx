@@ -147,7 +147,7 @@ export function ChangelogDrawer() {
         {/* Footer */}
         <div className="shrink-0 border-t border-border px-5 py-3 text-center">
           <a
-            href="https://useherald.xyz/docs"
+            href="https://docs.useherald.xyz/docs"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-text-muted hover:text-teal transition-colors"

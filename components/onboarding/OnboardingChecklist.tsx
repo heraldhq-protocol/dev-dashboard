@@ -70,10 +70,10 @@ export function OnboardingChecklist({
       id: "cli",
       label: "Try the Herald CLI",
       description: "Install @herald-protocol/cli and run herald doctor to verify your setup.",
-      done: checklist.cliUsed ?? false,
+      done: checklist.cliUsed,
       cta: checklist.cliUsed ? "Done" : "Mark done",
-      onMarkDone: () => setChecklistItem("cliUsed" as any, true),
-      externalHref: "https://useherald.xyz/docs/cli",
+      onMarkDone: () => setChecklistItem("cliUsed", true),
+      externalHref: "https://docs.useherald.xyz/docs/cli",
     },
     {
       id: "docs",
