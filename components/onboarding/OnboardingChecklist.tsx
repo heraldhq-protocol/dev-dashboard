@@ -13,6 +13,7 @@ interface ChecklistItem {
   description: string;
   done: boolean;
   href?: string;
+  externalHref?: string;
   cta: string;
   onMarkDone?: () => void;
 }
@@ -64,6 +65,15 @@ export function OnboardingChecklist({
       href: "/playground",
       cta: checklist.playgroundUsed ? "Done" : "Open Playground",
       onMarkDone: () => setChecklistItem("playgroundUsed", true),
+    },
+    {
+      id: "cli",
+      label: "Try the Herald CLI",
+      description: "Install @herald-protocol/cli and run herald doctor to verify your setup.",
+      done: checklist.cliUsed ?? false,
+      cta: checklist.cliUsed ? "Done" : "Mark done",
+      onMarkDone: () => setChecklistItem("cliUsed" as any, true),
+      externalHref: "https://useherald.xyz/docs/cli",
     },
     {
       id: "docs",
@@ -162,7 +172,17 @@ export function OnboardingChecklist({
                 </Link>
               ) : item.onMarkDone ? (
                 <div className="shrink-0 flex items-center gap-2">
-                  {item.href && (
+                  {item.externalHref ? (
+                    <a
+                      href={item.externalHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-teal hover:underline flex items-center gap-1"
+                    >
+                      Docs
+                      <ChevronRight className="w-3 h-3" />
+                    </a>
+                  ) : item.href ? (
                     <Link
                       href={item.href}
                       className="text-xs font-semibold text-teal hover:underline flex items-center gap-1"
@@ -170,7 +190,7 @@ export function OnboardingChecklist({
                       Open
                       <ChevronRight className="w-3 h-3" />
                     </Link>
-                  )}
+                  ) : null}
                   <Button
                     variant="outline"
                     size="sm"
