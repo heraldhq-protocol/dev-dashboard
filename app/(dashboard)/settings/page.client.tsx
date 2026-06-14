@@ -320,12 +320,14 @@ export default function SettingsPage() {
   const [groupChatInput, setGroupChatInput] = useState("");
   const [groupLinking, setGroupLinking] = useState(false);
   const [groupLinkUrl, setGroupLinkUrl] = useState("");
+  const [groupLinkNonce, setGroupLinkNonce] = useState("");
 
   const handleLinkGroup = async () => {
     setGroupLinking(true);
     try {
       const { nonce, connectUrl } = await getGroupConnectLink();
       setGroupLinkUrl(connectUrl);
+      setGroupLinkNonce(nonce);
       window.open(connectUrl, "_blank");
 
       const interval = setInterval(async () => {
@@ -335,12 +337,14 @@ export default function SettingsPage() {
             clearInterval(interval);
             setGroupLinking(false);
             setGroupLinkUrl("");
+            setGroupLinkNonce("");
             toast.success("Telegram group linked successfully!");
             refetchGroupChat();
           } else if (res.status === "expired") {
             clearInterval(interval);
             setGroupLinking(false);
             setGroupLinkUrl("");
+            setGroupLinkNonce("");
             toast.error("Group setup link expired. Please try again.");
           }
         } catch {
@@ -352,6 +356,7 @@ export default function SettingsPage() {
         clearInterval(interval);
         setGroupLinking(false);
         setGroupLinkUrl("");
+        setGroupLinkNonce("");
       }, 10 * 60 * 1000);
 
     } catch (err: any) {
@@ -1064,30 +1069,60 @@ export default function SettingsPage() {
                 </SandboxLockedAction>
               </div>
 
-              {groupLinking && (
-                <div className="p-4 rounded-xl bg-card-2 border border-border max-w-2xl space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin shrink-0" />
-                    <span className="text-xs font-semibold text-purple-400">Waiting for bot setup command in Telegram...</span>
+              {groupLinking && (() => {
+                const botUsername = groupLinkUrl
+                  ? new URL(groupLinkUrl).pathname.replace("/", "")
+                  : null;
+                const manualCmd = botUsername && groupLinkNonce
+                  ? `/start@${botUsername} setup_${groupLinkNonce}`
+                  : null;
+                return (
+                  <div className="p-4 rounded-xl bg-card-2 border border-border max-w-2xl space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                      <span className="text-xs font-semibold text-purple-400">Waiting for bot setup command in Telegram...</span>
+                    </div>
+                    <p className="text-xs text-text-muted">
+                      Click the link below to add the bot to your group. Telegram will automatically send the setup command.
+                    </p>
+                    {groupLinkUrl && (
+                      <a
+                        href={groupLinkUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:underline"
+                      >
+                        <span>Open Telegram Connect Link</span>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    )}
+                    {manualCmd && (
+                      <div className="pt-1 space-y-1.5">
+                        <p className="text-xs text-text-muted">
+                          <span className="font-semibold text-foreground">Bot already in your group?</span> Paste this command directly into the group chat instead:
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 px-3 py-2 rounded-lg bg-background border border-border text-xs font-mono text-foreground select-all break-all">
+                            {manualCmd}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(manualCmd);
+                              toast.success("Command copied!");
+                            }}
+                            className="shrink-0 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 text-xs font-medium text-foreground transition-colors"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-text-muted">
-                    Please add the bot to your group using the opened tab. If the window did not open, click the button below:
-                  </p>
-                  {groupLinkUrl && (
-                    <a
-                      href={groupLinkUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:underline"
-                    >
-                      <span>Open Telegram Connect Link</span>
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </a>
-                  )}
-                </div>
-              )}
+                );
+              })()}
 
               <div className="border-t border-border/60 my-4 pt-4 max-w-2xl">
                 <details className="group">
