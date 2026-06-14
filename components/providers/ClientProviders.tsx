@@ -98,7 +98,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
         try {
           const body = JSON.parse(initOptions.body as string);
           if (Array.isArray(body)) {
-            const enrichedBody = body.map((event: any) => {
+            const enrichedBody = body.map((event: { properties?: Record<string, unknown> }) => {
               if (!event.properties) {
                 event.properties = {};
               }
