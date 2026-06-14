@@ -120,6 +120,7 @@ function TourSettingsPanel() {
           id="restart-tour-btn"
           variant="default"
           onClick={restartTour}
+          data-adtivity-button-track="Restart Tour"
         >
           {tourCompleted ? "Restart Tour" : "Start Tour"}
         </Button>
@@ -588,7 +589,7 @@ export default function SettingsPage() {
 
           <div className="pt-6 flex items-center gap-4 border-t border-border">
             <SandboxLockedAction>
-              <Button type="submit" variant="default" isLoading={updateMutation.isPending}>
+              <Button type="submit" variant="default" isLoading={updateMutation.isPending} data-adtivity-button-track="Save General Settings">
                 Save Changes
               </Button>
             </SandboxLockedAction>
@@ -645,6 +646,7 @@ export default function SettingsPage() {
                 isLoading={syncOnChainMutation.isPending}
                 disabled={syncOnChainMutation.isPending}
                 onClick={() => syncOnChainMutation.mutate()}
+                data-adtivity-button-track="Sync On-chain"
                 className="shrink-0"
               >
                 Sync On-chain
@@ -735,7 +737,7 @@ export default function SettingsPage() {
 
           <div className="pt-4 flex items-center gap-4 border-t border-border">
             <SandboxLockedAction>
-              <Button type="submit" variant="default" isLoading={sandboxMutation.isPending}>
+              <Button type="submit" variant="default" isLoading={sandboxMutation.isPending} data-adtivity-button-track="Save Sandbox Contacts">
                 Save Sandbox Contacts
               </Button>
             </SandboxLockedAction>
@@ -792,7 +794,7 @@ export default function SettingsPage() {
             />
           </div>
           <SandboxLockedAction>
-            <Button type="submit" variant="default" isLoading={createAssetMutation.isPending} disabled={!newAssetUrl}>
+            <Button type="submit" variant="default" isLoading={createAssetMutation.isPending} disabled={!newAssetUrl} data-adtivity-button-track="Add Brand Asset">
               Add
             </Button>
           </SandboxLockedAction>

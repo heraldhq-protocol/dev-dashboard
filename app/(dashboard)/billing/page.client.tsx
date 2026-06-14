@@ -223,7 +223,7 @@ export default function BillingPage() {
               onboarding.
             </p>
           </div>
-          <Button variant="secondary" className="shrink-0 group">
+          <Button variant="secondary" className="shrink-0 group" data-adtivity-button-track="Contact Enterprise Sales">
             Contact Sales
           </Button>
         </div>

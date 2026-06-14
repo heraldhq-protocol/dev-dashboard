@@ -159,6 +159,7 @@ export function CurrentPlanCard({
             <Button
               onClick={onUpgradeClick}
               isLoading={isUpgrading}
+              data-adtivity-button-track="Current Plan Upgrade Button"
               className="w-full md:w-auto shadow-[0_0_20px_rgba(0,200,150,0.2)]"
             >
               Upgrade Plan
@@ -173,6 +174,7 @@ export function CurrentPlanCard({
                 size="sm"
                 onClick={onCancelClick}
                 isLoading={isCanceling}
+                data-adtivity-button-track="Current Plan Cancel Button"
                 className="text-text-muted hover:text-red mt-2"
               >
                 Cancel Subscription

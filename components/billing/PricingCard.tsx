@@ -88,6 +88,7 @@ export function PricingCard({
           disabled={isCurrent || isLowerTier || isPending}
           onClick={() => onAction(tier.tier)}
           isLoading={isPending}
+          data-adtivity-button-track={`Upgrade Plan Tier - ${tier.name}`}
         >
           {isCurrent ? "Active" : isLowerTier ? "Downgrade" : "Upgrade"}
         </Button>

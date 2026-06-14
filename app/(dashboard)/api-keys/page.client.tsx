@@ -81,6 +81,7 @@ export default function ApiKeysPage() {
             <SandboxLockedAction>
               <a
                 href="/billing#billing-plans"
+                data-adtivity-link-track="Upgrade API Keys Limit"
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors"
               >
                 <Lock className="h-3.5 w-3.5" />
@@ -94,6 +95,7 @@ export default function ApiKeysPage() {
                 id="create-api-key-btn"
                 size="sm"
                 onClick={() => setIsCreateOpen(true)}
+                data-adtivity-button-track="Create API Key Button"
                 className="gap-2 shrink-0 group"
               >
                 <Plus className="h-4 w-4" />
@@ -133,7 +135,7 @@ export default function ApiKeysPage() {
               You&apos;re on the <span className="font-medium">{billing.tierName}</span> plan. Upgrade to create additional live API keys.
             </p>
           </div>
-          <a href="/billing#billing-plans" className="shrink-0 flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition-colors">
+          <a href="/billing#billing-plans" data-adtivity-link-track="Upgrade API Keys Limit" className="shrink-0 flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition-colors">
             View Plans <ArrowUpRight className="h-3 w-3" />
           </a>
         </div>

@@ -281,6 +281,7 @@ export default function ComposersPlaygroundPage() {
                 store.resetDraft(store.activeChannel);
                 toast.success(`${store.activeChannel} draft reset`);
               }}
+              data-adtivity-button-track="Playground Reset"
               className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-3 sm:px-4"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -290,6 +291,7 @@ export default function ComposersPlaygroundPage() {
               variant="secondary"
               size="sm"
               onClick={() => toast.success("Draft saved locally")}
+              data-adtivity-button-track="Playground Save Draft"
               className="gap-2 bg-white/5 border-white/5 hover:bg-white/10 rounded-full px-3 sm:px-4"
             >
               <Save className="w-3.5 h-3.5" />
@@ -300,6 +302,7 @@ export default function ComposersPlaygroundPage() {
               variant="default"
               size="sm"
               onClick={() => setTestSendOpen(true)}
+              data-adtivity-button-track="Playground Send Test Trigger"
               className="gap-2 rounded-full px-4 sm:px-5"
             >
               <Send className="w-3.5 h-3.5" />
@@ -523,13 +526,14 @@ export default function ComposersPlaygroundPage() {
             </Button>
             <Button
               onClick={() => sendMutation.mutate()}
-disabled={
+              disabled={
                 (sendMode === "manual-address" && !recipient) ||
                 !hasValidKey ||
                 sendMutation.isPending ||
                 (sendMode === "test-contacts" && !hasTestContacts)
               }
               isLoading={sendMutation.isPending}
+              data-adtivity-button-track="Playground Send Test Confirm"
             >
               {sendMode === "test-contacts" ? "Send to Test Contacts" : "Send Test"}
             </Button>

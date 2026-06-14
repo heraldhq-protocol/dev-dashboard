@@ -158,6 +158,7 @@ export default function LoginForm() {
             className="w-full h-12 text-base shadow-[0_0_20px_rgba(0,200,150,0.2)] hover:shadow-[0_0_30px_rgba(0,200,150,0.35)] transition-all duration-300 relative overflow-hidden group"
             onClick={handleLogin}
             disabled={step === "authenticating"}
+            data-adtivity-button-track="Connect Wallet or Sign In"
           >
             {/* Button shine effect */}
             <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />

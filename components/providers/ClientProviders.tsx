@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SessionProvider } from "next-auth/react";
-import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
+import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { SolanaCluster } from "@herald-protocol/sdk";
-import { init, initClickTracking, initPageTracking, initLocationTracking } from "@adtivity/adtivity-sdk";
+import { init, initClickTracking, initPageTracking, initLocationTracking, identify, trackEvent } from "@adtivity/adtivity-sdk";
+import { useWallets } from "@privy-io/react-auth/solana";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -34,6 +35,53 @@ declare global {
   interface Window {
     __ADTIVITY_BOOTSTRAPPED__?: boolean;
   }
+}
+
+// Automatically track connected wallets (Privy or Solana wallet adapter)
+function AdtivityWalletTracker() {
+  const { wallets: privyWallets } = useWallets();
+  const { publicKey: adapterPublicKey, connected: adapterConnected } = useWallet();
+  const lastTrackedWallet = useRef<string | null>(null);
+
+  useEffect(() => {
+    // 1. Check if Solana adapter is connected
+    if (adapterConnected && adapterPublicKey) {
+      const address = adapterPublicKey.toBase58();
+      if (lastTrackedWallet.current !== address) {
+        lastTrackedWallet.current = address;
+        try {
+          identify(address);
+          trackEvent("Wallet Connected", { wallet_address: address });
+        } catch (err) {
+          console.warn("Adtivity failed to track Solana adapter wallet:", err);
+        }
+      }
+      return;
+    }
+
+    // 2. Check if Privy is connected
+    const activePrivyWallet = privyWallets.find((w) => w.address);
+    if (activePrivyWallet) {
+      const address = activePrivyWallet.address;
+      if (lastTrackedWallet.current !== address) {
+        lastTrackedWallet.current = address;
+        try {
+          identify(address);
+          trackEvent("Wallet Connected", { wallet_address: address });
+        } catch (err) {
+          console.warn("Adtivity failed to track Privy wallet:", err);
+        }
+      }
+      return;
+    }
+
+    // 3. Reset tracking on disconnect
+    if (!adapterConnected && !activePrivyWallet) {
+      lastTrackedWallet.current = null;
+    }
+  }, [adapterConnected, adapterPublicKey, privyWallets]);
+
+  return null;
 }
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
@@ -78,6 +126,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
             <ConnectionProvider endpoint={RPC_ENDPOINT}>
               <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>
+                  <AdtivityWalletTracker />
                   <TooltipProvider>
                     <OnboardingTourProvider>
                       {children}
