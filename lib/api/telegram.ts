@@ -26,6 +26,13 @@ export async function removeBotToken(): Promise<void> {
   await apiClient.delete("/portal/channels/telegram/bot-token");
 }
 
+export async function reregisterCustomWebhook(): Promise<{ success: boolean; webhookUrl: string; error?: string }> {
+  const { data } = await apiClient.post<{ success: boolean; webhookUrl: string; error?: string }>(
+    "/portal/channels/telegram/reregister-custom-webhook"
+  );
+  return data;
+}
+
 // ── Group chat ───────────────────────────────────────────────────────────────
 
 export interface GroupChatStatus {

@@ -15,6 +15,7 @@ import {
   getBotTokenStatus,
   saveBotToken,
   removeBotToken,
+  reregisterCustomWebhook,
   getGroupChatId,
   saveGroupChatId,
   removeGroupChatId,
@@ -313,6 +314,20 @@ export default function SettingsPage() {
     onSuccess: () => {
       toast.success("Bot token removed");
       refetchBotToken();
+    },
+  });
+
+  const reregisterWebhookMutation = useMutation({
+    mutationFn: reregisterCustomWebhook,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Webhook re-registered — Telegram will now deliver updates to the gateway");
+      } else {
+        toast.error(data.error || "Webhook re-registration failed");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to re-register webhook");
     },
   });
 
@@ -960,14 +975,27 @@ export default function SettingsPage() {
                   <p className="text-xs text-text-muted">Custom bot active</p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                className="text-red-400 hover:text-red-300 text-sm"
-                isLoading={removeBotTokenMutation.isPending}
-                onClick={() => removeBotTokenMutation.mutate()}
-              >
-                Remove Bot Token
-              </Button>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button
+                  variant="outline"
+                  className="text-sm gap-2"
+                  isLoading={reregisterWebhookMutation.isPending}
+                  onClick={() => reregisterWebhookMutation.mutate()}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Re-register Webhook
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-red-400 hover:text-red-300 text-sm"
+                  isLoading={removeBotTokenMutation.isPending}
+                  onClick={() => removeBotTokenMutation.mutate()}
+                >
+                  Remove Bot Token
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
