@@ -134,7 +134,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: true },
+          queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false },
           mutations: { retry: 0 },
         },
       })
@@ -145,10 +145,13 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <PrivyProvider>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <SessionProvider>
+        <SessionProvider refetchOnWindowFocus={false}>
           <QueryClientProvider client={queryClient}>
             <ConnectionProvider endpoint={RPC_ENDPOINT}>
-              <WalletProvider wallets={wallets} autoConnect>
+              {/* autoConnect disabled: it races Privy for the Phantom provider on
+                  the login page, breaking the connect/sign flow. Onboarding/invite
+                  pages connect explicitly via WalletModalProvider, so they are unaffected. */}
+              <WalletProvider wallets={wallets} autoConnect={false}>
                 <WalletModalProvider>
                   <AdtivityWalletTracker />
                   <TooltipProvider>
