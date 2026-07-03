@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { usePrivy } from "@privy-io/react-auth";
+import { useWallets, useSignMessage } from "@privy-io/react-auth/solana";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
@@ -56,9 +56,13 @@ function StepIndicator({ current }: { current: number }) {
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function OnboardingPage() {
   const router = useRouter();
-  const { data: session, status: sessionStatus } = useSession();
-  const { publicKey, signMessage } = useWallet();
-  const { setVisible } = useWalletModal();
+  const { status: sessionStatus, update: updateSession } = useSession();
+  const { login } = usePrivy();
+  const { wallets } = useWallets();
+  const { signMessage } = useSignMessage();
+
+  const activeWallet = wallets.find((w) => w.address) ?? null;
+  const walletAddress = activeWallet?.address ?? null;
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -88,23 +92,30 @@ export default function OnboardingPage() {
     setChecking(true);
     apiClient
       .get("/protocols/me")
-      .then(() => {
-        // Protocol exists — redirect to dashboard
+      .then(async (res) => {
+        // Protocol exists. The JWT may still carry protocolId=null (token minted
+        // before the protocol existed), which makes proxy.ts bounce us back here.
+        // Sync the real id into the session first, then go to the dashboard.
+        const data = res.data as { id?: string; protocolId?: string } | undefined;
+        const protocolId = data?.protocolId ?? data?.id;
+        if (protocolId) {
+          await updateSession({ protocolId });
+        }
         router.replace("/overview");
       })
       .catch(() => {
         // 404/401 = no protocol yet, stay on onboarding
         setChecking(false);
       });
-  }, [sessionStatus, step, router]);
+  }, [sessionStatus, step, router, updateSession]);
 
   // ── Auto-advance when wallet connects ──────────────────────────────────────
   useEffect(() => {
-    if (publicKey && step === 1) {
+    if (walletAddress && step === 1) {
       const timer = setTimeout(() => setStep(2), 0);
       return () => clearTimeout(timer);
     }
-  }, [publicKey, step]);
+  }, [walletAddress, step]);
 
   useEffect(() => {
     return () => {
@@ -114,10 +125,10 @@ export default function OnboardingPage() {
 
   // ── Step handlers ──────────────────────────────────────────────────────────
   const handleConnectWallet = () => {
-    if (publicKey) {
+    if (walletAddress) {
       setStep(2);
     } else {
-      setVisible(true);
+      login();
     }
   };
 
@@ -128,20 +139,21 @@ export default function OnboardingPage() {
   };
 
   const handleRegister = async () => {
-    if (!publicKey || !signMessage) {
+    if (!activeWallet || !walletAddress) {
       toast.error("Wallet not connected");
       return;
     }
     setLoading(true);
     try {
+      // eslint-disable-next-line react-hooks/purity -- timestamp for a one-off signing challenge in an event handler
       const timestamp = Date.now();
-      const message = createSignInChallenge(publicKey.toBase58(), timestamp);
+      const message = createSignInChallenge(walletAddress, timestamp);
       const encoded = new TextEncoder().encode(message);
-      const sigBytes = await signMessage(encoded);
+      const { signature: sigBytes } = await signMessage({ message: encoded, wallet: activeWallet });
       const signature = bs58.encode(sigBytes);
 
       const result = await registerProtocol({
-        walletPubkey: publicKey.toBase58(),
+        walletPubkey: walletAddress,
         signature,
         message,
         protocolName: protocolName.trim(),
@@ -154,7 +166,7 @@ export default function OnboardingPage() {
 
       // Sign in to establish session (redirect: false so user sees their API key first)
       const signInResult = await signIn("wallet", {
-        wallet: publicKey.toBase58(),
+        wallet: walletAddress,
         signature,
         message,
         redirect: false,
@@ -312,11 +324,11 @@ export default function OnboardingPage() {
                 className="w-full text-base"
                 onClick={handleConnectWallet}
               >
-                {publicKey ? "Continue Registration" : "Connect Wallet"}
+                {walletAddress ? "Continue Registration" : "Connect Wallet"}
               </Button>
-              {publicKey && (
+              {walletAddress && (
                 <p className="text-xs text-teal font-mono">
-                  {publicKey.toBase58().slice(0, 16)}…
+                  {walletAddress.slice(0, 16)}…
                 </p>
               )}
               <Button
@@ -427,7 +439,7 @@ export default function OnboardingPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-text-muted">Owner Wallet</span>
                   <span className="text-teal font-mono text-xs">
-                    {publicKey?.toBase58().slice(0, 12)}…
+                    {walletAddress?.slice(0, 12)}…
                   </span>
                 </div>
               </div>

@@ -51,10 +51,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           !credentials?.signature ||
           !credentials?.message
         ) {
+          console.error("[AUTH] Missing wallet-login credentials:", {
+            hasWallet: !!credentials?.wallet,
+            hasSignature: !!credentials?.signature,
+            hasMessage: !!credentials?.message,
+          });
           return null;
         }
 
         try {
+          console.log("[AUTH] wallet-login →", `${ADMIN_API_URL}/auth/wallet-login`, {
+            wallet: credentials.wallet,
+          });
           const res = await fetch(`${ADMIN_API_URL}/auth/wallet-login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -95,7 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         return {
           ...token,
@@ -108,6 +116,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           refreshToken: user.refreshToken,
           accessTokenExpires: user.accessTokenExpires,
         };
+      }
+
+      // Allow the client to sync a freshly-created/known protocolId into the JWT
+      // (e.g. after registration, or when an older token predates the protocol).
+      // Without this, proxy.ts bounces the user between /onboarding and /overview.
+      if (trigger === "update" && session && typeof session === "object") {
+        const data = session as { protocolId?: string | null };
+        if (data.protocolId) {
+          token.protocolId = data.protocolId;
+        }
       }
 
       if (Date.now() < (token.accessTokenExpires as number)) {

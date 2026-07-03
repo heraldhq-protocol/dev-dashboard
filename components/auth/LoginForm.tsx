@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -24,11 +24,22 @@ export default function LoginForm() {
   const { signMessage } = useSignMessage();
 
   const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
 
   const [error, setError] = useState("");
   const [step, setStep] = useState<"idle" | "authenticating" | "signing" | "redirecting">("idle");
 
   const processing = useRef(false);
+
+  // Already have a *valid* NextAuth session? Don't sit on /login — go to the app.
+  // Skip this when the session carries a RefreshAccessTokenError: that session is
+  // dead (api-client signs it out), and redirecting it to /overview would just
+  // feed the 401 → signOut → /login loop.
+  useEffect(() => {
+    if (sessionStatus === "authenticated" && !session?.error && step === "idle") {
+      router.replace("/overview");
+    }
+  }, [sessionStatus, session?.error, step, router]);
 
   const solanaWallet = wallets.find((w) => w.address) ?? null;
 

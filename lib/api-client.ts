@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
-import { getSession, signIn } from "next-auth/react";
+import { getSession, signOut } from "next-auth/react";
 
 export class HeraldApiError extends Error {
   public statusCode: number;
@@ -113,8 +113,11 @@ apiClient.interceptors.response.use(
         const session = await getSession();
 
         if (session?.error === "RefreshAccessTokenError") {
-          // Hard token expiry/revocation — kick user
-          signIn("wallet");
+          // Refresh token is dead/revoked. A credential-less signIn("wallet")
+          // can never succeed (wallet login needs a fresh signature) and just
+          // loops on CredentialsSignin → /login?error → reload. Clear the stale
+          // session and land on a clean login so the user can reconnect.
+          await signOut({ callbackUrl: "/login" });
           return Promise.reject(error);
         }
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { usePrivy } from "@privy-io/react-auth";
+import { useWallets, useSignMessage } from "@privy-io/react-auth/solana";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
@@ -17,8 +17,12 @@ function InviteContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  const { publicKey, signMessage } = useWallet();
-  const { setVisible } = useWalletModal();
+  const { login } = usePrivy();
+  const { wallets } = useWallets();
+  const { signMessage } = useSignMessage();
+
+  const activeWallet = wallets.find((w) => w.address) ?? null;
+  const walletAddress = activeWallet?.address ?? null;
 
   const [loading, setLoading] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -33,13 +37,8 @@ function InviteContent() {
   const handleConnectAndAccept = async () => {
     if (!token) return;
 
-    if (!publicKey) {
-      setVisible(true);
-      return;
-    }
-
-    if (!signMessage) {
-      toast.error("Wallet does not support message signing");
+    if (!activeWallet || !walletAddress) {
+      login();
       return;
     }
 
@@ -48,21 +47,22 @@ function InviteContent() {
       // 1. Accept the invite to associate this wallet with the team member
       await acceptInvite({
         inviteToken: token,
-        walletPubkey: publicKey.toBase58(),
+        walletPubkey: walletAddress,
       });
-      
+
       setAccepted(true);
       toast.success("Invite accepted! Signing in...");
 
       // 2. Sign in to establish the session
+      // eslint-disable-next-line react-hooks/purity -- timestamp for a one-off signing challenge in an event handler
       const timestamp = Date.now();
-      const message = createSignInChallenge(publicKey.toBase58(), timestamp);
+      const message = createSignInChallenge(walletAddress, timestamp);
       const encoded = new TextEncoder().encode(message);
-      const sigBytes = await signMessage(encoded);
+      const { signature: sigBytes } = await signMessage({ message: encoded, wallet: activeWallet });
       const signature = bs58.encode(sigBytes);
 
       const signInResult = await signIn("wallet", {
-        wallet: publicKey.toBase58(),
+        wallet: walletAddress,
         signature,
         message,
         redirect: false,
@@ -109,11 +109,11 @@ function InviteContent() {
 
         {!accepted && (
           <div className="space-y-4">
-            {publicKey ? (
+            {walletAddress ? (
               <div className="p-4 rounded-xl border border-border bg-navy-2 mb-4 text-left">
                 <p className="text-xs text-text-muted mb-1">Connected Wallet</p>
                 <p className="text-sm font-mono text-teal">
-                  {publicKey.toBase58().slice(0, 12)}...{publicKey.toBase58().slice(-12)}
+                  {walletAddress.slice(0, 12)}...{walletAddress.slice(-12)}
                 </p>
               </div>
             ) : null}
@@ -123,14 +123,14 @@ function InviteContent() {
               className="w-full py-6 text-base"
               isLoading={loading}
             >
-              {publicKey ? "Accept & Sign In" : "Connect Wallet"}
+              {walletAddress ? "Accept & Sign In" : "Connect Wallet"}
             </Button>
-            
-            {publicKey && (
+
+            {walletAddress && (
               <Button
                 variant="ghost"
                 className="w-full text-xs text-text-dim"
-                onClick={() => setVisible(true)}
+                onClick={() => login()}
                 disabled={loading}
               >
                 Use a different wallet

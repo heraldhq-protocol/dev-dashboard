@@ -1,12 +1,16 @@
 import { handlers } from "@/lib/auth";
 import type { NextRequest } from "next/server";
 
+const DEBUG_AUTH = process.env.NODE_ENV !== "production";
+
 const GET = async (req: NextRequest) => {
   try {
     const response = await handlers.GET(req);
-    const cloned = response.clone();
-    const text = await cloned.text();
-    console.log("[AUTH] GET /api/auth/* response:", response.status, text.slice(0, 500));
+    if (DEBUG_AUTH) {
+      // Reading the body buffers the whole response; only do this in dev.
+      const text = await response.clone().text();
+      console.log("[AUTH] GET /api/auth/* response:", response.status, text.slice(0, 500));
+    }
     return response;
   } catch (err) {
     console.error("[AUTH] GET /api/auth/* handler error:", err);

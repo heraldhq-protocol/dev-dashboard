@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { usePrivy } from "@privy-io/react-auth";
+import { useWallets, useSignMessage } from "@privy-io/react-auth/solana";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -13,27 +13,33 @@ export default function InviteAcceptPage() {
   const params = useParams();
   const router = useRouter();
   const token = params?.token as string;
-  const { publicKey, signMessage, connected } = useWallet();
-  const { setVisible } = useWalletModal();
+  const { login } = usePrivy();
+  const { wallets } = useWallets();
+  const { signMessage } = useSignMessage();
+
+  const activeWallet = wallets.find((w) => w.address) ?? null;
+  const walletAddress = activeWallet?.address ?? null;
 
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
   const handleAccept = async () => {
-    if (!publicKey || !signMessage) {
-      setVisible(true);
+    if (!activeWallet || !walletAddress) {
+      login();
       return;
     }
 
     setLoading(true);
     try {
-      const message = `Accept Herald Team Invite\nToken: ${token}\nWallet: ${publicKey.toBase58()}\nTimestamp: ${Date.now()}`;
+      // eslint-disable-next-line react-hooks/purity -- timestamp for a one-off signing challenge in an event handler
+      const timestamp = Date.now();
+      const message = `Accept Herald Team Invite\nToken: ${token}\nWallet: ${walletAddress}\nTimestamp: ${timestamp}`;
       const encoded = new TextEncoder().encode(message);
-      await signMessage(encoded);
+      await signMessage({ message: encoded, wallet: activeWallet });
 
       await acceptInvite({
         inviteToken: token,
-        walletPubkey: publicKey.toBase58(),
+        walletPubkey: walletAddress,
       });
 
       setDone(true);
@@ -78,10 +84,10 @@ export default function InviteAcceptPage() {
                 </p>
               </div>
 
-              {connected && publicKey ? (
+              {walletAddress ? (
                 <div className="w-full space-y-4">
                   <div className="rounded-lg border border-teal/20 bg-teal/5 px-4 py-2.5 text-sm text-teal font-mono">
-                    {publicKey.toBase58().slice(0, 20)}…
+                    {walletAddress.slice(0, 20)}…
                   </div>
                   <Button
                     className="w-full"
@@ -92,7 +98,7 @@ export default function InviteAcceptPage() {
                   </Button>
                   <button
                     className="text-xs text-text-muted hover:text-white transition-colors"
-                    onClick={() => setVisible(true)}
+                    onClick={() => login()}
                   >
                     Switch wallet
                   </button>
@@ -100,7 +106,7 @@ export default function InviteAcceptPage() {
               ) : (
                 <Button
                   className="w-full"
-                  onClick={() => setVisible(true)}
+                  onClick={() => login()}
                 >
                   Connect Wallet to Accept
                 </Button>

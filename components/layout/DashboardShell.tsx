@@ -10,11 +10,16 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { identify } from "@adtivity/adtivity-sdk";
 
+// Adtivity only runs (and is init()'d) in the production deployment; calling
+// identify() elsewhere throws "SDK not initialized". Keep this gate in sync
+// with ClientProviders/AuthWalletProviders.
+const IS_PRODUCTION = process.env.NEXT_PUBLIC_VERCEL_ENV === "production";
+
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
 
   useEffect(() => {
-    if (session?.user?.id && process.env.NEXT_PUBLIC_ADTIVITY_API_KEY) {
+    if (IS_PRODUCTION && session?.user?.id && process.env.NEXT_PUBLIC_ADTIVITY_API_KEY) {
       try {
         identify(session.user.id, {
           email: session.user.email ?? undefined,
